@@ -5221,7 +5221,7 @@ function _renderProfBody(full, followerCount, followingCount){
   b.innerHTML=
     '<div style="padding:20px 16px 16px;background:var(--card)">'+
       '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">'+
-        '<div id="prof-av-wrap" style="'+avWrapStyle+'"><div style="border-radius:50%;overflow:hidden;width:76px;height:76px;background:'+nc(full.display_name)+(profHasStory?';padding:2px':'')+'">'+avContent+'</div></div>'+
+        '<div id="prof-av-wrap" style="'+avWrapStyle+'"><div style="border-radius:50%;overflow:hidden;width:76px;height:76px;background:var(--card)'+(profHasStory?';padding:2px':'')+'">'+avContent+'</div></div>'+
         '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px">'+
           '<div style="display:flex;align-items:center;gap:5px"><span style="font-weight:700;font-size:15px;color:var(--text)">'+E(full.display_name)+'</span>'+badgeFor(full.id)+'</div>'+
           '<div style="display:flex;justify-content:space-around">'+
