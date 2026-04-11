@@ -128,6 +128,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .posthd{display:flex;align-items:center;gap:11px;padding:12px 14px 8px}
+.post{background:var(--card);border-bottom:1px solid var(--border)}
 .av{width:38px;height:38px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;cursor:pointer;font-size:15px}
 .postmeta{flex:1;cursor:pointer}
 .postname{font-weight:600;font-size:14.5px}
@@ -267,10 +268,10 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .prof-name{font-weight:700;font-size:15px;margin-bottom:3px}
 .prof-bio{font-size:13.5px;line-height:1.55;margin-bottom:14px;color:var(--sub)}
 .prof-btns{display:flex;gap:8px;align-items:center}
-.pbtn{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;border:1.5px solid var(--border);background:var(--card);color:var(--text)}
+.pbtn{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;border:1.5px solid var(--inp-border);background:var(--inp-bg);color:var(--text)}
 .pbtn.dark{background:var(--text);color:var(--card);border-color:var(--text)}
 .pbtn.star{width:38px;height:38px;flex:none;border-radius:9px;padding:0}
-.drops-tab{display:flex;align-items:center;padding:10px 16px 0}
+.drops-tab{display:flex;align-items:center;padding:10px 16px 0;background:var(--card)}
 .drops-tab-inner{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;border-bottom:2px solid var(--text);padding-bottom:8px}
 .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;margin-top:2px}
 .gcell{aspect-ratio:1;overflow:hidden;background:var(--border);cursor:pointer;position:relative}
@@ -1743,7 +1744,7 @@ function applyDark(on, skipSave){
   if(on){
     r.style.setProperty('--bg','#000000');
     r.style.setProperty('--card','#1C1C1E');
-    r.style.setProperty('--border','#2C2C2E');
+    r.style.setProperty('--border','#38383A');
     r.style.setProperty('--text','#F2F2F7');
     r.style.setProperty('--sub','#8E8E93');
     r.style.setProperty('--inp-bg','#2C2C2E');
@@ -4810,7 +4811,7 @@ function renderMe(){
   var meGI=getOwnGroupIndex();
   var meHasStory=meGI>=0;
   var meStorySeen=meHasStory&&svGroups[meGI]&&svGroups[meGI].seen;
-  var meRingStyle=meHasStory?('border-radius:50%;padding:3px;background:'+(meStorySeen?'var(--border)':'#1A1A1A')+';position:relative;display:inline-flex;cursor:pointer;flex-shrink:0'):'position:relative;flex-shrink:0';
+  var meRingStyle=meHasStory?('border-radius:50%;padding:3px;background:'+(meStorySeen?'var(--border)':'var(--text)')+';position:relative;display:inline-flex;cursor:pointer;flex-shrink:0'):'position:relative;flex-shrink:0';
   b.innerHTML='<div style="padding:20px 16px 16px;background:var(--card)"><div style="display:flex;align-items:center;gap:16px;margin-bottom:12px"><div id="me-av-wrap" style="'+meRingStyle+'"><div class="me-av" style="background:var(--card)'+(meHasStory?';padding:2px':'')+'">'+avContent+'</div><label class="me-av-plus" for="me-photo-input" onclick="event.stopPropagation()"><svg width="11" height="11" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></label><input id="me-photo-input" type="file" accept="image/*" style="display:none" onchange="pickProfPhoto(event)"/></div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:5px"><span style="font-weight:700;font-size:15px;color:var(--text)">'+E(dName)+'</span>'+badgeSVGFor(profile&&profile.id)+'</div><div style="display:flex;justify-content:space-around"><div style="display:flex;flex-direction:column;align-items:center;gap:1px"><span style="font-weight:700;font-size:17px;color:var(--text)">'+mine.length+'</span><span style="font-size:12px;color:var(--sub)">Drops</span></div><div onclick="openFollowSheet(\''+profile.id+'\',\'followers\')" style="display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer"><span style="font-weight:700;font-size:17px;color:var(--text)">'+(profile&&profile.followers||0)+'</span><span style="font-size:12px;color:var(--sub)">Followers</span></div><div onclick="openFollowSheet(\''+profile.id+'\',\'following\')" style="display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer"><span style="font-weight:700;font-size:17px;color:var(--text)">'+(profile&&profile.following||0)+'</span><span style="font-size:12px;color:var(--sub)">Following</span></div></div></div></div><div style="font-size:13px;color:var(--sub);margin-bottom:'+(profile&&profile.bio?'6':'12')+'px">'+E(uname)+'</div>'+(profile&&profile.bio?'<div style="font-size:13.5px;line-height:1.55;margin-bottom:12px;color:var(--text)">'+E(profile.bio)+'</div>':'')+'<div style="display:flex;gap:8px"><button class="pbtn" style="flex:1;min-width:0" onclick="openEP()">Edit Profile</button><button class="pbtn" style="flex:1;min-width:0" onclick="openShareSheet()">Share</button></div></div><div class="drops-tab"><div class="drops-tab-inner"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0C18 9.5 12 3 12 3z" stroke="var(--text)" stroke-width="2.2" stroke-linejoin="round"/></svg></div></div><div id="me-grid"></div>';
   // Wire Me avatar: tap=story/photo, hold=peek
   var meAvWrap=document.getElementById('me-av-wrap');
@@ -4997,7 +4998,7 @@ function _renderProfBody(full, followerCount, followingCount){
   // Build avatar with optional story ring
   var avInnerHTML='<div style="width:76px;height:76px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;background:'+nc(full.display_name)+'">'+avContent+'</div>';
   var avWrapStyle=profHasStory
-    ? 'display:inline-flex;border-radius:50%;padding:3px;background:'+(profStorySeen?'var(--border)':'#1A1A1A')+';cursor:pointer;flex-shrink:0'
+    ? 'display:inline-flex;border-radius:50%;padding:3px;background:'+(profStorySeen?'var(--border)':'var(--text)')+';cursor:pointer;flex-shrink:0'
     : 'display:inline-flex;flex-shrink:0;cursor:pointer';
   var b=document.getElementById('prof-body');
   // Layout exactly matches Me section:
