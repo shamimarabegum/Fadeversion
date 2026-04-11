@@ -4749,12 +4749,10 @@ function _renderProfBody(full, followerCount, followingCount){
   if(profMsgBtn){
     (function(u2){
       profMsgBtn.addEventListener('click',function(){
-        // Switch to talk tab so nav state is correct
-        goTab('talk');
-        // Open chat immediately on top — profile stays hidden behind
-        if(!convos.find(function(c){return c.user.id===u2.id;}))
-          convos.unshift({user:u2,lastMsg:'',lastSid:'demo',ts:Date.now()});
-        openChat(u2);
+        // Mark that we came from profile so back button restores profile
+        _chatBackCtx='prof';
+        // Open chat on top of profile (startConvoC sets z-index:660 > prof z:650)
+        startConvoC(u2.id);
       });
     })(full);
   }
@@ -4910,8 +4908,9 @@ function startConvoC(uid){
         if(ctx==='notif'){
           var l=document.getElementById('notif-list');
           setTimeout(function(){l.scrollTop=_notifScrollY;},30);
+        } else if(ctx==='prof'){
+          // Profile screen was never closed — it's already visible underneath, nothing to do
         }
-        // ctx==='prof' → profile screen still visible underneath, nothing to do
       },350);
     });
   }
