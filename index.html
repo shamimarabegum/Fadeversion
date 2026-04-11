@@ -889,7 +889,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   </div>
   <div id="s-search" class="screen">
     <div class="topbar"><div class="tb-l"><button class="ibtn" onclick="goTab('today')"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button></div><span class="tb-logo">Search</span><div class="tb-r" style="width:38px"></div></div>
-    <div class="sbar"><div class="swrap"><span class="sico"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></span><input class="sinp" id="sinp" placeholder="Search people..." oninput="doSearch(this.value)" autocomplete="off"/></div></div>
+    <div class="sbar"><div class="swrap"><span class="sico"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></span><input class="sinp" id="sinp" placeholder="Search people & posts..." oninput="doSearch(this.value)" onfocus="doSearch(this.value)" autocomplete="off" style="padding-right:38px"/><button id="sinp-clear" onclick="clearSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--sub);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;align-items:center;justify-content:center;padding:0;flex-shrink:0"><svg width="9" height="9" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button></div></div>
     <div class="scroller" id="sresults" style="padding-top:6px"></div>
   </div>
   <div id="s-talk" class="screen">
@@ -1765,7 +1765,7 @@ function goTab(n){
       },{once:true});
     }
   }
-  if(n==='search'){setTimeout(function(){var s=document.getElementById('sinp');if(s)s.focus();},350);doSearch('');}
+  if(n==='search'){setTimeout(function(){var s=document.getElementById('sinp');if(s)s.focus();},350);showSearchHome();}
   if(n==='me')renderMe();
   if(n==='talk')renderTalkList();
 }
@@ -2185,19 +2185,181 @@ function buildStrengthMeter(inputId){
 }
 
 // ── SEARCH ────────────────────────────────────────────────────────────────────
+// ── SEARCH HISTORY ────────────────────────────────────────────────────────────
+var _SRH_KEY='fade_srh';
+function getSRH(){try{var r=localStorage.getItem(_SRH_KEY);return r?JSON.parse(r):[];}catch(e){return[];}}
+function addSRH(q){if(!q)return;var h=getSRH().filter(function(x){return x.toLowerCase()!==q.toLowerCase();});h.unshift(q);h=h.slice(0,8);try{localStorage.setItem(_SRH_KEY,JSON.stringify(h));}catch(e){}}
+function removeSRH(q){var h=getSRH().filter(function(x){return x!==q;});try{localStorage.setItem(_SRH_KEY,JSON.stringify(h));}catch(e){}}
+function clearAllSRH(){try{localStorage.removeItem(_SRH_KEY);}catch(e){}}
+
+function clearSearch(){
+  var inp=document.getElementById('sinp');
+  if(inp){inp.value='';inp.focus();}
+  var clr=document.getElementById('sinp-clear');
+  if(clr)clr.style.display='none';
+  showSearchHome();
+}
+
+function _syncClearBtn(val){
+  var clr=document.getElementById('sinp-clear');
+  if(!clr)return;
+  clr.style.display=val?'flex':'none';
+}
+
+function showSearchHome(){
+  var r=document.getElementById('sresults');
+  r.innerHTML='';
+  _syncClearBtn(false);
+
+  // ── Recent searches ──────────────────────────────────────────────────────
+  var history=getSRH();
+  if(history.length){
+    var recHdr=document.createElement('div');
+    recHdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:18px 16px 8px';
+    recHdr.innerHTML=
+      '<span style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.7px">Recent</span>'+
+      '<button onclick="clearAllSRH();showSearchHome()" style="background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--sub);padding:4px 0">Clear all</button>';
+    r.appendChild(recHdr);
+    history.forEach(function(q,i){
+      var row=document.createElement('div');
+      row.className='anim-fade-up';
+      row.style.cssText='display:flex;align-items:center;gap:13px;padding:11px 16px;cursor:pointer';
+      row.style.animationDelay=(Math.min(i,6)*20)+'ms';
+      row.innerHTML=
+        '<div style="width:34px;height:34px;border-radius:50%;background:var(--inp-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
+          '<svg width="14" height="14" fill="none" stroke="var(--sub)" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>'+
+        '</div>'+
+        '<span style="flex:1;font-size:14.5px;font-weight:500;color:var(--text)">'+E(q)+'</span>'+
+        '<button data-srh="'+E(q)+'" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--sub);display:flex;align-items:center;border-radius:50%" onclick="event.stopPropagation();removeSRH(this.dataset.srh);showSearchHome()">'+
+          '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'+
+        '</button>';
+      row.onclick=function(e){if(e.target.closest('button'))return;var inp=document.getElementById('sinp');if(inp)inp.value=q;doSearch(q);};
+      r.appendChild(row);
+    });
+  }
+
+  // ── Suggested people (not yet following) ────────────────────────────────
+  var suggested=USERS.filter(function(u){
+    return profile&&u.id!==profile.id&&!following.has(u.id);
+  }).slice(0,8);
+  if(suggested.length){
+    var sugHdr=document.createElement('div');
+    sugHdr.style.cssText='padding:'+(history.length?'20px':'18px')+' 16px 8px;font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.7px';
+    sugHdr.textContent='Suggested';
+    r.appendChild(sugHdr);
+    suggested.forEach(function(u,i){
+      r.appendChild(_buildPersonRow(u,history.length+i));
+    });
+  }
+
+  // ── Fallback if nothing to show ──────────────────────────────────────────
+  if(!history.length&&!suggested.length){
+    r.innerHTML='<div class="empty" style="padding:60px 22px;text-align:center"><div class="empt">Search Fade</div><div class="emps" style="margin-top:6px">Find people or search keywords</div></div>';
+  }
+}
+
+function _buildPersonRow(u,animIdx){
+  var isF=following.has(u.id);
+  var row=document.createElement('div');
+  row.className='anim-fade-up';
+  row.style.cssText='display:flex;align-items:center;gap:13px;padding:10px 16px;cursor:pointer';
+  row.style.animationDelay=(Math.min(animIdx||0,8)*22)+'ms';
+
+  var avDiv=document.createElement('div');
+  avDiv.style.cssText='width:46px;height:46px;border-radius:50%;overflow:hidden;flex-shrink:0;background:'+nc(u.display_name||u.username);
+  avDiv.innerHTML=avH(u.avatar_url,u.display_name||u.username);
+
+  var info=document.createElement('div');
+  info.style.cssText='flex:1;min-width:0';
+  info.innerHTML=
+    '<div style="font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:4px">'+E(u.display_name||u.username)+badgeFor(u.id)+'</div>'+
+    '<div style="font-size:13px;color:var(--sub);margin-top:2px">@'+E(u.username)+'</div>';
+
+  var fBtn=document.createElement('button');
+  fBtn.className='btn-srh-follow';
+  fBtn.style.cssText='flex-shrink:0;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;border:1.5px solid var(--border);transition:background .15s,color .15s,border-color .15s;background:'+(isF?'transparent':'var(--text)')+';color:'+(isF?'var(--text)':'var(--card)')+';border-color:'+(isF?'var(--border)':'var(--text)');
+  fBtn.textContent=isF?'Following':'Follow';
+  fBtn.onclick=function(e){
+    e.stopPropagation();
+    toggleFollow(u.id,fBtn);
+    // update style after toggle
+    var nowF=following.has(u.id);
+    fBtn.style.background=nowF?'transparent':'var(--text)';
+    fBtn.style.color=nowF?'var(--text)':'var(--card)';
+    fBtn.style.borderColor=nowF?'var(--border)':'var(--text)';
+    fBtn.textContent=nowF?'Following':'Follow';
+  };
+
+  row.appendChild(avDiv);
+  row.appendChild(info);
+  row.appendChild(fBtn);
+  row.onclick=function(e){if(e.target.closest('button'))return;openProf(u);};
+  return row;
+}
+
 function doSearch(q){
   var r=document.getElementById('sresults');
   var q2=(q||'').trim().replace(/^@/,'');
-  if(!q2){r.innerHTML='<div class="empty" style="padding:60px 22px;text-align:center"><div class="empt">Search for people</div><div class="emps" style="margin-top:6px">Enter a name or @username</div></div>';return;}
-  var res=USERS.filter(function(u){var n=(u.display_name||'').toLowerCase(),un=(u.username||'').toLowerCase(),qq=q2.toLowerCase();return un===qq||un.startsWith(qq)||n.startsWith(qq)||un.includes(qq)||n.includes(qq);});
-  if(!res.length){r.innerHTML='<div class="empty"><div class="empt">No results</div></div>';return;}
-  r.innerHTML='';
-  res.forEach(function(u){
-    var el=document.createElement('div');
-    el.style.cssText='display:flex;align-items:center;gap:13px;padding:12px 16px;cursor:pointer';
-    el.innerHTML='<div style="width:46px;height:46px;border-radius:50%;overflow:hidden;flex-shrink:0;background:'+nc(u.display_name)+'">'+avH(u.avatar_url,u.display_name)+'</div><div><div style="font-weight:600;font-size:14.5px">'+E(u.display_name)+'</div><div style="font-size:13px;color:var(--sub);margin-top:2px">@'+E(u.username)+'</div></div>';
-    el.onclick=function(){openProf(u);};r.appendChild(el);
+  _syncClearBtn(!!q2);
+  if(!q2){showSearchHome();return;}
+
+  var qq=q2.toLowerCase();
+
+  // ── People results ───────────────────────────────────────────────────────
+  var peopleRes=USERS.filter(function(u){
+    var n=(u.display_name||'').toLowerCase(),un=(u.username||'').toLowerCase();
+    return un===qq||un.startsWith(qq)||n.startsWith(qq)||un.includes(qq)||n.includes(qq);
   });
+
+  // ── Post results (text match, skip expired) ──────────────────────────────
+  var now=Date.now();
+  var postRes=posts.filter(function(p){
+    if(!p.text)return false;
+    if(p.expires_at&&new Date(p.expires_at).getTime()<now)return false;
+    if(!p.expires_at&&now-new Date(p.ts).getTime()>=86400000)return false;
+    return p.text.toLowerCase().includes(qq);
+  });
+
+  if(!peopleRes.length&&!postRes.length){
+    r.innerHTML='<div class="empty"><div class="empt">No results for "'+E(q2)+'"</div><div class="emps" style="margin-top:6px">Try a different name or keyword</div></div>';
+    return;
+  }
+
+  // Save to history when results found (debounced — save after 600ms pause)
+  clearTimeout(doSearch._saveT);
+  doSearch._saveT=setTimeout(function(){addSRH(q2);},600);
+
+  r.innerHTML='';
+
+  // ── Render People section ────────────────────────────────────────────────
+  if(peopleRes.length){
+    var ph=document.createElement('div');
+    ph.style.cssText='padding:18px 16px 8px;font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.7px';
+    ph.textContent='People';
+    r.appendChild(ph);
+    peopleRes.forEach(function(u,i){
+      r.appendChild(_buildPersonRow(u,i));
+    });
+  }
+
+  // ── Render Posts section ─────────────────────────────────────────────────
+  if(postRes.length){
+    var postsH=document.createElement('div');
+    postsH.style.cssText='padding:'+(peopleRes.length?'20px':'18px')+' 16px 8px;font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.7px';
+    postsH.textContent='Posts';
+    r.appendChild(postsH);
+    var animBase=peopleRes.length;
+    postRes.forEach(function(p,i){
+      var el=buildPost(p,false);
+      el.classList.add('anim-fade-up');
+      el.style.animationDelay=(Math.min(animBase+i,10)*25)+'ms';
+      if(p.liked){
+        var h=el.querySelector('#hi-'+p.id);if(h)h.setAttribute('fill','currentColor');
+        var lb=el.querySelector('#lb-'+p.id);if(lb)lb.classList.add('liked');
+      }
+      r.appendChild(el);
+    });
+  }
 }
 
 // ── NOTIFS ────────────────────────────────────────────────────────────────────
