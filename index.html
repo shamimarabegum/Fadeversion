@@ -1200,7 +1200,7 @@ var svGroups=[],svGI=0,svII=0,svTmr=null,svLiked={},svPaused=false,svBarStart=0,
 var chatUser=null,cFile=null;
 var dMsgs={},posts=[],notifs=[];
 var csReply=null,csPid=null;
-var following=new Set(),CF=new Set(),blocked=new Set();
+var following=new Set(),CF=new Set(),blocked=new Set(),muted=new Set();
 var unreadConvos=new Set();
 var convos=[];
 var _realtimeChannel=null;
@@ -1899,6 +1899,7 @@ var _sb = (function(){
       following = new Set();
       CF = new Set();
       blocked = new Set();
+      muted = new Set();
       restricted = new Set();
       unreadConvos = new Set();
       svGroups = [];
@@ -2161,6 +2162,14 @@ function initApp(userProfile){
   _sb.from('restricted_users').select('restricted_id').eq('restrictor_id',profile.id).then(function(res){
     (res.data||[]).forEach(function(r){restricted.add(r.restricted_id);});
   });
+  // Load close friends from Supabase
+  _sb.from('close_friends').select('friend_id').eq('user_id',profile.id).then(function(res){
+    (res.data||[]).forEach(function(r){CF.add(r.friend_id);});
+  }).catch(function(){});
+  // Load muted users from Supabase
+  _sb.from('muted_users').select('muted_id').eq('user_id',profile.id).then(function(res){
+    (res.data||[]).forEach(function(r){muted.add(r.muted_id);});
+  }).catch(function(){});
 
   // Check for unread messages on login — retry until nav dot is in DOM
   function checkUnreadOnBoot(attempt){
@@ -2906,6 +2915,8 @@ var GROUP_LABELS={1:'Close Friends',2:'People you follow',4:'Suggested'};
 function isVisibleToMe(p){
   // Own posts always visible
   if(profile&&p.uid===profile.id)return true;
+  // Muted users' posts hidden (softer than block)
+  if(muted.has(p.uid))return false;
   var _u=USERS.find(function(x){return x.id===p.uid;})||{};
   // If owner has private account, must follow them to see
   if(_u.is_private&&!following.has(p.uid))return false;
@@ -4261,6 +4272,40 @@ function subscribeToChat(partnerId){
       clearTimeout(_typingHideT);
       _typingHideT=setTimeout(hideTypingBubble,400); // small delay feels natural
     })
+    // ── Listen for message deletions (unsend) ────────────────────────────
+    .on('postgres_changes',{event:'DELETE',schema:'public',table:'messages'},function(payload){
+      var old=payload.old;
+      if(!old||!old.id)return;
+      // Remove the bubble from DOM if it's visible
+      var el=document.querySelector('[data-msgid="'+old.id+'"]');
+      if(el)el.remove();
+    })
+    // ── Listen for read receipt updates ─────────────────────────────────
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},function(payload){
+      var r=payload.new;
+      if(!r||!r.id||!r.is_read)return;
+      // Only care about our sent messages being marked read by the other person
+      if(r.sender_id!==profile.id)return;
+      // Find the seen-ind that follows the bubble with this msgid
+      var bubble=document.querySelector('[data-msgid="'+r.id+'"]');
+      if(bubble){
+        // seen-ind is appended directly after the bwrap in the msgs container
+        var msgs=document.getElementById('msgs');
+        if(msgs){
+          // Remove all existing seen-inds first (we only show one at a time — the last one)
+          msgs.querySelectorAll('.seen-ind').forEach(function(s){s.textContent='';});
+          // Find the bwrap containing this bubble
+          var wrap=bubble.classList.contains('bwrap')?bubble:bubble.closest('.bwrap');
+          if(wrap){
+            // The seen-ind is the next sibling of the bwrap
+            var next=wrap.nextSibling;
+            if(next&&next.classList&&next.classList.contains('seen-ind')){
+              next.textContent='Seen';
+            }
+          }
+        }
+      }
+    })
     .subscribe();
 }
 
@@ -4446,8 +4491,8 @@ function appendBubble(m){
   if(isMine){
     var si=document.createElement('div');
     si.className='seen-ind';
-    // Only show "Seen" if receiver has read it (is_read=true from DB)
-    si.textContent=m.isRead?'Seen':'';
+    // Show Sent until receiver reads it, then Seen (updated via realtime)
+    si.textContent=m.isRead?'Seen':'Sent';
     msgs.appendChild(si);
   }
   msgs.scrollTop=msgs.scrollHeight;
@@ -4484,7 +4529,23 @@ function ctxReply(){if(!_ctxMsg)return closeCtx();_replyMsg=_ctxMsg;var sName=_c
 function cancelReplyBar(){_replyMsg=null;document.getElementById('reply-bar').classList.remove('on');}
 function ctxSavePhoto(){if(!_ctxMsg||!_ctxMsg.img)return closeCtx();var a=document.createElement('a');a.href=_ctxMsg.img;a.download='fade-photo.jpg';a.click();closeCtx();T('Photo saved');}
 function ctxCopy(){if(!_ctxMsg)return closeCtx();if(navigator.clipboard)navigator.clipboard.writeText(_ctxMsg.text||'').catch(function(){});T('Copied');closeCtx();}
-function ctxUnsend(){if(!_ctxMsg)return closeCtx();var uid=chatUser&&chatUser.id;if(uid&&dMsgs[uid])dMsgs[uid]=dMsgs[uid].filter(function(x){return x.ts!==_ctxMsg.ts;});if(_ctxBsEl){var w=_ctxBsEl.parentElement;if(w&&w.classList.contains('bwrap'))w.remove();}closeCtx();T('Unsent');}
+function ctxUnsend(){
+  if(!_ctxMsg)return closeCtx();
+  var msg=_ctxMsg;
+  var uid=chatUser&&chatUser.id;
+  // Remove from local dMsgs cache
+  if(uid&&dMsgs[uid])dMsgs[uid]=dMsgs[uid].filter(function(x){return x.ts!==msg.ts;});
+  // Remove bubble from DOM immediately — don't wait for DB
+  if(_ctxBsEl){var w=_ctxBsEl.parentElement;if(w&&w.classList.contains('bwrap'))w.remove();}
+  closeCtx();
+  T('Unsent');
+  // Delete from Supabase so the other person loses it too (on reload or realtime DELETE event)
+  if(msg.id&&!String(msg.id).startsWith('tmp')){
+    _sb.from('messages').delete().eq('id',msg.id).then(function(res){
+      if(res.error)console.warn('Unsend DB delete failed:',res.error.message);
+    });
+  }
+}
 function openReactSheet(m,bs,isMine){
   if(!m.reaction)return;
   var actor=isMine?(profile&&profile.display_name||'You'):(chatUser&&chatUser.display_name||'Them');
@@ -5319,27 +5380,43 @@ function startConvoC(uid){
   _chatBackCtx=null; // reset after wiring
 }
 function toggleFollow(uid,btn){
+  var targetUser=USERS.find(function(x){return x.id===uid;})||{};
+  var isPrivate=!!targetUser.is_private;
   if(following.has(uid)){
+    // Unfollow
     following.delete(uid);
     btn.textContent='Follow';
-    btn.classList.add('dark');
+    btn.style.background='var(--text)';btn.style.color='var(--card)';btn.style.border='none';
     T('Unfollowed');
-    // Remove from Supabase follows table
     _sb.from('follows').delete().eq('follower_id',profile.id).eq('following_id',uid).then(function(){});
+    // Also cancel any pending request
+    _sb.from('follow_requests').delete().eq('requester_id',profile.id).eq('requested_id',uid).then(function(){});
+  } else if(btn.dataset.pending==='1'){
+    // Cancel pending request
+    btn.dataset.pending='';
+    btn.textContent='Follow';
+    btn.style.background='var(--text)';btn.style.color='var(--card)';btn.style.border='none';
+    T('Request cancelled');
+    _sb.from('follow_requests').delete().eq('requester_id',profile.id).eq('requested_id',uid).then(function(){});
+  } else if(isPrivate){
+    // Send follow request
+    btn.dataset.pending='1';
+    btn.textContent='Requested';
+    btn.style.background='transparent';btn.style.color='var(--text)';btn.style.border='1.5px solid var(--border)';
+    T('Follow request sent');
+    _sb.from('follow_requests').upsert({requester_id:profile.id,requested_id:uid,status:'pending'},{onConflict:'requester_id,requested_id'}).then(function(){});
+    pushN('follow_request',{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},null,{},uid);
   } else {
+    // Follow directly (public account)
     following.add(uid);
     btn.textContent='Following';
-    btn.classList.remove('dark');
-    SFX('follow');
-    haptic('follow');
+    btn.style.background='transparent';btn.style.color='var(--text)';btn.style.border='1.5px solid var(--border)';
+    SFX('follow');haptic('follow');
     T('Following');
-    // Save to Supabase follows table
     _sb.from('follows').insert({follower_id:profile.id,following_id:uid}).then(function(){});
-    // Notify the person being followed
-    var u=USERS.find(function(x){return x.id===uid;});
     pushN('follow',{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},null,{},uid);
   }
-  // sync every Follow Back button in the notif list that belongs to this user
+  // sync Follow Back buttons in notif list
   notifs.forEach(function(n){
     if(n.type==='follow'&&n.actor&&n.actor.id===uid){
       var fbBtn=document.getElementById('fbn-'+n.id);
@@ -5361,6 +5438,7 @@ function toggleCF(uid,btn){
     var fb=document.getElementById('fb-'+uid);
     if(fb){fb.textContent='Follow';fb.classList.add('dark');}
     T('Removed from Close Friends');
+    _sb.from('close_friends').delete().eq('user_id',profile.id).eq('friend_id',uid).then(function(){});
   } else {
     CF.add(uid);
     following.add(uid);
@@ -5369,9 +5447,27 @@ function toggleCF(uid,btn){
     var fb=document.getElementById('fb-'+uid);
     if(fb){fb.textContent='Following';fb.classList.remove('dark');}
     T('Added to Close Friends');
+    _sb.from('close_friends').upsert({user_id:profile.id,friend_id:uid},{onConflict:'user_id,friend_id'}).then(function(){});
   }
 }
-function openDD(e){e.stopPropagation();var u=_profUser;if(!u)return;document.getElementById('dd-items').innerHTML=[{l:'Restrict',a:'restrict'},{l:'Block',a:'block'},{l:'About this account',a:'about'},{l:'Copy profile URL',a:'copyurl'}].map(function(o){return'<div class="dd-item" onclick="ddAct(\''+o.a+'\')">'+o.l+'</div>';}).join('');var bg=document.getElementById('dd-bg'),sh=document.getElementById('dd-sheet');bg.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){bg.style.background='rgba(0,0,0,.25)';sh.style.transform='translateY(0)';});});}
+function openDD(e){
+  e.stopPropagation();
+  var u=_profUser;if(!u)return;
+  var isMuted=muted.has(u.id);
+  var items=[
+    {l:isMuted?'Unmute':'Mute',a:'mute'},
+    {l:'Restrict',a:'restrict'},
+    {l:'Block',a:'block'},
+    {l:'About this account',a:'about'},
+    {l:'Copy profile URL',a:'copyurl'}
+  ];
+  document.getElementById('dd-items').innerHTML=items.map(function(o){
+    return'<div class="dd-item" onclick="ddAct(\''+o.a+'\')">'+o.l+'</div>';
+  }).join('');
+  var bg=document.getElementById('dd-bg'),sh=document.getElementById('dd-sheet');
+  bg.style.display='flex';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){bg.style.background='rgba(0,0,0,.25)';sh.style.transform='translateY(0)';});});
+}
 function closeDD(){var bg=document.getElementById('dd-bg'),sh=document.getElementById('dd-sheet');if(bg)bg.style.background='rgba(0,0,0,0)';if(sh)sh.style.transform='translateY(100%)';setTimeout(function(){if(bg)bg.style.display='none';},320);}
 function openPostMenu(postId,uid,e){
   if(e)e.stopPropagation();
@@ -5456,7 +5552,38 @@ function _restrictUser(uid){
     T('Restricted — their comments will only be visible to them');
   }
 }
-function ddAct(a){var u=_profUser;if(!u)return;closeDD();if(a==='block'){_blockUser(u.id);closeProf();T('Blocked');}else if(a==='restrict'){_restrictUser(u.id);}else if(a==='about'){T('Connect Supabase for account info');}else if(a==='copyurl'){var url='fade.app/'+u.username;if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('URL copied');}).catch(function(){T(url);});else T(url);}}
+function _muteUser(uid){
+  if(!uid||!profile)return;
+  if(muted.has(uid)){
+    muted.delete(uid);
+    _sb.from('muted_users').delete().eq('user_id',profile.id).eq('muted_id',uid).then(function(){});
+    T('Unmuted');
+  } else {
+    muted.add(uid);
+    _sb.from('muted_users').upsert({user_id:profile.id,muted_id:uid},{onConflict:'user_id,muted_id'}).then(function(){});
+    // Remove their posts from feed visually without blocking
+    posts=posts.filter(function(p){return p.uid!==uid;});
+    var feedEl=document.getElementById('feed');
+    if(feedEl){
+      feedEl.querySelectorAll('.post').forEach(function(el){
+        if(el.dataset.pid){
+          // check if this post belongs to muted user — re-render is cleanest
+        }
+      });
+      renderFeed();
+    }
+    T('Muted — their posts won\'t appear in your feed');
+  }
+}
+function ddAct(a){
+  var u=_profUser;if(!u)return;
+  closeDD();
+  if(a==='mute'){_muteUser(u.id);}
+  else if(a==='block'){_blockUser(u.id);closeProf();T('Blocked');}
+  else if(a==='restrict'){_restrictUser(u.id);}
+  else if(a==='about'){T('Connect Supabase for account info');}
+  else if(a==='copyurl'){var url='fade.app/'+u.username;if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('URL copied');}).catch(function(){T(url);});else T(url);}
+}
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
 function openSettings(){soStack=[];buildSRoot();document.getElementById('sp0').classList.add('active');[1,2,3,4].forEach(function(i){document.getElementById('sp'+i).classList.remove('active','behind');});document.getElementById('so-title').textContent='Settings';var so=document.getElementById('so');so.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){so.classList.add('on');});});}
