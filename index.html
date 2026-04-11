@@ -2700,7 +2700,7 @@ function renderFeed(){
   }
   f.innerHTML=skHTML;
   _sb.from('posts')
-    .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at')
+    .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at,audience')
     .gt('expires_at', new Date().toISOString())
     .order('created_at',{ascending:false})
     .limit(60)
@@ -2736,7 +2736,7 @@ function renderFeedRows(rows,likedIds){
       text:r.text||'', img:r.img_url||null,
       likes:r.likes_count||0,
       liked:likedIds.indexOf(r.id)>-1,
-      comments:[], commentsCount:r.comments_count||0, ts:r.created_at
+      comments:[], commentsCount:r.comments_count||0, ts:r.created_at, audience:r.audience||'everyone'
     };
   });
   posts=posts.filter(function(p){
