@@ -4658,6 +4658,7 @@ function sendPhoto(e){
       var el=document.querySelector('[data-msgid="'+tempId+'"]');
       if(el){
         el.dataset.msgid=res.data.id;
+        m.id=res.data.id;
         // Ensure img src is the final DB URL, not blob
         if(imgUrl!==blobUrl){var fi=el.querySelector('img');if(fi&&fi.src!==imgUrl)fi.src=imgUrl;}
       }
@@ -4697,9 +4698,10 @@ function sendMsg(){
     expires_at:expires
   }).select('id').single().then(function(res){
     if(res.error){console.error('sendMsg insert error:',res.error.code,res.error.message,res.error.hint||'');T('Send failed ('+res.error.code+'): '+(res.error.message||'check console'));return;}
-    // Replace temp id on the DOM node
+    // Replace temp id on the DOM node AND the message object so unsend works
     var el=document.querySelector('[data-msgid="'+tempId+'"]');
     if(el)el.dataset.msgid=res.data.id;
+    m.id=res.data.id;
     // Update convo list
     var cv=convos.find(function(x){return x.user.id===chatUser.id;});
     if(cv){cv.lastMsg=txt;cv.lastSid='demo';cv.ts=Date.now();}
