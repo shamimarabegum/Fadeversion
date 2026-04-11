@@ -2859,6 +2859,78 @@ function confirmDel(id){
 function closeDelSheet(){
   document.getElementById('del-modal').classList.remove('on');
 }
+// ── EDIT CAPTION ─────────────────────────────────────────────────────────────
+function openEditCaption(postId){
+  var p=posts.find(function(x){return x.id===postId;});if(!p)return;
+  var items=document.getElementById('dd-items');
+  items.innerHTML='';
+  var title=document.createElement('div');title.style.cssText='padding:18px 20px 4px;font-weight:700;font-size:16px;color:var(--text)';title.textContent='Edit caption';items.appendChild(title);
+  var ta=document.createElement('textarea');
+  ta.style.cssText='width:calc(100% - 32px);margin:10px 16px 0;min-height:90px;border-radius:14px;border:1.5px solid var(--border);background:var(--inp-bg);color:var(--text);font-size:15px;font-family:Inter,sans-serif;padding:12px 14px;resize:none;outline:none;line-height:1.5;display:block';
+  ta.value=p.text||'';
+  items.appendChild(ta);
+  var row=document.createElement('div');row.style.cssText='display:flex;gap:10px;padding:14px 16px 6px';
+  var cancel=document.createElement('button');cancel.style.cssText='flex:1;padding:13px;border-radius:14px;border:1.5px solid var(--border);background:none;color:var(--text);font-size:15px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer';cancel.textContent='Cancel';cancel.onclick=closeDD;
+  var save=document.createElement('button');save.style.cssText='flex:1;padding:13px;border-radius:14px;border:none;background:#7C3AED;color:#fff;font-size:15px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer';save.textContent='Save';
+  save.onclick=function(){
+    var newTxt=ta.value.trim();
+    save.textContent='Saving...';save.disabled=true;
+    _sb.from('posts').update({text:newTxt||null}).eq('id',postId).eq('user_id',profile.id).then(function(res){
+      if(res.error){T('Failed to save');save.textContent='Save';save.disabled=false;return;}
+      p.text=newTxt;
+      document.querySelectorAll('[data-pid="'+postId+'"]').forEach(function(el){
+        var tb=el.querySelector('.postbody,.post-caption');if(tb)tb.textContent=newTxt;
+      });
+      closeDD();T('Caption updated');renderMe();
+    });
+  };
+  row.appendChild(cancel);row.appendChild(save);items.appendChild(row);
+  var ddbg=document.getElementById('dd-bg'),ddsh=document.getElementById('dd-sheet');
+  ddbg.style.display='flex';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){ddbg.style.background='rgba(0,0,0,.25)';ddsh.style.transform='translateY(0)';});});
+  setTimeout(function(){ta.focus();},400);
+}
+
+// ── CHANGE AUDIENCE ──────────────────────────────────────────────────────────
+function openChangeAudience(postId){
+  var p=posts.find(function(x){return x.id===postId;});if(!p)return;
+  var items=document.getElementById('dd-items');
+  items.innerHTML='';
+  var title=document.createElement('div');title.style.cssText='padding:18px 20px 8px;font-weight:700;font-size:16px;color:var(--text)';title.textContent='Change audience';items.appendChild(title);
+  var sub=document.createElement('div');sub.style.cssText='padding:0 20px 10px;font-size:13px;color:var(--sub)';sub.textContent='Who can see this drop?';items.appendChild(sub);
+  var opts=[{val:'everyone',label:'Everyone',icon:'🌍'},{val:'followers',label:'Followers',icon:'👥'},{val:'close_friends',label:'Close Friends',icon:'⭐'}];
+  opts.forEach(function(o){
+    var row=document.createElement('div');row.className='dd-item';
+    row.style.justifyContent='space-between';
+    var left=document.createElement('span');left.style.cssText='display:flex;align-items:center;gap:10px;font-size:15px';
+    left.innerHTML='<span style="font-size:20px">'+o.icon+'</span>'+o.label;
+    var check=document.createElement('span');check.style.cssText='font-size:18px;color:#7C3AED';
+    if((p.audience||'everyone')===o.val)check.textContent='✓';
+    row.appendChild(left);row.appendChild(check);
+    row.onclick=function(){
+      if((p.audience||'everyone')===o.val){closeDD();return;}
+      _sb.from('posts').update({audience:o.val}).eq('id',postId).eq('user_id',profile.id).then(function(res){
+        if(res.error){T('Failed to update');return;}
+        p.audience=o.val;closeDD();T('Audience updated');
+      });
+    };
+    items.appendChild(row);
+  });
+  var ddbg=document.getElementById('dd-bg'),ddsh=document.getElementById('dd-sheet');
+  ddbg.style.display='flex';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){ddbg.style.background='rgba(0,0,0,.25)';ddsh.style.transform='translateY(0)';});});
+}
+
+// ── SHARE POST ───────────────────────────────────────────────────────────────
+function sharePost(postId){
+  var p=posts.find(function(x){return x.id===postId;});if(!p)return;
+  var url=window.location.origin+'?post='+postId;
+  var text=(p.text?p.text.slice(0,80)+' — ':'')+' shared from Fade';
+  if(navigator.share){navigator.share({title:'Check this drop on Fade',text:text,url:url}).catch(function(){});return;}
+  if(navigator.clipboard){navigator.clipboard.writeText(url).then(function(){T('Link copied');}).catch(function(){T(url);});}else{T(url);}
+}
+
+
 function doDelPost(id){
   _sb.from('posts').delete().eq('id',id).eq('user_id',profile.id).then(function(){});
   posts=posts.filter(function(p){return p.id!==id;});
@@ -4896,6 +4968,22 @@ function openPostMenu(postId,uid,e){
   if(!items)return;
   if(isOwn){
     items.innerHTML='';
+    // ── Edit caption ──
+    var ec=document.createElement('div');ec.className='dd-item';
+    ec.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit caption';
+    ec.onclick=function(){closeDD();openEditCaption(postId);};
+    items.appendChild(ec);
+    // ── Change audience ──
+    var ca=document.createElement('div');ca.className='dd-item';
+    ca.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Change audience';
+    ca.onclick=function(){closeDD();openChangeAudience(postId);};
+    items.appendChild(ca);
+    // ── Share ──
+    var sh2=document.createElement('div');sh2.className='dd-item';
+    sh2.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share post';
+    sh2.onclick=function(){closeDD();sharePost(postId);};
+    items.appendChild(sh2);
+    // ── Delete ──
     var d=document.createElement('div');d.className='dd-item red';
     d.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>Delete post';
     d.onclick=function(){closeDD();confirmDel(postId);};
