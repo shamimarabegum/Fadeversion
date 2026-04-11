@@ -90,9 +90,9 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .sitm{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0;transition:opacity .15s,transform .15s}
 .sitm:active{opacity:.5;transform:scale(.92)}
 .sring{width:66px;height:66px;border-radius:50%;padding:2.5px;position:relative}
-.sring-active{background:#1A1A1A}
+.sring-active{background:var(--text)}
 .prof-av-ring{border-radius:50%;padding:3px;display:inline-flex;cursor:pointer;transition:opacity .15s}
-.prof-av-ring-active{background:#1A1A1A}
+.prof-av-ring-active{background:var(--text)}
 .prof-av-ring-seen{background:var(--border)}
 .prof-av-ring-none{background:none}
 .sring-seen{background:var(--border)}
@@ -103,7 +103,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .sname.on{color:var(--text)}
 
 /* SPLASH */
-#splash{position:fixed;inset:0;z-index:9999;background:#fff;display:flex;align-items:center;justify-content:center;transition:opacity .4s ease}
+#splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .4s ease}
 #splash.hide{opacity:0;pointer-events:none}
 .splash-logo{font-family:'Playfair Display',serif;font-size:72px;font-style:italic;opacity:0;transition:opacity .2s ease}
 .splash-logo.ready{opacity:1;animation:fadeDown 500ms cubic-bezier(.25,.46,.45,.94) both}
@@ -117,6 +117,13 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .swipe-hint{position:absolute;top:50%;transform:translateY(-50%);opacity:0;transition:opacity .15s;font-size:18px;pointer-events:none}
 .bwrap.me .swipe-hint{left:-32px}
 .bwrap.them .swipe-hint{right:-32px}
+
+/* TYPING INDICATOR */
+.typing-bubble{display:inline-flex;align-items:center;gap:4px;padding:12px 16px;background:var(--bubble-them);border-radius:22px 22px 22px 6px}
+.typing-bubble span{width:7px;height:7px;border-radius:50%;background:var(--sub);display:block;animation:typingDot 1.2s ease-in-out infinite}
+.typing-bubble span:nth-child(2){animation-delay:.2s}
+.typing-bubble span:nth-child(3){animation-delay:.4s}
+@keyframes typingDot{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
 
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
@@ -996,7 +1003,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     <div class="chatrow">
       <label for="chat-photo-inp" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--inp-bg);cursor:pointer;flex-shrink:0;color:var(--sub)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></label>
       <input id="chat-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendPhoto(event)"/>
-      <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this)" onkeydown="chatKD(event)"></textarea>
+      <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping()" onkeydown="chatKD(event)"></textarea>
       <button onclick="sendMsg()" style="width:38px;height:38px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end"><svg width="17" height="17" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
     </div>
   </div>
@@ -1730,10 +1737,38 @@ function badgeSVGFor(uid){
   if(u.badge_type==='blue'||u.is_verified) return BADGE_BLUE_SVG;
   return '';
 }
-function applyDark(on){
-  S_DARK=on;var r=document.documentElement;
-  if(on){r.style.setProperty('--bg','#111111');r.style.setProperty('--card','#1C1C1E');r.style.setProperty('--border','#2C2C2E');r.style.setProperty('--text','#F0F0F0');r.style.setProperty('--sub','#666666');r.style.setProperty('--inp-bg','#2C2C2E');r.style.setProperty('--inp-border','#3A3A3C');r.style.setProperty('--inp-text','#F0F0F0');r.style.setProperty('--inp-ph','#666666');r.style.setProperty('--bubble-them','#3A3A3C');r.style.setProperty('--bubble-them-text','#F0F0F0');}
-  else{r.style.setProperty('--bg','#ffffff');r.style.setProperty('--card','#ffffff');r.style.setProperty('--border','#F0F0EE');r.style.setProperty('--text','#1A1A1A');r.style.setProperty('--sub','#9A9A95');r.style.setProperty('--inp-bg','#F5F5F3');r.style.setProperty('--inp-border','#EBEBEA');r.style.setProperty('--inp-text','#1A1A1A');r.style.setProperty('--inp-ph','#AEAEAA');r.style.setProperty('--bubble-them','#F0F0F0');r.style.setProperty('--bubble-them-text','#111111');}
+function applyDark(on, skipSave){
+  S_DARK=on;
+  var r=document.documentElement;
+  if(on){
+    r.style.setProperty('--bg','#000000');
+    r.style.setProperty('--card','#1C1C1E');
+    r.style.setProperty('--border','#2C2C2E');
+    r.style.setProperty('--text','#F2F2F7');
+    r.style.setProperty('--sub','#8E8E93');
+    r.style.setProperty('--inp-bg','#2C2C2E');
+    r.style.setProperty('--inp-border','#3A3A3C');
+    r.style.setProperty('--inp-text','#F2F2F7');
+    r.style.setProperty('--inp-ph','#636366');
+    r.style.setProperty('--bubble-them','#2C2C2E');
+    r.style.setProperty('--bubble-them-text','#F2F2F7');
+  } else {
+    r.style.setProperty('--bg','#ffffff');
+    r.style.setProperty('--card','#ffffff');
+    r.style.setProperty('--border','#F0F0EE');
+    r.style.setProperty('--text','#1A1A1A');
+    r.style.setProperty('--sub','#9A9A95');
+    r.style.setProperty('--inp-bg','#F5F5F3');
+    r.style.setProperty('--inp-border','#EBEBEA');
+    r.style.setProperty('--inp-text','#1A1A1A');
+    r.style.setProperty('--inp-ph','#AEAEAA');
+    r.style.setProperty('--bubble-them','#F0F0F0');
+    r.style.setProperty('--bubble-them-text','#111111');
+  }
+  // Persist per-user so it survives reload but resets on logout
+  if(!skipSave && profile){
+    try{localStorage.setItem('fade_dark_'+profile.id, on?'1':'0');}catch(e){}
+  }
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
@@ -1908,6 +1943,10 @@ var _sb = (function(){
       document.querySelectorAll('.nbtn').forEach(function(b){b.classList.remove('on');});
       var nb=document.getElementById('nb-today');if(nb)nb.classList.add('on');
 
+      // ── Reset theme to light on logout ───────────────────────────────────
+      applyDark(false, true);
+      S_DARK = false;
+
       // ── Show auth screen ──────────────────────────────────────────────
       var auth = document.getElementById('s-auth');
       auth.style.display = 'flex';
@@ -2014,6 +2053,12 @@ function trySignup(){
 
 function initApp(userProfile){
   profile = userProfile;
+  // Restore per-user dark mode preference
+  try{
+    var _dk=localStorage.getItem('fade_dark_'+profile.id);
+    if(_dk==='1'){applyDark(true,true);}
+    else{applyDark(false,true);}
+  }catch(e){applyDark(false,true);}
   loadVerificationState();
   _sb.auth.getUser().then(function(res){
     var u = res.data && res.data.user;
@@ -3983,16 +4028,71 @@ function openChat(u){
 }
 
 // Realtime subscription for the open chat
+// ── TYPING INDICATOR ─────────────────────────────────────────────────────────
+var _typingBroadcastT=null; // debounce timer for broadcasting
+var _typingHideT=null;      // timer to hide the indicator bubble
+var _typingBubbleEl=null;   // reference to the DOM bubble
+
+function broadcastTyping(){
+  if(!_chatChannel||!chatUser||!profile)return;
+  // Broadcast typing event on the shared channel (no DB write)
+  _chatChannel.send({type:'broadcast',event:'typing',payload:{uid:profile.id}}).catch(function(){});
+  // Stop broadcasting 2s after last keystroke (server-side the receiver auto-hides after 3s)
+  clearTimeout(_typingBroadcastT);
+  _typingBroadcastT=setTimeout(function(){
+    if(_chatChannel)_chatChannel.send({type:'broadcast',event:'typing_stop',payload:{uid:profile.id}}).catch(function(){});
+  },2000);
+}
+
+function showTypingBubble(){
+  var msgs=document.getElementById('msgs');
+  if(!msgs)return;
+  // Remove any existing bubble first
+  hideTypingBubble();
+  var wrap=document.createElement('div');
+  wrap.id='typing-indicator-wrap';
+  wrap.className='bwrap them anim-fade-up';
+  wrap.style.cssText='animation-duration:.18s';
+  // Small avatar
+  var tav=document.createElement('div');
+  tav.className='tav';
+  tav.style.cssText='width:28px;height:28px;min-width:28px;border-radius:50%;overflow:hidden;align-self:flex-end;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:'+(chatUser?nc(chatUser.display_name||chatUser.username):'var(--border)');
+  tav.innerHTML=chatUser?avH(chatUser.avatar_url,chatUser.display_name||chatUser.username):'';
+  var bs=document.createElement('div');
+  bs.className='them-bs';
+  var bub=document.createElement('div');
+  bub.className='typing-bubble';
+  bub.innerHTML='<span></span><span></span><span></span>';
+  bs.appendChild(bub);
+  wrap.appendChild(tav);
+  wrap.appendChild(bs);
+  msgs.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+  _typingBubbleEl=wrap;
+}
+
+function hideTypingBubble(){
+  if(_typingBubbleEl){
+    if(_typingBubbleEl.parentNode)_typingBubbleEl.parentNode.removeChild(_typingBubbleEl);
+    _typingBubbleEl=null;
+  }
+  clearTimeout(_typingHideT);
+}
+
 var _chatChannel=null;
 function subscribeToChat(partnerId){
   if(_chatChannel){_sb.removeChannel(_chatChannel);_chatChannel=null;}
-  _chatChannel=_sb.channel('chat-'+profile.id+'-'+partnerId)
+  // Use a deterministic channel name so both sides join the same channel
+  var ids=[profile.id,partnerId].sort();
+  _chatChannel=_sb.channel('chat-'+ids[0]+'-'+ids[1])
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},function(payload){
       var r=payload.new;
       var isRelevant=(r.sender_id===partnerId&&r.receiver_id===profile.id)||(r.sender_id===profile.id&&r.receiver_id===partnerId);
       if(!isRelevant)return;
       var alreadyShown=document.querySelector('[data-msgid="'+r.id+'"]');
       if(alreadyShown)return;
+      // Hide typing bubble when a real message arrives
+      hideTypingBubble();
       // Mark as read immediately if it's incoming and chat is open
       if(r.receiver_id===profile.id){
         unreadConvos.delete(r.sender_id);
@@ -4025,13 +4125,30 @@ function subscribeToChat(partnerId){
       }
       // Mark as read immediately if chat is open
       if(r.sender_id===partnerId&&r.receiver_id===profile.id){
-        _sb.from('messages').update({is_read:true}).eq('id',r.id).then(function(){
-          // Update the Seen indicator on the sender's last bubble if they have chat open
-        });
+        _sb.from('messages').update({is_read:true}).eq('id',r.id).then(function(){});
         SFX('receive');
       }
     })
+    // ── Listen for typing broadcasts ────────────────────────────────────
+    .on('broadcast',{event:'typing'},function(payload){
+      if(!payload||!payload.payload)return;
+      if(payload.payload.uid===profile.id)return; // ignore own typing
+      showTypingBubble();
+      // Auto-hide after 3s in case typing_stop is missed
+      clearTimeout(_typingHideT);
+      _typingHideT=setTimeout(hideTypingBubble,3000);
+    })
+    .on('broadcast',{event:'typing_stop'},function(payload){
+      if(!payload||!payload.payload)return;
+      if(payload.payload.uid===profile.id)return;
+      clearTimeout(_typingHideT);
+      _typingHideT=setTimeout(hideTypingBubble,400); // small delay feels natural
+    })
     .subscribe();
+}
+
+function chatKD(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}
 }
 
 // Realtime subscription for Talk list (new messages from anyone)
@@ -4342,6 +4459,9 @@ function sendPhoto(e){
 function sendMsg(){
   var inp=document.getElementById('chatinp');var txt=inp.value.trim();if(!txt||!chatUser)return;
   inp.value='';inp.style.height='';
+  // Stop any pending typing broadcast
+  clearTimeout(_typingBroadcastT);
+  if(_chatChannel)_chatChannel.send({type:'broadcast',event:'typing_stop',payload:{uid:profile.id}}).catch(function(){});
   var replyToId=_replyMsg&&_replyMsg.id||null;
   var replyToText=_replyMsg&&(_replyMsg.text||(_replyMsg.isPhoto?'📷 Photo':''))||null;
   var replyToSender=_replyMsg&&(_replyMsg.sid==='demo'?'You':(chatUser&&chatUser.display_name||'Them'))||null;
@@ -4377,6 +4497,8 @@ function sendMsg(){
 
 function closeCW(){
   if(_chatChannel){_sb.removeChannel(_chatChannel);_chatChannel=null;}
+  hideTypingBubble();
+  clearTimeout(_typingBroadcastT);
   var cw=document.getElementById('cw');cw.classList.remove('on');
   if(chatUser){unreadConvos.delete(chatUser.id);}
   setTimeout(function(){cw.style.display='none';chatUser=null;},350);
