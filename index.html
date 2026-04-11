@@ -5273,14 +5273,30 @@ function openProf(u){
   var ps=document.getElementById('prof-screen');
   ps.style.display='flex';
   requestAnimationFrame(function(){requestAnimationFrame(function(){ps.classList.add('on');});});
-  // Fetch live follower + following counts from follows table
+  // Fetch live profile data (avatar, counts) from Supabase
   var uid=full.id;
+  // If avatar_url missing from cache, fetch fresh profile first then counts
+  var profileFetch=(!full.avatar_url)
+    ? _sb.from('profiles').select('avatar_url,bio').eq('id',uid).single().then(function(pr){
+        if(pr.data&&pr.data.avatar_url){
+          full.avatar_url=pr.data.avatar_url;
+          var cached=USERS.find(function(x){return x.id===uid;});
+          if(cached)cached.avatar_url=pr.data.avatar_url;
+          // Re-render avatar in place
+          if(_profUser&&_profUser.id===uid){
+            var avWrap=document.getElementById('prof-av-wrap');
+            if(avWrap){var img=avWrap.querySelector('div');if(img)img.innerHTML='<img src="'+pr.data.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>';}
+          }
+        }
+      })
+    : Promise.resolve();
   Promise.all([
+    profileFetch,
     _sb.from('follows').select('follower_id',{count:'exact',head:true}).eq('following_id',uid),
     _sb.from('follows').select('following_id',{count:'exact',head:true}).eq('follower_id',uid)
   ]).then(function(results){
-    var folCount=results[0].count||0;
-    var fingCount=results[1].count||0;
+    var folCount=results[1].count||0;
+    var fingCount=results[2].count||0;
     // Update cached USERS entry so repeat opens are accurate
     var cached=USERS.find(function(x){return x.id===uid;});
     if(cached){cached.followers=folCount;cached.following=fingCount;}
@@ -5361,57 +5377,38 @@ var _chatBackCtx=null;
 function startConvoC(uid){
   var u=USERS.find(function(x){return x.id===uid;});
   if(!u)return;
-
-  // Snapshot what's behind us right now
-  var ctx=_chatBackCtx; // may be set externally before calling
-
-  // Load chat
-  chatUser=u;_replyMsg=null;cancelReplyBar();
-  setChatHeader(u);
-
+  var ctx=_chatBackCtx;
+  // Elevate z-index so chat sits above profile/story screens
   var cw=document.getElementById('cw');
   cw.style.zIndex='660';
-  cw.style.display='flex';
-  requestAnimationFrame(function(){requestAnimationFrame(function(){cw.classList.add('on');});});
-
-  var msgs=document.getElementById('msgs');msgs.innerHTML='';
-  var hist=(dMsgs[u.id]||[]).filter(function(m){return Date.now()-m.ts<86400000;});
-  dMsgs[u.id]=hist;
-  addSysMsg('Chats are gone after 24 hours.');
-  hist.forEach(function(m){appendBubble(m);});
-  msgs.scrollTop=msgs.scrollHeight;
-  setTimeout(function(){var ci=document.getElementById('chatinp');if(ci)ci.focus();},350);
-
-  if(!convos.find(function(c){return c.user.id===u.id;}))
-    convos.unshift({user:u,lastMsg:'',lastSid:'demo',ts:Date.now()});
-
-  // Wire back button
-  var backBtn=cw.querySelector('.cwbar .ibtn');
-  if(backBtn){
-    var newBack=backBtn.cloneNode(true);
-    backBtn.parentNode.replaceChild(newBack,backBtn);
-    newBack.addEventListener('click',function(){
-      // Mark as read on the way out
-      if(chatUser){unreadConvos.delete(chatUser.id);var cv2=convos.find(function(x){return x.user.id===chatUser.id;});if(cv2)cv2.lastSid='demo';}
-      document.getElementById('talk-dot').classList.remove('on');
-      cw.classList.remove('on');
-      setTimeout(function(){
-        cw.style.display='none';
-        cw.style.zIndex='';
-        chatUser=null;
-        _chatBackCtx=null;
-        renderTalkList();
-        // Return to whatever was behind us
-        if(ctx==='notif'){
-          var l=document.getElementById('notif-list');
-          setTimeout(function(){l.scrollTop=_notifScrollY;},30);
-        } else if(ctx==='prof'){
-          // Profile screen was never closed — it's already visible underneath, nothing to do
-        }
-      },350);
-    });
-  }
-  _chatBackCtx=null; // reset after wiring
+  // Use openChat for proper Supabase load + realtime subscription
+  openChat(u);
+  // Override back button to restore context (profile/notif) and reset z-index
+  setTimeout(function(){
+    var backBtn=cw.querySelector('.cwbar .ibtn');
+    if(backBtn){
+      var newBack=backBtn.cloneNode(true);
+      backBtn.parentNode.replaceChild(newBack,backBtn);
+      newBack.addEventListener('click',function(){
+        if(chatUser){unreadConvos.delete(chatUser.id);}
+        document.getElementById('talk-dot').classList.remove('on');
+        cw.classList.remove('on');
+        setTimeout(function(){
+          cw.style.display='none';
+          cw.style.zIndex='';
+          chatUser=null;
+          _chatBackCtx=null;
+          renderTalkList();
+          if(ctx==='notif'){
+            var l=document.getElementById('notif-list');
+            setTimeout(function(){l.scrollTop=_notifScrollY;},30);
+          }
+          // ctx==='prof': profile screen still visible underneath, nothing to do
+        },350);
+      });
+    }
+    _chatBackCtx=null;
+  },0);
 }
 function toggleFollow(uid,btn){
   var targetUser=USERS.find(function(x){return x.id===uid;})||{};
