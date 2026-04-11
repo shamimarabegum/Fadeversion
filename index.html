@@ -1203,6 +1203,7 @@ var csReply=null,csPid=null;
 var following=new Set(),CF=new Set(),blocked=new Set(),muted=new Set();
 var unreadConvos=new Set();
 var convos=[];
+var _convosLoaded=false;
 var _realtimeChannel=null;
 var _pendingNewPosts=0;
 
@@ -2218,7 +2219,7 @@ function setupPTR(){
       if(!tpulling&&tsc.scrollTop<=0&&e.changedTouches[0].clientY-tsy>70){
         tpulling=true;tptr.style.display='flex';
         requestAnimationFrame(function(){requestAnimationFrame(function(){tptr.style.opacity='1';});});
-        setTimeout(function(){tptr.style.opacity='0';setTimeout(function(){tptr.style.display='none';tpulling=false;renderTalkList();},220);},900);
+        setTimeout(function(){tptr.style.opacity='0';setTimeout(function(){tptr.style.display='none';tpulling=false;_convosLoaded=false;loadConversations(function(){_convosLoaded=true;_renderTalkFromCache();});},220);},900);
       }
     },{passive:true});
   }
@@ -3950,8 +3951,16 @@ function updateTalkDot(){
 
 function renderTalkList(){
   var l=document.getElementById('talk-list');
-  l.innerHTML='<div class="empty anim-fade-in"><div class="ptr-ring" style="margin:0 auto"></div></div>';
-  loadConversations(function(){
+  // If convos not loaded yet, do a full load; otherwise render cache instantly
+  if(!convos.length&&!_convosLoaded){
+    l.innerHTML='<div class="empty anim-fade-in"><div class="ptr-ring" style="margin:0 auto"></div></div>';
+    loadConversations(function(){_convosLoaded=true;_renderTalkFromCache();});
+    return;
+  }
+  _renderTalkFromCache();
+}
+function _renderTalkFromCache(){
+  var l=document.getElementById('talk-list');
     if(!convos.length){
       l.innerHTML='<div class="empty anim-fade-up"><div class="empt">No chats yet</div><div class="emps">Tap + to start talking.</div></div>';
       return;
@@ -4025,9 +4034,8 @@ function renderTalkList(){
       };
       l.appendChild(row);
     });
-  });
-}
 
+}
 // ── TALK NEW CHAT ─────────────────────────────────────────────────────────────
 function openNC(){document.getElementById('nc-modal').classList.add('on');document.getElementById('nc-inp').value='';document.getElementById('nc-res').style.display='none';setTimeout(function(){document.getElementById('nc-inp').focus();},300);}
 function closeNC(){document.getElementById('nc-modal').classList.remove('on');}
@@ -4350,7 +4358,15 @@ function subscribeToInbox(){
       unreadConvos.add(r.sender_id);
       updateTalkDot();
       SFX('receive');
-      if(curTab==='talk')renderTalkList();
+      // Update convos cache in memory — no DB call needed
+      if(_convosLoaded){
+        var senderUser=USERS.find(function(x){return x.id===r.sender_id;})||{id:r.sender_id,display_name:'User',username:'user',avatar_url:null};
+        var existing=convos.find(function(c){return c.user.id===r.sender_id;});
+        var lastMsg=r.content||(r.is_photo?'📷 Photo':'');
+        if(existing){existing.lastMsg=lastMsg;existing.lastSid=r.sender_id;existing.ts=new Date(r.created_at).getTime();convos.sort(function(a,b){return b.ts-a.ts;});}
+        else{convos.unshift({user:senderUser,lastMsg:lastMsg,lastSid:r.sender_id,ts:new Date(r.created_at).getTime()});}
+      }
+      if(curTab==='talk')_renderTalkFromCache();
     })
     .subscribe();
 
@@ -5452,6 +5468,18 @@ function toggleFollow(uid,btn){
     T('Following');
     _sb.from('follows').insert({follower_id:profile.id,following_id:uid}).then(function(){});
     pushN('follow',{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},null,{},uid);
+  }
+  // Update follower/following counts in profile DOM immediately
+  var fnEl=document.getElementById('prof-fol-n');
+  var fgEl=document.getElementById('prof-fing-n');
+  if(fnEl||fgEl){
+    var isNowFollowing=following.has(uid);
+    // Update the viewed user's follower count
+    if(fnEl){
+      var cur=parseInt(fnEl.textContent)||0;
+      fnEl.textContent=Math.max(0,cur+(isNowFollowing?1:-1));
+    }
+    // Update our own following count on our profile (only visible if we're on our own profile — safe to skip)
   }
   // sync Follow Back buttons in notif list
   notifs.forEach(function(n){
