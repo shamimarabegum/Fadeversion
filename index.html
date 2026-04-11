@@ -3773,6 +3773,12 @@ function renderSVFrame(animate){
       });
     }
   }
+  // Record view in Supabase for every frame (not just first)
+  if(!isOwnStory&&item.id&&profile){
+    _sb.from('story_views').upsert({story_id:item.id,user_id:profile.id},{onConflict:'story_id,user_id'}).then(function(){});
+    // Mark group as seen in memory
+    if(svGroups[svGI])svGroups[svGI].seen=true;
+  }
   if(animate){body.style.opacity='0';requestAnimationFrame(function(){body.style.transition='opacity .18s ease';body.style.opacity='1';setTimeout(function(){body.style.transition='';},200);});}
 }
 function startSVTmr(){
