@@ -3028,11 +3028,6 @@ function renderStrip(){
     badge.innerHTML='<svg width="8" height="8" fill="none" stroke="var(--card)" stroke-width="3" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
     badge.onclick=function(e){e.stopPropagation();openCreator();};
     ringDiv.appendChild(innerDiv);ringDiv.appendChild(badge);
-    if(isActiveNow(profile.id)&&canSeeActivity(profile.id)){
-      var selfDot=document.createElement('div');
-      selfDot.style.cssText='position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#22C55E;border:2px solid var(--card);z-index:3';
-      ringDiv.appendChild(selfDot);
-    }
     ringDiv.onclick=function(e){if(e.target.closest('.sadd'))return;openSV(ownIdx);};
   } else {
     ringDiv.className='sring sring-none';
