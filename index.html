@@ -3079,7 +3079,7 @@ function renderFeedRows(rows,likedIds,isFirst){
     _feedSentinelObs.observe(sentinel);
   }
 }
-function buildPost(p, showDelete){
+function buildPost(p, showDelete, imgRatio){
   var el=document.createElement('div');el.className='post';el.dataset.pid=p.id;
   var a=p.author||{};
   var uJ=JSON.stringify(USERS.find(function(x){return x.id===p.uid;})||{id:p.uid,username:a.username,display_name:a.display_name,avatar_url:null});
@@ -3089,7 +3089,7 @@ function buildPost(p, showDelete){
   var avatarClick=isOwn?"goTab('me')":'openProf('+uJ+')';
   var hdr='<div class="posthd"><div class="av" onclick=\''+avatarClick+'\'>'+avH(avUrl,avName)+'</div><div class="postmeta" onclick=\''+avatarClick+'\'>  <div class="postname" style="display:flex;align-items:center;gap:4px">'+E(a.display_name||'User')+badgeFor(p.uid)+'</div><div class="posttm">'+ago(p.ts)+' · fades in '+fadeIn(p.ts)+'</div></div><button class="post-menu-btn" onclick="openPostMenu(\''+p.id+'\',\''+p.uid+'\',event)" style="background:none;border:none;cursor:pointer;padding:6px 4px;color:var(--sub);display:flex;flex-direction:column;gap:3.5px;align-items:center;justify-content:center;flex-shrink:0;border-radius:8px;transition:opacity .15s" onmousedown="event.stopPropagation()"><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i></button></div>';
   var mediaHTML='',textHTML='';
-  if(p.img){mediaHTML='<div style="width:100%;overflow:hidden"><img src="'+p.img+'" style="width:100%;aspect-ratio:4/5;display:block;object-fit:cover" loading="lazy"/></div>';if(p.text)textHTML='<div class="post-caption">'+E(p.text)+'</div>';}
+  if(p.img){var _ar=imgRatio||'4/5';mediaHTML='<div style="width:100%;overflow:hidden"><img src="'+p.img+'" style="width:100%;aspect-ratio:'+_ar+';display:block;object-fit:cover" loading="lazy"/></div>';if(p.text)textHTML='<div class="post-caption">'+E(p.text)+'</div>';}
   else if(p.text){textHTML='<div class="postbody">'+E(p.text)+'</div>';}
   var _likeOwnerU=isOwn?null:(USERS.find(function(x){return x.id===p.uid;})||null);
   var _hideLikeCount=isOwn?S.hideLikes:(_likeOwnerU?!!_likeOwnerU.hide_likes:false);
@@ -5059,7 +5059,7 @@ function renderMe(){
   if(!mine.length){g.style.cssText='background:var(--card)';g.innerHTML='<div class="empty"><div class="empt">Nothing dropped yet</div><div class="emps">Drop something. It disappears in 24 hours.</div></div>';}
   else{
     mine.slice(0,2).forEach(function(p,i){
-      var el=buildPost(p,true);
+      var el=buildPost(p,true,'4/3');
       el.style.marginBottom='1px';
       g.appendChild(el);
     });
@@ -5313,7 +5313,7 @@ function _renderProfBody(full, followerCount, followingCount){
   if(!myPosts.length){g.style.cssText='background:var(--card);padding:44px 22px;text-align:center';g.innerHTML='<div style="color:var(--sub);font-size:13.5px" class="anim-fade-up">Nothing dropped yet.</div>';}
   else{
     myPosts.slice(0,2).forEach(function(p,i){
-      var el=buildPost(p,false);
+      var el=buildPost(p,false,'4/3');
       el.style.marginBottom='1px';
       g.appendChild(el);
     });
