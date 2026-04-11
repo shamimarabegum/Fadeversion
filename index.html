@@ -4217,6 +4217,12 @@ function subscribeToChat(partnerId){
       var r=payload.new;
       var isRelevant=(r.sender_id===partnerId&&r.receiver_id===profile.id)||(r.sender_id===profile.id&&r.receiver_id===partnerId);
       if(!isRelevant)return;
+      // Our own messages are already rendered optimistically — just patch the real id onto the temp bubble
+      if(r.sender_id===profile.id){
+        var tmpEl=document.querySelector('[data-msgid^="tmp-"]');
+        if(tmpEl)tmpEl.dataset.msgid=r.id;
+        return;
+      }
       var alreadyShown=document.querySelector('[data-msgid="'+r.id+'"]');
       if(alreadyShown)return;
       // Hide typing bubble when a real message arrives
@@ -4401,7 +4407,10 @@ function subscribeToInbox(){
 }
 function addSysMsg(txt){var msgs=document.getElementById('msgs');var d=document.createElement('div');d.className='bubble sys';d.textContent=txt;msgs.appendChild(d);}
 function appendBubble(m){
-  var msgs=document.getElementById('msgs');msgs.querySelectorAll('.seen-ind').forEach(function(s){s.remove();});
+  var msgs=document.getElementById('msgs');
+  // Only clear "Sent/Seen" indicators on my own messages (not received timestamps)
+  var isMineNew=m.sid==='demo';
+  if(isMineNew){msgs.querySelectorAll('.seen-ind').forEach(function(s){s.textContent='';});}
   var isMine=m.sid==='demo';
   var wrap=document.createElement('div');wrap.className='bwrap '+(isMine?'me':'them');wrap.dataset.ts=m.ts;wrap.dataset.msgid=m.id||'';
   var bs=document.createElement('div');bs.className=isMine?'me-bs':'them-bs';
@@ -4491,9 +4500,16 @@ function appendBubble(m){
   if(isMine){
     var si=document.createElement('div');
     si.className='seen-ind';
-    // Show Sent until receiver reads it, then Seen (updated via realtime)
-    si.textContent=m.isRead?'Seen':'Sent';
+    // Format time: e.g. "2:34 PM"
+    var tStr=m.ts?new Date(m.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';
+    si.textContent=(m.isRead?'Seen':'Sent')+(tStr?' · '+tStr:'');
     msgs.appendChild(si);
+  } else {
+    // Timestamp for received messages — shown below bubble on the left
+    var rt=document.createElement('div');
+    rt.style.cssText='font-size:11px;color:var(--sub);padding:2px 6px 4px;text-align:left;margin-left:34px';
+    rt.textContent=m.ts?new Date(m.ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';
+    msgs.appendChild(rt);
   }
   msgs.scrollTop=msgs.scrollHeight;
 }
