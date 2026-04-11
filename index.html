@@ -5055,8 +5055,22 @@ function renderMe(){
   var meAvWrap=document.getElementById('me-av-wrap');
   attachAvatarInteractions(meAvWrap, profPhotoUrl||profile&&profile.avatar_url||null, true, profile&&profile.id);
   var g=document.getElementById('me-grid');
+  g.className='';g.style.cssText='background:var(--bg)';
   if(!mine.length){g.style.cssText='background:var(--card)';g.innerHTML='<div class="empty"><div class="empt">Nothing dropped yet</div><div class="emps">Drop something. It disappears in 24 hours.</div></div>';}
-  else{g.className='pgrid';mine.forEach(function(p,i){var cell=document.createElement('div');cell.className='gcell';cell.classList.add('anim-scale-in');cell.style.animationDelay=(Math.min(i,8)*30)+'ms';if(p.img){cell.innerHTML='<img src="'+p.img+'" loading="lazy"/>';}else{cell.style.background='var(--inp-bg)';cell.innerHTML='<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 8px;gap:4px"><span style="font-size:16px;opacity:.3;line-height:1">“</span><p style="font-size:11px;font-weight:500;color:var(--text);text-align:center;line-height:1.45;margin:0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden">'+E((p.text||'').slice(0,80))+'</p></div>';}cell.onclick=function(){openScrollView(profile.id,i);};g.appendChild(cell);});}
+  else{
+    mine.slice(0,2).forEach(function(p,i){
+      var el=buildPost(p,true);
+      el.style.marginBottom='1px';
+      g.appendChild(el);
+    });
+    if(mine.length>=3){
+      var viewAll=document.createElement('div');
+      viewAll.style.cssText='display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 16px;background:var(--card);cursor:pointer;border-top:1px solid var(--border)';
+      viewAll.innerHTML='<span style="font-size:13px;font-weight:600;color:var(--sub)">View all '+mine.length+' drops</span><svg width="14" height="14" fill="none" stroke="var(--sub)" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
+      viewAll.onclick=function(){openScrollView(profile.id,0);};
+      g.appendChild(viewAll);
+    }
+  }
 }
 function pickProfPhoto(e){
   var f=e.target.files[0];if(!f||!profile)return;
@@ -5295,8 +5309,22 @@ function _renderProfBody(full, followerCount, followingCount){
   var profAvWrap=document.getElementById('prof-av-wrap');
   attachAvatarInteractions(profAvWrap, full.avatar_url||null, false, full.id);
   var g=document.getElementById('prof-grid');
-  if(!myPosts.length){g.className='';g.style.cssText='background:var(--card);padding:44px 22px;text-align:center';g.innerHTML='<div style="color:var(--sub);font-size:13.5px" class="anim-fade-up">Nothing dropped yet.</div>';}
-  else{myPosts.forEach(function(p,i){var cell=document.createElement('div');cell.className='gcell';cell.classList.add('anim-scale-in');cell.style.animationDelay=(Math.min(i,8)*30)+'ms';if(p.img){cell.innerHTML='<img src="'+p.img+'" loading="lazy"/>';}else{cell.style.background='var(--inp-bg)';cell.innerHTML='<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 8px;gap:4px"><span style="font-size:16px;opacity:.3;line-height:1">“</span><p style="font-size:11px;font-weight:500;color:var(--text);text-align:center;line-height:1.45;margin:0;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden">'+E((p.text||'').slice(0,80))+'</p></div>';}cell.onclick=function(){openScrollView(full.id,i);};g.appendChild(cell);});}
+  g.className='';g.style.cssText='background:var(--bg)';
+  if(!myPosts.length){g.style.cssText='background:var(--card);padding:44px 22px;text-align:center';g.innerHTML='<div style="color:var(--sub);font-size:13.5px" class="anim-fade-up">Nothing dropped yet.</div>';}
+  else{
+    myPosts.slice(0,2).forEach(function(p,i){
+      var el=buildPost(p,false);
+      el.style.marginBottom='1px';
+      g.appendChild(el);
+    });
+    if(myPosts.length>=3){
+      var viewAll=document.createElement('div');
+      viewAll.style.cssText='display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 16px;background:var(--card);cursor:pointer;border-top:1px solid var(--border)';
+      viewAll.innerHTML='<span style="font-size:13px;font-weight:600;color:var(--sub)">View all '+myPosts.length+' drops</span><svg width="14" height="14" fill="none" stroke="var(--sub)" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>';
+      viewAll.onclick=function(){openScrollView(full.id,0);};
+      g.appendChild(viewAll);
+    }
+  }
 }
 
 function openProf(u){
