@@ -2700,7 +2700,7 @@ function renderFeed(){
   }
   f.innerHTML=skHTML;
   _sb.from('posts')
-    .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at')
+    .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at,audience')
     .gt('expires_at', new Date().toISOString())
     .order('created_at',{ascending:false})
     .limit(60)
@@ -2736,7 +2736,7 @@ function renderFeedRows(rows,likedIds){
       text:r.text||'', img:r.img_url||null,
       likes:r.likes_count||0,
       liked:likedIds.indexOf(r.id)>-1,
-      comments:[], commentsCount:r.comments_count||0, ts:r.created_at
+      comments:[], commentsCount:r.comments_count||0, ts:r.created_at, audience:r.audience||'everyone'
     };
   });
   posts=posts.filter(function(p){
@@ -3028,6 +3028,11 @@ function renderStrip(){
     badge.innerHTML='<svg width="8" height="8" fill="none" stroke="var(--card)" stroke-width="3" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
     badge.onclick=function(e){e.stopPropagation();openCreator();};
     ringDiv.appendChild(innerDiv);ringDiv.appendChild(badge);
+    if(isActiveNow(profile.id)&&canSeeActivity(profile.id)){
+      var selfDot=document.createElement('div');
+      selfDot.style.cssText='position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#22C55E;border:2px solid var(--card);z-index:3';
+      ringDiv.appendChild(selfDot);
+    }
     ringDiv.onclick=function(e){if(e.target.closest('.sadd'))return;openSV(ownIdx);};
   } else {
     ringDiv.className='sring sring-none';
@@ -3729,12 +3734,11 @@ function showConvoMenu(u,rowEl){
 
 // ── CHAT ──────────────────────────────────────────────────────────────────────
 function canSeeActivity(uid){
-  // Check the OTHER user's activity_visible setting if we have it
   var uObj=USERS.find(function(u){return u.id===uid;})||{};
   var theirPref=uObj.activity_visible||'everyone';
   if(theirPref==='nobody')return false;
+  if(theirPref==='everyone')return true;
   var isMutual=following.has(uid);
-  if(theirPref==='followers'&&!isMutual)return false;
   var hasConvo=convos.some(function(c){return c.user.id===uid;});
   return !!(isMutual||hasConvo);
 }
@@ -5724,9 +5728,19 @@ function _adminBuildImgBox(url){
       imgBox.innerHTML='';
       imgBox.appendChild(fb);
     };
-    // Set src after attaching handlers
-    img.src=url;
-    img.onclick=function(){openPhotoViewer(url);};
+    img.onclick=function(){openPhotoViewer(img.src||url);};
+    if(url&&!url.startsWith('data:')&&url.indexOf('verification-docs')>-1){
+      var bucketKey='verification-docs/';
+      var pathStart=url.indexOf(bucketKey);
+      if(pathStart>-1){pathStart+=bucketKey.length;}
+      var storagePath=pathStart>-1?decodeURIComponent(url.slice(pathStart)):null;
+      if(storagePath){
+        _sb.storage.from('verification-docs').createSignedUrl(storagePath,3600).then(function(sr){
+          if(sr.data&&sr.data.signedUrl){img.src=sr.data.signedUrl;}
+          else{img.src=url;}
+        }).catch(function(){img.src=url;});
+      } else {img.src=url;}
+    } else {img.src=url;}
     imgBox.appendChild(img);
     imgWrap.appendChild(imgBox);
   } else {
