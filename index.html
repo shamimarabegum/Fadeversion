@@ -2700,7 +2700,7 @@ function renderFeed(){
   }
   f.innerHTML=skHTML;
   _sb.from('posts')
-    .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at,audience')
+    .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at')
     .gt('expires_at', new Date().toISOString())
     .order('created_at',{ascending:false})
     .limit(60)
@@ -2736,7 +2736,7 @@ function renderFeedRows(rows,likedIds){
       text:r.text||'', img:r.img_url||null,
       likes:r.likes_count||0,
       liked:likedIds.indexOf(r.id)>-1,
-      comments:[], commentsCount:r.comments_count||0, ts:r.created_at, audience:r.audience||'everyone'
+      comments:[], commentsCount:r.comments_count||0, ts:r.created_at
     };
   });
   posts=posts.filter(function(p){
@@ -5724,9 +5724,20 @@ function _adminBuildImgBox(url){
       imgBox.innerHTML='';
       imgBox.appendChild(fb);
     };
-    // Set src after attaching handlers
-    img.src=url;
-    img.onclick=function(){openPhotoViewer(url);};
+    img.onclick=function(){openPhotoViewer(img.src||url);};
+    // Use signed URL for private verification-docs bucket
+    if(url&&!url.startsWith('data:')&&url.indexOf('verification-docs')>-1){
+      var bucketKey='verification-docs/';
+      var pathStart=url.indexOf(bucketKey);
+      if(pathStart>-1){pathStart+=bucketKey.length;}
+      var storagePath=pathStart>-1?decodeURIComponent(url.slice(pathStart)):null;
+      if(storagePath){
+        _sb.storage.from('verification-docs').createSignedUrl(storagePath,3600).then(function(sr){
+          if(sr.data&&sr.data.signedUrl){img.src=sr.data.signedUrl;}
+          else{img.src=url;}
+        }).catch(function(){img.src=url;});
+      } else {img.src=url;}
+    } else {img.src=url;}
     imgBox.appendChild(img);
     imgWrap.appendChild(imgBox);
   } else {
