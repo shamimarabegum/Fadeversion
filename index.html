@@ -2861,6 +2861,13 @@ function renderNotifs(){
 }
 
 // ── FEED ──────────────────────────────────────────────────────────────────────
+// ── FEED PAGINATION STATE ────────────────────────────────────────────────────
+var _feedPageSize = 20;
+var _feedOffset = 0;
+var _feedExhausted = false;
+var _feedLoading = false;
+var _feedSentinelObs = null;
+
 // ── FEED RANKING ──────────────────────────────────────────────────────────────
 // Groups: 0=own, 1=close friends, 2=mutuals, 3=following, 4=suggested
 function getPostGroup(p){
@@ -2924,44 +2931,71 @@ function tapNewPostsBanner(){
 }
 function renderFeed(){
   var f=document.getElementById('feed');
-  // Show skeleton placeholders instead of spinner
+  // Reset pagination state
+  _feedOffset=0;
+  _feedExhausted=false;
+  _feedLoading=false;
+  posts=[];
+  // Tear down previous sentinel observer
+  if(_feedSentinelObs){_feedSentinelObs.disconnect();_feedSentinelObs=null;}
+  // Show skeleton placeholders
   var skHTML='';
   for(var si=0;si<4;si++){
     skHTML+='<div class="skeleton-post" style="opacity:'+(1-si*0.18)+'"><div class="skeleton-post-hd"><div class="skeleton skeleton-avatar" style="width:38px;height:38px;flex-shrink:0"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="skeleton skeleton-text" style="width:38%"></div><div class="skeleton skeleton-text" style="width:22%"></div></div></div><div class="skeleton skeleton-text" style="width:75%"></div><div class="skeleton skeleton-text" style="width:55%"></div><div style="display:flex;gap:16px;padding-top:4px"><div class="skeleton skeleton-round" style="width:52px;height:20px"></div><div class="skeleton skeleton-round" style="width:52px;height:20px"></div></div></div>';
   }
   f.innerHTML=skHTML;
+  _loadFeedPage(true);
+}
+
+function _loadFeedPage(isFirst){
+  if(_feedLoading||_feedExhausted)return;
+  _feedLoading=true;
+  var now=new Date().toISOString();
   _sb.from('posts')
     .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at,audience')
-    .gt('expires_at', new Date().toISOString())
+    .gt('expires_at', now)
     .order('created_at',{ascending:false})
-    .limit(60)
+    .range(_feedOffset, _feedOffset + _feedPageSize - 1)
     .then(function(res){
-      if(res.error){f.innerHTML='<div class="empty"><div class="emps">Could not load posts.</div></div>';return;}
+      _feedLoading=false;
+      var f=document.getElementById('feed');
+      if(res.error){
+        if(isFirst)f.innerHTML='<div class="empty"><div class="emps">Could not load posts.</div></div>';
+        return;
+      }
       var rows=res.data||[];
-      if(!rows.length){renderFeedRows([],[]);return;}
-      // Get unique user_ids to fetch profiles
+      if(rows.length < _feedPageSize) _feedExhausted=true;
+      _feedOffset += rows.length;
+
+      if(!rows.length&&isFirst){renderFeedRows([],[],true);return;}
+      if(!rows.length){
+        // Remove spinner sentinel
+        var old=document.getElementById('feed-sentinel');if(old)old.remove();
+        return;
+      }
+
       var uids=[...new Set(rows.map(function(r){return r.user_id;}))];
       _sb.from('profiles').select('id,username,display_name,avatar_url').in('id',uids).then(function(pr){
         var profileMap={};
         (pr.data||[]).forEach(function(p){profileMap[p.id]=p;});
-        // Attach profile to each row
         rows=rows.map(function(r){
           var au=profileMap[r.user_id]||{};
           return Object.assign({},r,{profiles:au});
         });
-        if(!profile){renderFeedRows(rows,[]);return;}
+        if(!profile){renderFeedRows(rows,[],isFirst);return;}
         _sb.from('likes').select('post_id').eq('user_id',profile.id).then(function(lr){
           var likedIds=(lr.data||[]).map(function(x){return x.post_id;});
-          renderFeedRows(rows,likedIds);
+          renderFeedRows(rows,likedIds,isFirst);
         });
       });
     });
 }
-function renderFeedRows(rows,likedIds){
+
+function renderFeedRows(rows,likedIds,isFirst){
   var f=document.getElementById('feed');
-  posts=rows.map(function(r){
+  var newPosts=rows.map(function(r){
     var au=r.profiles||{};
-            return{
+    return{
       id:r.id, uid:r.user_id,
       author:{display_name:au.display_name||au.username||'User',username:au.username||'',avatar_url:au.avatar_url||null},
       text:r.text||'', img:r.img_url||null,
@@ -2969,39 +3003,66 @@ function renderFeedRows(rows,likedIds){
       liked:likedIds.indexOf(r.id)>-1,
       comments:[], commentsCount:r.comments_count||0, ts:r.created_at, audience:r.audience||'everyone'
     };
-  });
-  posts=posts.filter(function(p){
+  }).filter(function(p){
     if(p.expires_at&&new Date(p.expires_at).getTime()<=Date.now())return false;
     if(!p.expires_at&&Date.now()-new Date(p.ts).getTime()>=86400000)return false;
     return isVisibleToMe(p);
   });
-  var ranked=rankFeed(posts);
-  if(!ranked.length){
-    f.innerHTML='<div class="empty anim-fade-up" style="padding:48px 28px;text-align:center"><div style="font-size:36px;margin-bottom:16px">👋</div><div class="empt" style="font-size:17px;font-weight:700;margin-bottom:8px">Nothing here yet</div><div class="emps" style="font-size:14px;line-height:1.6;color:var(--sub)">Follow people to see their drops.<br>Everything fades in 24 hours.</div><button onclick="goTab(\'search\')" style="margin-top:22px;background:var(--text);color:var(--card);border:none;border-radius:14px;padding:13px 28px;font-family:Inter,sans-serif;font-size:14px;font-weight:600;cursor:pointer">Find people</button></div>';
-    return;
+
+  if(isFirst){
+    // Full re-render
+    posts=newPosts;
+    var ranked=rankFeed(posts);
+    if(!ranked.length){
+      f.innerHTML='<div class="empty anim-fade-up" style="padding:48px 28px;text-align:center"><div style="font-size:36px;margin-bottom:16px">👋</div><div class="empt" style="font-size:17px;font-weight:700;margin-bottom:8px">Nothing here yet</div><div class="emps" style="font-size:14px;line-height:1.6;color:var(--sub)">Follow people to see their drops.<br>Everything fades in 24 hours.</div><button onclick="goTab(\'search\')" style="margin-top:22px;background:var(--text);color:var(--card);border:none;border-radius:14px;padding:13px 28px;font-family:Inter,sans-serif;font-size:14px;font-weight:600;cursor:pointer">Find people</button></div>';
+      return;
+    }
+    f.innerHTML='';
+    var lastGroup=-1,animIdx=0;
+    ranked.forEach(function(p){
+      var g=getPostGroup(p);
+      if(g!==lastGroup&&g!==0&&GROUP_LABELS[g]){
+        var div=document.createElement('div');div.style.cssText='padding:20px 14px 6px';
+        div.classList.add('anim-fade-up');div.style.animationDelay=(Math.min(animIdx,8)*30)+'ms';
+        div.innerHTML='<span style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.7px">'+GROUP_LABELS[g]+'</span>';
+        f.appendChild(div);animIdx++;
+      }
+      lastGroup=g;
+      var el=buildPost(p,false);
+      el.classList.add('anim-fade-up');el.style.animationDelay=(Math.min(animIdx,8)*30)+'ms';
+      animIdx++;f.appendChild(el);
+      if(p.liked){
+        var h=document.getElementById('hi-'+p.id);if(h)h.setAttribute('fill','currentColor');
+        var lb=document.getElementById('lb-'+p.id);if(lb)lb.classList.add('liked');
+      }
+    });
+  } else {
+    // Append mode — remove old sentinel first
+    var oldSentinel=document.getElementById('feed-sentinel');if(oldSentinel)oldSentinel.remove();
+    newPosts.forEach(function(p){
+      posts.push(p);
+      var el=buildPost(p,false);
+      el.classList.add('anim-fade-up');
+      f.appendChild(el);
+      if(p.liked){
+        var h=document.getElementById('hi-'+p.id);if(h)h.setAttribute('fill','currentColor');
+        var lb=document.getElementById('lb-'+p.id);if(lb)lb.classList.add('liked');
+      }
+    });
   }
-  f.innerHTML='';
-  var lastGroup=-1,animIdx=0;
-  ranked.forEach(function(p){
-    var g=getPostGroup(p);
-    if(g!==lastGroup&&g!==0&&GROUP_LABELS[g]){
-      var div=document.createElement('div');div.style.cssText='padding:20px 14px 6px';
-      div.classList.add('anim-fade-up');div.style.animationDelay=(Math.min(animIdx,8)*30)+'ms';
-      div.innerHTML='<span style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.7px">'+GROUP_LABELS[g]+'</span>';
-      f.appendChild(div);animIdx++;
-    }
-    lastGroup=g;
-    var el=buildPost(p,false);
-    el.classList.add('anim-fade-up');el.style.animationDelay=(Math.min(animIdx,8)*30)+'ms';
-    animIdx++;f.appendChild(el);
-    // Apply liked state to heart after DOM insert
-    if(p.liked){
-      var h=document.getElementById('hi-'+p.id);
-      if(h)h.setAttribute('fill','currentColor');
-      var lb=document.getElementById('lb-'+p.id);
-      if(lb)lb.classList.add('liked');
-    }
-  });
+
+  // Attach infinite-scroll sentinel unless feed is exhausted
+  if(!_feedExhausted){
+    var sentinel=document.createElement('div');
+    sentinel.id='feed-sentinel';
+    sentinel.style.cssText='height:1px;width:100%';
+    f.appendChild(sentinel);
+    if(_feedSentinelObs){_feedSentinelObs.disconnect();}
+    _feedSentinelObs=new IntersectionObserver(function(entries){
+      if(entries[0].isIntersecting){_loadFeedPage(false);}
+    },{rootMargin:'200px'});
+    _feedSentinelObs.observe(sentinel);
+  }
 }
 function buildPost(p, showDelete){
   var el=document.createElement('div');el.className='post';el.dataset.pid=p.id;
@@ -3187,6 +3248,39 @@ function openCompose(){var bg=document.getElementById('compose-bg');bg.style.dis
 function closeCompose(){closeSheet('compose-bg');}
 function pickCI(e){var f=e.target.files[0];if(!f)return;cFile=f;document.getElementById('c-pi').src=URL.createObjectURL(f);document.getElementById('c-pv').classList.add('on');}
 function rmCI(){cFile=null;document.getElementById('c-pv').classList.remove('on');document.getElementById('c-pi').src='';document.getElementById('c-file2').value='';}
+
+// ── IMAGE COMPRESSION ─────────────────────────────────────────────────────────
+// Compresses a File/Blob to JPEG at maxDim px and quality q (0-1).
+// Returns a Promise that resolves to a Blob.
+function compressImage(file, maxDim, quality){
+  maxDim = maxDim || 1280;
+  quality = quality || 0.82;
+  return new Promise(function(resolve){
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function(){
+      URL.revokeObjectURL(url);
+      var w = img.naturalWidth, h = img.naturalHeight;
+      if(w <= maxDim && h <= maxDim && file.size < 600*1024){
+        // Already small enough — skip compression
+        resolve(file);
+        return;
+      }
+      var scale = Math.min(1, maxDim / Math.max(w, h));
+      var cw = Math.round(w * scale), ch = Math.round(h * scale);
+      var canvas = document.createElement('canvas');
+      canvas.width = cw; canvas.height = ch;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, cw, ch);
+      canvas.toBlob(function(blob){
+        resolve(blob || file);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 function submitPost(){
   var txt=document.getElementById('c-text').value.trim();if(!txt&&!cFile)return T('Add text or a photo');
   var btn=document.querySelector('#compose-bg .dropbtn');
@@ -3210,23 +3304,22 @@ function submitPost(){
   }
 
   if(cFile){
-    var reader=new FileReader();
-    reader.onload=function(e){
-      var b64=e.target.result.split(',')[1];
-      var ext=cFile.name.split('.').pop()||'jpg';
-      var path=profile.id+'/'+Date.now()+'.'+ext;
-      _sb.storage.from('post-images').upload(path,cFile,{contentType:cFile.type,upsert:true})
+    compressImage(cFile, 1280, 0.82).then(function(compressed){
+      var ext = 'jpg';
+      var path = profile.id+'/'+Date.now()+'.jpg';
+      _sb.storage.from('post-images').upload(path, compressed, {contentType:'image/jpeg', upsert:true})
       .then(function(sr){
         if(sr.error){
-          // fallback: store as base64 data URL if storage not set up
-          doInsert(e.target.result);
+          // fallback: read original as data URL
+          var reader = new FileReader();
+          reader.onload = function(ev){ doInsert(ev.target.result); };
+          reader.readAsDataURL(cFile);
         } else {
-          var pub=_sb.storage.from('post-images').getPublicUrl(path);
-          doInsert(pub.data&&pub.data.publicUrl||e.target.result);
+          var pub = _sb.storage.from('post-images').getPublicUrl(path);
+          doInsert(pub.data&&pub.data.publicUrl||null);
         }
       });
-    };
-    reader.readAsDataURL(cFile);
+    });
   } else {
     doInsert(null);
   }
@@ -4450,8 +4543,9 @@ function sendPhoto(e){
   cancelReplyBar();
   appendBubble(m);SFX('send');
   e.target.value='';
-  var path='chat/'+profile.id+'/'+Date.now()+'-'+f.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
-  _sb.storage.from('post-images').upload(path,f,{contentType:f.type,upsert:true}).then(function(sr){
+  compressImage(f, 1280, 0.82).then(function(compressed){
+  var path='chat/'+profile.id+'/'+Date.now()+'.jpg';
+  _sb.storage.from('post-images').upload(path,compressed,{contentType:'image/jpeg',upsert:true}).then(function(sr){
     var imgUrl=blobUrl;
     if(!sr.error){
       var pub=_sb.storage.from('post-images').getPublicUrl(path);
@@ -4478,7 +4572,8 @@ function sendPhoto(e){
       if(cv){cv.lastMsg='\ud83d\udcf7 Photo';cv.lastSid='demo';cv.ts=Date.now();}
       else{convos.unshift({user:chatUser,lastMsg:'\ud83d\udcf7 Photo',lastSid:'demo',ts:Date.now()});}
     });
-  });
+  }); // end storage upload
+  }); // end compressImage
 }
 function sendMsg(){
   var inp=document.getElementById('chatinp');var txt=inp.value.trim();if(!txt||!chatUser)return;
