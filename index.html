@@ -4210,12 +4210,11 @@ function hideTypingBubble(){
 var _chatChannel=null;
 function subscribeToChat(partnerId){
   if(_chatChannel){_sb.removeChannel(_chatChannel);_chatChannel=null;}
-  // Use a deterministic channel name so both sides join the same channel
-  var ids=[profile.id,partnerId].sort();
-  _chatChannel=_sb.channel('chat-'+ids[0]+'-'+ids[1])
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},function(payload){
+  // Each user gets their own receive channel — avoids shared channel conflicts with unfiltered postgres_changes
+  _chatChannel=_sb.channel('chat-'+profile.id+'-'+partnerId)
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'receiver_id=eq.'+profile.id},function(payload){
       var r=payload.new;
-      var isRelevant=(r.sender_id===partnerId&&r.receiver_id===profile.id)||(r.sender_id===profile.id&&r.receiver_id===partnerId);
+      var isRelevant=(r.sender_id===partnerId&&r.receiver_id===profile.id);
       if(!isRelevant)return;
       // Our own messages are already rendered optimistically — just patch the real id onto the temp bubble
       if(r.sender_id===profile.id){
@@ -4287,7 +4286,7 @@ function subscribeToChat(partnerId){
       if(el)el.remove();
     })
     // ── Listen for read receipt updates ─────────────────────────────────
-    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages'},function(payload){
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:'receiver_id=eq.'+profile.id},function(payload){
       var r=payload.new;
       if(!r||!r.id)return;
       var bubble=document.querySelector('[data-msgid="'+r.id+'"]');
