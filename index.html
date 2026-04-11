@@ -4210,8 +4210,10 @@ function hideTypingBubble(){
 var _chatChannel=null;
 function subscribeToChat(partnerId){
   if(_chatChannel){_sb.removeChannel(_chatChannel);_chatChannel=null;}
-  // Each user gets their own receive channel — avoids shared channel conflicts with unfiltered postgres_changes
-  _chatChannel=_sb.channel('chat-'+profile.id+'-'+partnerId)
+  // Shared channel name for broadcast (typing) — both users must be on same name
+  // postgres_changes are filtered server-side so no conflict
+  var ids=[profile.id,partnerId].sort();
+  _chatChannel=_sb.channel('chat-'+ids[0]+'-'+ids[1])
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'receiver_id=eq.'+profile.id},function(payload){
       var r=payload.new;
       var isRelevant=(r.sender_id===partnerId&&r.receiver_id===profile.id);
@@ -4285,7 +4287,21 @@ function subscribeToChat(partnerId){
       var el=document.querySelector('[data-msgid="'+old.id+'"]');
       if(el)el.remove();
     })
-    // ── Listen for read receipt updates ─────────────────────────────────
+    // ── Listen for updates on messages WE SENT (partner reacting to our bubbles) ──
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:'sender_id=eq.'+profile.id},function(payload){
+      var r=payload.new;
+      if(!r||!r.id||!r.reaction)return; // only care about reactions here
+      var bubble=document.querySelector('[data-msgid="'+r.id+'"]');
+      if(!bubble)return;
+      var bwrap=bubble.classList.contains('bwrap')?bubble:bubble.closest('.bwrap');
+      if(!bwrap)return;
+      var bs=bwrap.querySelector('.me-bs')||bwrap.querySelector('.them-bs');
+      if(!bs)return;
+      var oldBadge=bs.querySelector('.rxn-badge');
+      if(oldBadge)oldBadge.remove();
+      if(r.reaction){var fakeMsg={id:r.id,reaction:r.reaction};bs.appendChild(makeBadge(fakeMsg,true,bs));}
+    })
+    // ── Listen for read receipt updates + reactions on messages we RECEIVED ─
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'messages',filter:'receiver_id=eq.'+profile.id},function(payload){
       var r=payload.new;
       if(!r||!r.id)return;
@@ -4294,9 +4310,12 @@ function subscribeToChat(partnerId){
         var bwrap=bubble.classList.contains('bwrap')?bubble:bubble.closest('.bwrap');
         if(bwrap){
           var isMine=(r.sender_id===profile.id);
-          var old=bwrap.querySelector('.rxn-badge');
-          if(old)old.remove();
-          if(r.reaction){var fakeMsg={id:r.id,reaction:r.reaction};bwrap.appendChild(makeBadge(fakeMsg,isMine,bwrap));}
+          var bs=bwrap.querySelector(isMine?'.me-bs':'.them-bs')||bwrap.querySelector('.me-bs')||bwrap.querySelector('.them-bs');
+          if(bs){
+            var oldBadge=bs.querySelector('.rxn-badge');
+            if(oldBadge)oldBadge.remove();
+            if(r.reaction){var fakeMsg={id:r.id,reaction:r.reaction};bs.appendChild(makeBadge(fakeMsg,isMine,bs));}
+          }
         }
         if(r.is_read&&r.sender_id===profile.id){
           var msgs=document.getElementById('msgs');
