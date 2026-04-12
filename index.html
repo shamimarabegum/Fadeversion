@@ -128,7 +128,9 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .posthd{display:flex;align-items:center;gap:11px;padding:12px 14px 8px}
-.post{background:var(--card)}
+.post{background:var(--card);transition:filter 4s linear}
+.fade-bar-wrap{height:2px;background:transparent;width:100%;overflow:hidden}
+.fade-bar{height:2px;border-radius:0 2px 2px 0;transition:width 60s linear,background-color 60s linear}
 .av{width:38px;height:38px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;cursor:pointer;font-size:15px}
 .postmeta{flex:1;cursor:pointer}
 .postname{font-weight:600;font-size:14.5px}
@@ -1639,6 +1641,41 @@ function E(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 function ago(d){var diff=Date.now()-(typeof d==='number'?d:new Date(d).getTime());if(diff<60000)return'now';if(diff<3600000)return Math.floor(diff/60000)+'m';if(diff<86400000)return Math.floor(diff/3600000)+'h';return'1d';}
 function agoS(d){var diff=Date.now()-new Date(d).getTime();if(diff<3600000)return Math.floor(diff/60000)+'m ago';return Math.floor(diff/3600000)+'h ago';}
 function fadeIn(ts){var rem=Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);return rem<=0?'soon':h>0?h+'h':m+'m';}
+// ── FADE BAR helpers ──────────────────────────────────────────────────────────
+function _fadeRem(ts){return Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));}
+function _fadeBarColor(rem){
+  var pct=rem/86400000; // 1.0 = full, 0 = gone
+  if(pct>0.25)return'#d1d5db'; // neutral grey — plenty of time
+  if(pct>0.083)return'#f59e0b'; // amber — under 2h
+  return'#ef4444'; // red — under 30m
+}
+function _fadeSaturate(rem){
+  var pct=rem/86400000;
+  if(pct>0.25)return 1;          // full colour
+  if(pct>0.083)return 0.6+(pct-0.083)/(0.25-0.083)*0.4; // 2h→6h: 60%→100%
+  return 0.25+(pct/0.083)*0.35;  // 0→2h: 25%→60%
+}
+function _applyFadeBar(el,ts){
+  var rem=_fadeRem(ts);
+  var pct=Math.max(0,rem/86400000)*100;
+  var bar=el.querySelector('.fade-bar');
+  var wrap=el.querySelector('.fade-bar-wrap');
+  if(bar){bar.style.width=pct+'%';bar.style.backgroundColor=_fadeBarColor(rem);}
+  // desaturate
+  var sat=_fadeSaturate(rem);
+  el.style.filter=sat<1?'saturate('+sat+')':'';
+  // hide bar entirely if expired
+  if(wrap)wrap.style.opacity=rem<=0?'0':'1';
+}
+var _fadeTickInterval=null;
+function _startFadeTick(){
+  if(_fadeTickInterval)return;
+  _fadeTickInterval=setInterval(function(){
+    document.querySelectorAll('.post[data-pts]').forEach(function(el){
+      _applyFadeBar(el,el.dataset.pts);
+    });
+  },60000);
+}
 function bgClose(e,id){if(e.target.id===id||e.target.classList.contains('compose-dim'))closeSheet(id);}
 function closeSheet(id){var el=document.getElementById(id);var sheet=el&&el.querySelector('.sheet');if(sheet)sheet.style.transform='translateY(100%)';setTimeout(function(){if(el)el.style.display='none';},320);}
 function grow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,88)+'px';}
@@ -3081,6 +3118,8 @@ function renderFeedRows(rows,likedIds,isFirst){
 }
 function buildPost(p, showDelete){
   var el=document.createElement('div');el.className='post';el.dataset.pid=p.id;
+  // Store post timestamp for the fade tick
+  el.dataset.pts=p.ts;
   var a=p.author||{};
   var uJ=JSON.stringify(USERS.find(function(x){return x.id===p.uid;})||{id:p.uid,username:a.username,display_name:a.display_name,avatar_url:null});
   var isOwn=profile&&p.uid===profile.id;
@@ -3100,7 +3139,16 @@ function buildPost(p, showDelete){
   var _ownerCmtPerm=isOwn?S.cmtPerm:(_postOwner.cmt_perm||'everyone');
   var canCmt=isOwn||(_ownerCmtPerm==='everyone')||(_ownerCmtPerm==='followers'&&following.has(p.uid));
   var acts='<div class="postacts"><button class="actbtn'+(p.liked?' liked':'')+'" id="lb-'+p.id+'" onclick="likePost(\''+p.id+'\',this)"><svg id="hi-'+p.id+'" width="24" height="24" fill="'+(p.liked?'currentColor':'none')+'" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+lc+'</button>'+(canCmt?'<button class="actbtn" onclick="openCS(\''+p.id+'\')"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0-9-9c0 1.68.46 3.25 1.27 4.6L3 21l4.4-1.27A8.96 8.96 0 0 0 12 21z"/></svg>'+cc+'</button>':'')+'</div>';
-  el.innerHTML=hdr+mediaHTML+textHTML+acts;
+  var rem=_fadeRem(p.ts);
+  var barPct=Math.max(0,rem/86400000)*100;
+  var barColor=_fadeBarColor(rem);
+  var barHTML='<div class="fade-bar-wrap"><div class="fade-bar" style="width:'+barPct+'%;background-color:'+barColor+'"></div></div>';
+  el.innerHTML=hdr+mediaHTML+textHTML+acts+barHTML;
+  // Apply initial desaturation
+  var sat=_fadeSaturate(rem);
+  if(sat<1)el.style.filter='saturate('+sat+')';
+  // Start global tick if not running
+  _startFadeTick();
   // Double-tap to like
   var _lastTap=0;
   el.addEventListener('touchend',function(e){
@@ -4583,21 +4631,7 @@ function closeCtx(){document.getElementById('msg-ctx').style.display='none';docu
 function ctxReact(emoji){if(!_ctxMsg||!_ctxBsEl)return closeCtx();var m=_ctxMsg,bs=_ctxBsEl,isMine=_ctxIsMine;var removing=m.reaction===emoji;m.reaction=removing?null:emoji;if(!removing)SFX('react');var old=bs.querySelector('.rxn-badge');if(old)old.remove();if(m.reaction)bs.appendChild(makeBadge(m,isMine,bs));closeCtx();if(!removing)T(emoji+' added');_sb.from('messages').update({reaction:m.reaction}).eq('id',m.id).then(function(){});}
 function ctxReply(){if(!_ctxMsg)return closeCtx();_replyMsg=_ctxMsg;var sName=_ctxMsg.sid==='demo'?'You':(chatUser&&chatUser.display_name||'Them');_replyMsg._sName=sName;document.getElementById('reply-name').textContent=sName;document.getElementById('reply-preview').textContent=(_ctxMsg.text||(_ctxMsg.isPhoto?'📷 Photo':'')).slice(0,50)||'…';document.getElementById('reply-bar').classList.add('on');document.getElementById('chatinp').focus();closeCtx();}
 function cancelReplyBar(){_replyMsg=null;document.getElementById('reply-bar').classList.remove('on');}
-function ctxSavePhoto(){
-  if(!_ctxMsg||!_ctxMsg.img)return closeCtx();
-  var src=_ctxMsg.img;
-  closeCtx();
-  fetch(src).then(function(r){return r.blob();}).then(function(blob){
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');a.href=url;a.download='fade-photo.jpg';a.click();
-    setTimeout(function(){URL.revokeObjectURL(url);},2000);
-    T('Photo saved');
-  }).catch(function(){
-    // fallback for CORS-restricted envs — open in new tab so user can long-press save
-    window.open(src,'_blank');
-    T('Long-press the photo to save');
-  });
-}
+function ctxSavePhoto(){if(!_ctxMsg||!_ctxMsg.img)return closeCtx();var a=document.createElement('a');a.href=_ctxMsg.img;a.download='fade-photo.jpg';a.click();closeCtx();T('Photo saved');}
 function ctxCopy(){if(!_ctxMsg)return closeCtx();if(navigator.clipboard)navigator.clipboard.writeText(_ctxMsg.text||'').catch(function(){});T('Copied');closeCtx();}
 function ctxUnsend(){
   if(!_ctxMsg)return closeCtx();
@@ -4905,13 +4939,8 @@ function renderCSList(){
         SFX(comment.liked?'like':'unlike');
         // Persist to Supabase
         if(profile&&profile.id){
-          if(comment.liked){
-            _sb.from('comment_likes').insert({comment_id:comment.id,user_id:profile.id}).then(function(){});
-            _sb.from('comments').update({likes_count:comment.likes}).eq('id',comment.id).then(function(){});
-          } else {
-            _sb.from('comment_likes').delete().eq('comment_id',comment.id).eq('user_id',profile.id).then(function(){});
-            _sb.from('comments').update({likes_count:Math.max(0,comment.likes)}).eq('id',comment.id).then(function(){});
-          }
+          if(comment.liked){_sb.from('comment_likes').insert({comment_id:comment.id,user_id:profile.id}).then(function(){});}
+          else{_sb.from('comment_likes').delete().eq('comment_id',comment.id).eq('user_id',profile.id).then(function(){});}
         }
       };
     })(c,heartBtn,heartCount,p,ci);
@@ -4971,7 +5000,7 @@ function renderCSList(){
         rhBtn.innerHTML='<svg width="14" height="14" fill="'+(r.liked?'#E8352A':'none')+'" stroke="'+(r.liked?'#E8352A':'currentColor')+'" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
         var rhCount=document.createElement('div');rhCount.className='cheart-count';rhCount.textContent=r.likes>0?r.likes:'';
         (function(reply,hb,hc,post,commentIdx,replyIdx){hb.onclick=function(){reply.liked=!reply.liked;reply.likes=Math.max(0,(reply.likes||0)+(reply.liked?1:-1));hb.className='cheart'+(reply.liked?' liked':'');hb.innerHTML='<svg width="14" height="14" fill="'+(reply.liked?'#E8352A':'none')+'" stroke="'+(reply.liked?'#E8352A':'currentColor')+'" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';hc.textContent=reply.likes>0?reply.likes:'';SFX(reply.liked?'like':'unlike');
-          if(profile&&profile.id){if(reply.liked){_sb.from('comment_likes').insert({comment_id:reply.id,user_id:profile.id}).then(function(){});_sb.from('comments').update({likes_count:reply.likes}).eq('id',reply.id).then(function(){});}else{_sb.from('comment_likes').delete().eq('comment_id',reply.id).eq('user_id',profile.id).then(function(){});_sb.from('comments').update({likes_count:Math.max(0,reply.likes)}).eq('id',reply.id).then(function(){});}}
+          if(profile&&profile.id){if(reply.liked){_sb.from('comment_likes').insert({comment_id:reply.id,user_id:profile.id}).then(function(){});}else{_sb.from('comment_likes').delete().eq('comment_id',reply.id).eq('user_id',profile.id).then(function(){});}}
         };})(r,rhBtn,rhCount,p,ci,c.replies.indexOf(r));
         rhWrap.appendChild(rhBtn);rhWrap.appendChild(rhCount);
 
@@ -5069,24 +5098,10 @@ function renderMe(){
   var meHasStory=meGI>=0;
   var meStorySeen=meHasStory&&svGroups[meGI]&&svGroups[meGI].seen;
   var meRingStyle=meHasStory?('border-radius:50%;padding:3px;background:'+(meStorySeen?'var(--border)':'var(--text)')+';position:relative;display:inline-flex;cursor:pointer;flex-shrink:0'):'position:relative;flex-shrink:0';
-  b.innerHTML='<div style="padding:20px 16px 16px;background:var(--card)"><div style="display:flex;align-items:center;gap:16px;margin-bottom:12px"><div id="me-av-wrap" style="'+meRingStyle+'"><div class="me-av" style="background:var(--card)'+(meHasStory?';padding:2px':'')+'">'+avContent+'</div><div class="me-av-plus" id="me-av-plus-btn"><svg width="11" height="11" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:5px"><span style="font-weight:700;font-size:15px;color:var(--text)">'+E(dName)+'</span>'+badgeSVGFor(profile&&profile.id)+'</div><div style="display:flex;justify-content:space-around"><div style="display:flex;flex-direction:column;align-items:center;gap:1px"><span style="font-weight:700;font-size:17px;color:var(--text)">'+mine.length+'</span><span style="font-size:12px;color:var(--sub)">Drops</span></div><div onclick="openFollowSheet(\''+profile.id+'\',\'followers\')" style="display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer"><span style="font-weight:700;font-size:17px;color:var(--text)">'+(profile&&profile.followers||0)+'</span><span style="font-size:12px;color:var(--sub)">Followers</span></div><div onclick="openFollowSheet(\''+profile.id+'\',\'following\')" style="display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer"><span style="font-weight:700;font-size:17px;color:var(--text)">'+(profile&&profile.following||0)+'</span><span style="font-size:12px;color:var(--sub)">Following</span></div></div></div></div><div style="font-size:13px;color:var(--sub);margin-bottom:'+(profile&&profile.bio?'6':'12')+'px">'+E(uname)+'</div>'+(profile&&profile.bio?'<div style="font-size:13.5px;line-height:1.55;margin-bottom:12px;color:var(--text)">'+E(profile.bio)+'</div>':'')+'<div style="display:flex;gap:8px"><button class="pbtn" style="flex:1;min-width:0" onclick="openEP()">Edit Profile</button><button class="pbtn" style="flex:1;min-width:0" onclick="openShareSheet()">Share</button></div></div><div class="drops-tab"><div class="drops-tab-inner"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0C18 9.5 12 3 12 3z" stroke="var(--text)" stroke-width="2.2" stroke-linejoin="round"/></svg></div></div><div id="me-grid"></div>';
+  b.innerHTML='<div style="padding:20px 16px 16px;background:var(--card)"><div style="display:flex;align-items:center;gap:16px;margin-bottom:12px"><div id="me-av-wrap" style="'+meRingStyle+'"><div class="me-av" style="background:var(--card)'+(meHasStory?';padding:2px':'')+'">'+avContent+'</div><label class="me-av-plus" for="me-photo-input" onclick="event.stopPropagation()"><svg width="11" height="11" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></label><input id="me-photo-input" type="file" accept="image/*" style="display:none" onchange="pickProfPhoto(event)"/></div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px"><div style="display:flex;align-items:center;gap:5px"><span style="font-weight:700;font-size:15px;color:var(--text)">'+E(dName)+'</span>'+badgeSVGFor(profile&&profile.id)+'</div><div style="display:flex;justify-content:space-around"><div style="display:flex;flex-direction:column;align-items:center;gap:1px"><span style="font-weight:700;font-size:17px;color:var(--text)">'+mine.length+'</span><span style="font-size:12px;color:var(--sub)">Drops</span></div><div onclick="openFollowSheet(\''+profile.id+'\',\'followers\')" style="display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer"><span style="font-weight:700;font-size:17px;color:var(--text)">'+(profile&&profile.followers||0)+'</span><span style="font-size:12px;color:var(--sub)">Followers</span></div><div onclick="openFollowSheet(\''+profile.id+'\',\'following\')" style="display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer"><span style="font-weight:700;font-size:17px;color:var(--text)">'+(profile&&profile.following||0)+'</span><span style="font-size:12px;color:var(--sub)">Following</span></div></div></div></div><div style="font-size:13px;color:var(--sub);margin-bottom:'+(profile&&profile.bio?'6':'12')+'px">'+E(uname)+'</div>'+(profile&&profile.bio?'<div style="font-size:13.5px;line-height:1.55;margin-bottom:12px;color:var(--text)">'+E(profile.bio)+'</div>':'')+'<div style="display:flex;gap:8px"><button class="pbtn" style="flex:1;min-width:0" onclick="openEP()">Edit Profile</button><button class="pbtn" style="flex:1;min-width:0" onclick="openShareSheet()">Share</button></div></div><div class="drops-tab"><div class="drops-tab-inner"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0C18 9.5 12 3 12 3z" stroke="var(--text)" stroke-width="2.2" stroke-linejoin="round"/></svg></div></div><div id="me-grid"></div>';
   // Wire Me avatar: tap=story/photo, hold=peek
   var meAvWrap=document.getElementById('me-av-wrap');
   attachAvatarInteractions(meAvWrap, profPhotoUrl||profile&&profile.avatar_url||null, true, profile&&profile.id);
-  // Create hidden file input outside wrap (avoids label/for triggering avatar click)
-  var _meInp=document.getElementById('me-photo-input');
-  if(_meInp)_meInp.parentNode.removeChild(_meInp);
-  var _meInp=document.createElement('input');
-  _meInp.id='me-photo-input';_meInp.type='file';_meInp.accept='image/*';_meInp.style.display='none';
-  _meInp.onchange=function(ev){pickProfPhoto(ev);};
-  document.body.appendChild(_meInp);
-  // Wire + button — intercept both touch and click so it never bubbles to avatar wrap
-  var _plusBtn=document.getElementById('me-av-plus-btn');
-  if(_plusBtn){
-    function _openPicker(ev){ev.stopPropagation();ev.preventDefault();_meInp.click();}
-    _plusBtn.addEventListener('touchstart',_openPicker,{passive:false});
-    _plusBtn.addEventListener('click',_openPicker);
-  }
   var g=document.getElementById('me-grid');
   g.innerHTML='';g.className='';g.style.cssText='background:var(--bg)';
   if(!mine.length){
@@ -6278,17 +6293,10 @@ function saveProfile(){if(!profile)return;var newName=document.getElementById('e
   saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';
   saveBtn.onclick=function(){
     var src=overlay._src;if(!src)return;
-    fetch(src).then(function(r){return r.blob();}).then(function(blob){
-      var url=URL.createObjectURL(blob);
-      var a=document.createElement('a');a.href=url;a.download='fade-photo.jpg';a.click();
-      setTimeout(function(){URL.revokeObjectURL(url);},2000);
-      saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Saved';
-      saveBtn.style.background='rgba(255,255,255,.3)';
-      setTimeout(function(){saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';saveBtn.style.background='rgba(255,255,255,.15)';},2000);
-    }).catch(function(){
-      window.open(src,'_blank');
-      T('Long-press the photo to save');
-    });
+    var a=document.createElement('a');a.href=src;a.download='fade-photo.jpg';a.click();
+    saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Saved';
+    saveBtn.style.background='rgba(255,255,255,.3)';
+    setTimeout(function(){saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';saveBtn.style.background='rgba(255,255,255,.15)';},2000);
   };
   topBar.appendChild(closeBtn);topBar.appendChild(saveBtn);
   var img=document.createElement('img');
@@ -6335,8 +6343,7 @@ function userHasStory(uid){return storyGIForUser(uid)>=0;}
 function attachAvatarInteractions(el,avatarUrl,isOwn,uid){
   if(!el)return;
   var holdTimer=null,didHold=false;
-  function startHold(ev){
-    if(ev&&ev.target&&ev.target.closest&&ev.target.closest('.me-av-plus'))return;
+  function startHold(){
     didHold=false;
     holdTimer=setTimeout(function(){
       didHold=true;
@@ -6344,10 +6351,8 @@ function attachAvatarInteractions(el,avatarUrl,isOwn,uid){
     },500);
   }
   function endHold(){clearTimeout(holdTimer);}
-  function handleClick(e){
+  function handleClick(){
     if(didHold){didHold=false;return;}
-    // If the + button (me-av-plus label) was clicked, let it handle the file input — don't interfere
-    if(e&&e.target&&(e.target.closest('.me-av-plus')))return;
     var gi=storyGIForUser(uid);
     if(gi>=0){
       // hide prof-screen behind SV, restore on closeSV
@@ -6371,7 +6376,7 @@ function attachAvatarInteractions(el,avatarUrl,isOwn,uid){
   el.addEventListener('mouseup',endHold);
   el.addEventListener('touchend',endHold);
   el.addEventListener('mouseleave',endHold);
-  el.addEventListener('click',function(e){handleClick(e);});
+  el.addEventListener('click',handleClick);
 }
 
 
