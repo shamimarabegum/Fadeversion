@@ -6353,6 +6353,12 @@ function attachAvatarInteractions(el,avatarUrl,isOwn,uid){
   function endHold(){clearTimeout(holdTimer);}
   function handleClick(){
     if(didHold){didHold=false;return;}
+    if(isOwn){
+      // own profile — always open file picker to change photo
+      var inp=document.getElementById('me-photo-input');
+      if(inp)inp.click();
+      return;
+    }
     var gi=storyGIForUser(uid);
     if(gi>=0){
       // hide prof-screen behind SV, restore on closeSV
@@ -6360,14 +6366,8 @@ function attachAvatarInteractions(el,avatarUrl,isOwn,uid){
       if(ps&&ps.classList.contains('on')){
         _svFromProf=true;
         ps.classList.remove('on');
-        // keep display:flex so it's ready to animate back
       }
       openSV(gi);
-    }
-    else if(isOwn){
-      // own profile, no story — open file picker to change photo
-      var inp=document.getElementById('me-photo-input');
-      if(inp)inp.click();
     }
     else if(avatarUrl){openPhotoViewer(avatarUrl,{isProfile:true,canChange:false});}
   }
