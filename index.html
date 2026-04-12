@@ -26,7 +26,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',s
 .screen.active{transform:translateX(0)}
 .screen.left{transform:translateX(-20%)}
 .scroller{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:16px;position:relative}
-.feed-fade-overlay{position:fixed;bottom:56px;left:0;right:0;height:48px;pointer-events:none;z-index:9;background:linear-gradient(to bottom,transparent,var(--bg));transition:opacity .3s;opacity:0}
 .scroller::-webkit-scrollbar{display:none}
 
 /* AUTH */
@@ -906,7 +905,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     <div style="position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column">
       <div id="ptr"><div class="ptr-ring"></div></div>
       <div id="new-posts-banner" onclick="tapNewPostsBanner()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg><span id="new-posts-label">New posts</span></div>
-      <div class="scroller" id="today-scroll"><div class="strip" id="strip"></div><div id="feed"></div></div><div class="feed-fade-overlay" id="feed-fade-overlay"></div>
+      <div class="scroller" id="today-scroll"><div class="strip" id="strip"></div><div id="feed"></div></div>
     </div>
   </div>
   <div id="s-search" class="screen">
@@ -1472,9 +1471,20 @@ var _dobChanges=[],_emailChanges=[];
 
   // Called after successful auth via initApp()
   window._triggerA2HS=function(){
-    // Only show if user has interacted (signed in), not on first load
+    if(isInStandalone)return; // already installed
+    // If native prompt is ready, fire it directly after sign-in
+    if(window._a2hsDeferredPrompt){
+      setTimeout(function(){
+        window._a2hsDeferredPrompt.prompt();
+        window._a2hsDeferredPrompt.userChoice.then(function(choice){
+          window._a2hsDeferredPrompt=null;
+        });
+      }, 2000);
+      return;
+    }
+    // Fallback: show custom sheet after short delay
     if(_showCount>=MAX_SHOWS)return;
-    setTimeout(window.showA2HS, 8000);
+    setTimeout(window.showA2HS, 5000);
   };
 })();
 
@@ -1821,7 +1831,6 @@ function goTab(n){
   if(n==='search'){setTimeout(function(){var s=document.getElementById('sinp');if(s)s.focus();},350);showSearchHome();}
   if(n==='me')renderMe();
   if(n==='talk')renderTalkList();
-  var _ffo=document.getElementById('feed-fade-overlay');if(_ffo)_ffo.style.opacity=(n==='today'?'1':'0');
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -6992,55 +7001,35 @@ function closeFollowSheet(){
 </script>
 <script>
 (function(){
-  // ── Inline Web Manifest ──────────────────────────────────────────────────
+  // Inline Web Manifest
   var manifest={
-    name:"Fade",
-    short_name:"Fade",
+    name:"Fade",short_name:"Fade",
     description:"Everything fades in 24 hours.",
-    start_url:"/",
-    display:"standalone",
+    start_url:"/",display:"standalone",
     orientation:"portrait",
-    background_color:"#1A1A1A",
-    theme_color:"#1A1A1A",
+    background_color:"#1A1A1A",theme_color:"#1A1A1A",
     icons:[
       {src:"https://xmgmpewuevzgriqgsoct.supabase.co/storage/v1/object/public/avatars/android-chrome-512x512.png",sizes:"512x512",type:"image/png",purpose:"any maskable"},
       {src:"https://xmgmpewuevzgriqgsoct.supabase.co/storage/v1/object/public/avatars/android-chrome-512x512.png",sizes:"192x192",type:"image/png",purpose:"any maskable"}
     ]
   };
-  var blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
-  var url=URL.createObjectURL(blob);
-  var el=document.getElementById('pwa-manifest');
-  if(el)el.href=url;
+  var mBlob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  var mUrl=URL.createObjectURL(mBlob);
+  var mEl=document.getElementById('pwa-manifest');
+  if(mEl)mEl.href=mUrl;
 
-  // ── Inline Service Worker ────────────────────────────────────────────────
+  // Inline Service Worker
   if('serviceWorker' in navigator){
     var swCode=[
-      'var CACHE="fade-v1";',
-      'self.addEventListener("install",function(e){',
-      '  e.waitUntil(caches.open(CACHE).then(function(c){',
-      '    return c.addAll(["/"]);',
-      '  }));',
-      '  self.skipWaiting();',
-      '});',
-      'self.addEventListener("activate",function(e){',
-      '  e.waitUntil(caches.keys().then(function(keys){',
-      '    return Promise.all(keys.filter(function(k){return k!==CACHE;}).map(function(k){return caches.delete(k);}));',
-      '  }));',
-      '  self.clients.claim();',
-      '});',
-      'self.addEventListener("fetch",function(e){',
-      '  if(e.request.method!=="GET")return;',
-      '  e.respondWith(fetch(e.request).catch(function(){',
-      '    return caches.match(e.request).then(function(r){return r||caches.match("/");});',
-      '  }));',
-      '});'
-    ].join("\n");
+      'var CACHE="fade-v2";',
+      'self.addEventListener("install",function(e){e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(["/"]);}).catch(function(){}));self.skipWaiting();});',
+      'self.addEventListener("activate",function(e){e.waitUntil(caches.keys().then(function(keys){return Promise.all(keys.filter(function(k){return k!==CACHE;}).map(function(k){return caches.delete(k);}));}));self.clients.claim();});',
+      'self.addEventListener("fetch",function(e){if(e.request.method!=="GET")return;e.respondWith(fetch(e.request).catch(function(){return caches.match(e.request).then(function(r){return r||caches.match("/");});}));});'
+    ].join('\n');
     var swBlob=new Blob([swCode],{type:'application/javascript'});
     var swUrl=URL.createObjectURL(swBlob);
     window.addEventListener('load',function(){
-      navigator.serviceWorker.register(swUrl,{scope:'/'}).then(function(){
-        console.log('Fade SW registered');
-      }).catch(function(e){console.log('SW failed:',e);});
+      navigator.serviceWorker.register(swUrl,{scope:'/'}).catch(function(){});
     });
   }
 })();
