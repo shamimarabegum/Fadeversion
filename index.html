@@ -4583,7 +4583,21 @@ function closeCtx(){document.getElementById('msg-ctx').style.display='none';docu
 function ctxReact(emoji){if(!_ctxMsg||!_ctxBsEl)return closeCtx();var m=_ctxMsg,bs=_ctxBsEl,isMine=_ctxIsMine;var removing=m.reaction===emoji;m.reaction=removing?null:emoji;if(!removing)SFX('react');var old=bs.querySelector('.rxn-badge');if(old)old.remove();if(m.reaction)bs.appendChild(makeBadge(m,isMine,bs));closeCtx();if(!removing)T(emoji+' added');_sb.from('messages').update({reaction:m.reaction}).eq('id',m.id).then(function(){});}
 function ctxReply(){if(!_ctxMsg)return closeCtx();_replyMsg=_ctxMsg;var sName=_ctxMsg.sid==='demo'?'You':(chatUser&&chatUser.display_name||'Them');_replyMsg._sName=sName;document.getElementById('reply-name').textContent=sName;document.getElementById('reply-preview').textContent=(_ctxMsg.text||(_ctxMsg.isPhoto?'📷 Photo':'')).slice(0,50)||'…';document.getElementById('reply-bar').classList.add('on');document.getElementById('chatinp').focus();closeCtx();}
 function cancelReplyBar(){_replyMsg=null;document.getElementById('reply-bar').classList.remove('on');}
-function ctxSavePhoto(){if(!_ctxMsg||!_ctxMsg.img)return closeCtx();var a=document.createElement('a');a.href=_ctxMsg.img;a.download='fade-photo.jpg';a.click();closeCtx();T('Photo saved');}
+function ctxSavePhoto(){
+  if(!_ctxMsg||!_ctxMsg.img)return closeCtx();
+  var src=_ctxMsg.img;
+  closeCtx();
+  fetch(src).then(function(r){return r.blob();}).then(function(blob){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download='fade-photo.jpg';a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);},2000);
+    T('Photo saved');
+  }).catch(function(){
+    // fallback for CORS-restricted envs — open in new tab so user can long-press save
+    window.open(src,'_blank');
+    T('Long-press the photo to save');
+  });
+}
 function ctxCopy(){if(!_ctxMsg)return closeCtx();if(navigator.clipboard)navigator.clipboard.writeText(_ctxMsg.text||'').catch(function(){});T('Copied');closeCtx();}
 function ctxUnsend(){
   if(!_ctxMsg)return closeCtx();
@@ -4891,8 +4905,13 @@ function renderCSList(){
         SFX(comment.liked?'like':'unlike');
         // Persist to Supabase
         if(profile&&profile.id){
-          if(comment.liked){_sb.from('comment_likes').insert({comment_id:comment.id,user_id:profile.id}).then(function(){});}
-          else{_sb.from('comment_likes').delete().eq('comment_id',comment.id).eq('user_id',profile.id).then(function(){});}
+          if(comment.liked){
+            _sb.from('comment_likes').insert({comment_id:comment.id,user_id:profile.id}).then(function(){});
+            _sb.from('comments').update({likes_count:comment.likes}).eq('id',comment.id).then(function(){});
+          } else {
+            _sb.from('comment_likes').delete().eq('comment_id',comment.id).eq('user_id',profile.id).then(function(){});
+            _sb.from('comments').update({likes_count:Math.max(0,comment.likes)}).eq('id',comment.id).then(function(){});
+          }
         }
       };
     })(c,heartBtn,heartCount,p,ci);
@@ -4952,7 +4971,7 @@ function renderCSList(){
         rhBtn.innerHTML='<svg width="14" height="14" fill="'+(r.liked?'#E8352A':'none')+'" stroke="'+(r.liked?'#E8352A':'currentColor')+'" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
         var rhCount=document.createElement('div');rhCount.className='cheart-count';rhCount.textContent=r.likes>0?r.likes:'';
         (function(reply,hb,hc,post,commentIdx,replyIdx){hb.onclick=function(){reply.liked=!reply.liked;reply.likes=Math.max(0,(reply.likes||0)+(reply.liked?1:-1));hb.className='cheart'+(reply.liked?' liked':'');hb.innerHTML='<svg width="14" height="14" fill="'+(reply.liked?'#E8352A':'none')+'" stroke="'+(reply.liked?'#E8352A':'currentColor')+'" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';hc.textContent=reply.likes>0?reply.likes:'';SFX(reply.liked?'like':'unlike');
-          if(profile&&profile.id){if(reply.liked){_sb.from('comment_likes').insert({comment_id:reply.id,user_id:profile.id}).then(function(){});}else{_sb.from('comment_likes').delete().eq('comment_id',reply.id).eq('user_id',profile.id).then(function(){});}}
+          if(profile&&profile.id){if(reply.liked){_sb.from('comment_likes').insert({comment_id:reply.id,user_id:profile.id}).then(function(){});_sb.from('comments').update({likes_count:reply.likes}).eq('id',reply.id).then(function(){});}else{_sb.from('comment_likes').delete().eq('comment_id',reply.id).eq('user_id',profile.id).then(function(){});_sb.from('comments').update({likes_count:Math.max(0,reply.likes)}).eq('id',reply.id).then(function(){});}}
         };})(r,rhBtn,rhCount,p,ci,c.replies.indexOf(r));
         rhWrap.appendChild(rhBtn);rhWrap.appendChild(rhCount);
 
@@ -6245,10 +6264,17 @@ function saveProfile(){if(!profile)return;var newName=document.getElementById('e
   saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';
   saveBtn.onclick=function(){
     var src=overlay._src;if(!src)return;
-    var a=document.createElement('a');a.href=src;a.download='fade-photo.jpg';a.click();
-    saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Saved';
-    saveBtn.style.background='rgba(255,255,255,.3)';
-    setTimeout(function(){saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';saveBtn.style.background='rgba(255,255,255,.15)';},2000);
+    fetch(src).then(function(r){return r.blob();}).then(function(blob){
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');a.href=url;a.download='fade-photo.jpg';a.click();
+      setTimeout(function(){URL.revokeObjectURL(url);},2000);
+      saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Saved';
+      saveBtn.style.background='rgba(255,255,255,.3)';
+      setTimeout(function(){saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';saveBtn.style.background='rgba(255,255,255,.15)';},2000);
+    }).catch(function(){
+      window.open(src,'_blank');
+      T('Long-press the photo to save');
+    });
   };
   topBar.appendChild(closeBtn);topBar.appendChild(saveBtn);
   var img=document.createElement('img');
@@ -6303,8 +6329,10 @@ function attachAvatarInteractions(el,avatarUrl,isOwn,uid){
     },500);
   }
   function endHold(){clearTimeout(holdTimer);}
-  function handleClick(){
+  function handleClick(e){
     if(didHold){didHold=false;return;}
+    // If the + button (me-av-plus label) was clicked, let it handle the file input — don't interfere
+    if(e&&e.target&&(e.target.closest('.me-av-plus')))return;
     var gi=storyGIForUser(uid);
     if(gi>=0){
       // hide prof-screen behind SV, restore on closeSV
@@ -6328,7 +6356,7 @@ function attachAvatarInteractions(el,avatarUrl,isOwn,uid){
   el.addEventListener('mouseup',endHold);
   el.addEventListener('touchend',endHold);
   el.addEventListener('mouseleave',endHold);
-  el.addEventListener('click',handleClick);
+  el.addEventListener('click',function(e){handleClick(e);});
 }
 
 
