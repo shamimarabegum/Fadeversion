@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <title>Fade</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231A1A1A'/%3E%3Ctext x='16' y='24' text-anchor='middle' font-family='Georgia%2C serif' font-style='italic' font-size='22' font-weight='700' fill='white'%3EF%3C/text%3E%3C/svg%3E"/>
+<link rel="apple-touch-icon" href="https://xmgmpewuevzgriqgsoct.supabase.co/storage/v1/object/public/avatars/android-chrome-512x512.png"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="Fade"/>
 <meta name="theme-color" content="#1A1A1A"/>
-<link rel="manifest" href="/manifest.json"/>
+<link rel="manifest" id="pwa-manifest"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -6990,15 +6991,59 @@ function closeFollowSheet(){
 (function(){if(!window.visualViewport)return;window.visualViewport.addEventListener('resize',function(){var kbH=Math.max(0,window.innerHeight-window.visualViewport.height);var cw=document.getElementById('cw'),foot=cw&&cw.querySelector('.chatfoot'),msgs=document.getElementById('msgs');if(cw&&cw.classList.contains('on')&&foot){foot.style.marginBottom=kbH>0?kbH+'px':'0';if(kbH>0&&msgs)msgs.scrollTop=msgs.scrollHeight;}},{passive:true});})();
 </script>
 <script>
-if('serviceWorker' in navigator){
-  window.addEventListener('load',function(){
-    navigator.serviceWorker.register('/sw.js').then(function(reg){
-      console.log('SW registered');
-    }).catch(function(err){
-      console.log('SW failed:',err);
+(function(){
+  // ── Inline Web Manifest ──────────────────────────────────────────────────
+  var manifest={
+    name:"Fade",
+    short_name:"Fade",
+    description:"Everything fades in 24 hours.",
+    start_url:"/",
+    display:"standalone",
+    orientation:"portrait",
+    background_color:"#1A1A1A",
+    theme_color:"#1A1A1A",
+    icons:[
+      {src:"https://xmgmpewuevzgriqgsoct.supabase.co/storage/v1/object/public/avatars/android-chrome-512x512.png",sizes:"512x512",type:"image/png",purpose:"any maskable"},
+      {src:"https://xmgmpewuevzgriqgsoct.supabase.co/storage/v1/object/public/avatars/android-chrome-512x512.png",sizes:"192x192",type:"image/png",purpose:"any maskable"}
+    ]
+  };
+  var blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var el=document.getElementById('pwa-manifest');
+  if(el)el.href=url;
+
+  // ── Inline Service Worker ────────────────────────────────────────────────
+  if('serviceWorker' in navigator){
+    var swCode=[
+      'var CACHE="fade-v1";',
+      'self.addEventListener("install",function(e){',
+      '  e.waitUntil(caches.open(CACHE).then(function(c){',
+      '    return c.addAll(["/"]);',
+      '  }));',
+      '  self.skipWaiting();',
+      '});',
+      'self.addEventListener("activate",function(e){',
+      '  e.waitUntil(caches.keys().then(function(keys){',
+      '    return Promise.all(keys.filter(function(k){return k!==CACHE;}).map(function(k){return caches.delete(k);}));',
+      '  }));',
+      '  self.clients.claim();',
+      '});',
+      'self.addEventListener("fetch",function(e){',
+      '  if(e.request.method!=="GET")return;',
+      '  e.respondWith(fetch(e.request).catch(function(){',
+      '    return caches.match(e.request).then(function(r){return r||caches.match("/");});',
+      '  }));',
+      '});'
+    ].join("\n");
+    var swBlob=new Blob([swCode],{type:'application/javascript'});
+    var swUrl=URL.createObjectURL(swBlob);
+    window.addEventListener('load',function(){
+      navigator.serviceWorker.register(swUrl,{scope:'/'}).then(function(){
+        console.log('Fade SW registered');
+      }).catch(function(e){console.log('SW failed:',e);});
     });
-  });
-}
+  }
+})();
 </script>
 </body>
 </html>
