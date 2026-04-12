@@ -24,7 +24,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',s
 .screen{display:flex;flex-direction:column;overflow:hidden;position:absolute;inset:0;transform:translateX(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94);background:var(--bg)}
 .screen.active{transform:translateX(0)}
 .screen.left{transform:translateX(-20%)}
-.scroller{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:16px}
+.scroller{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:16px;position:relative}
+.feed-fade-overlay{position:fixed;bottom:56px;left:0;right:0;height:72px;pointer-events:none;z-index:9;background:linear-gradient(to bottom,transparent,var(--bg));transition:opacity .3s}
 .scroller::-webkit-scrollbar{display:none}
 
 /* AUTH */
@@ -85,7 +86,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .lav{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:inherit}
 
 /* STORY STRIP */
-.strip{display:flex;gap:12px;padding:14px;overflow-x:auto;background:var(--card);flex-shrink:0}
+.strip{display:flex;gap:12px;padding:14px 16px;overflow-x:auto;flex-shrink:0;background:rgba(255,255,255,0.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,0.06)}
 .strip::-webkit-scrollbar{display:none}
 .sitm{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0;transition:opacity .15s,transform .15s}
 .sitm:active{opacity:.5;transform:scale(.92)}
@@ -127,17 +128,15 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.posthd{display:flex;align-items:center;gap:11px;padding:12px 14px 8px}
-.post{background:var(--card);transition:filter 4s linear}
-.fade-bar-wrap{height:2px;background:transparent;width:100%;overflow:hidden}
-.fade-bar{height:2px;border-radius:0 2px 2px 0;transition:width 60s linear,background-color 60s linear}
-.av{width:38px;height:38px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;cursor:pointer;font-size:15px}
+.posthd{display:flex;align-items:center;gap:13px;padding:14px 16px 10px}
+.post{background:var(--card)}
+.av{width:42px;height:42px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;cursor:pointer;font-size:16px}
 .postmeta{flex:1;cursor:pointer}
-.postname{font-weight:600;font-size:14.5px}
-.posttm{font-size:12px;color:var(--sub);margin-top:1px}
-.postbody{font-size:15.5px;line-height:1.72;padding:10px 14px}
-.post-caption{font-size:15px;line-height:1.68;padding:8px 14px 2px}
-.postacts{display:flex;gap:18px;padding:10px 14px 18px;align-items:center}
+.postname{font-weight:700;font-size:14.5px;letter-spacing:-.1px}
+.posttm{font-size:11.5px;color:var(--sub);margin-top:2px;font-weight:400;letter-spacing:.1px}
+.postbody{font-size:15px;line-height:1.75;padding:8px 16px 2px;font-weight:400;color:var(--text)}
+.post-caption{font-size:15px;line-height:1.72;padding:8px 16px 2px;font-weight:400}
+.postacts{display:flex;gap:20px;padding:10px 16px 18px;align-items:center}
 .actbtn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--sub);font-family:'Inter',sans-serif;transition:color .15s,transform .12s}
 .actbtn:active{transform:scale(.88)}
 .actbtn.liked{color:#E8352A}
@@ -555,10 +554,22 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 /* Like / heart pop */
 @keyframes heartPop {
   0%   { transform: scale(1); }
-  30%  { transform: scale(1.42); }
-  60%  { transform: scale(.88); }
-  80%  { transform: scale(1.12); }
+  25%  { transform: scale(1.55); }
+  50%  { transform: scale(.85); }
+  75%  { transform: scale(1.15); }
   100% { transform: scale(1); }
+}
+@keyframes particleFly {
+  0%   { transform: translate(0,0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx),var(--ty)) scale(0); opacity: 0; }
+}
+.heart-particle {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particleFly 0.55s cubic-bezier(.2,.8,.4,1) forwards;
+  z-index: 10;
 }
 
 /* Unlike subtle shrink */
@@ -763,16 +774,16 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 
 /* Skeleton post card structure */
 .skeleton-post {
-  padding: 14px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 11px;
   background: var(--card);
 }
 .skeleton-post-hd {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 13px;
 }
 
 /* ── PRESS FEEDBACK ────────────────────────────────────────── */
@@ -894,7 +905,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     <div style="position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column">
       <div id="ptr"><div class="ptr-ring"></div></div>
       <div id="new-posts-banner" onclick="tapNewPostsBanner()"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg><span id="new-posts-label">New posts</span></div>
-      <div class="scroller" id="today-scroll"><div class="strip" id="strip"></div><div id="feed"></div></div>
+      <div class="scroller" id="today-scroll"><div class="strip" id="strip"></div><div id="feed"></div></div><div class="feed-fade-overlay" id="feed-fade-overlay"></div>
     </div>
   </div>
   <div id="s-search" class="screen">
@@ -1641,41 +1652,6 @@ function E(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 function ago(d){var diff=Date.now()-(typeof d==='number'?d:new Date(d).getTime());if(diff<60000)return'now';if(diff<3600000)return Math.floor(diff/60000)+'m';if(diff<86400000)return Math.floor(diff/3600000)+'h';return'1d';}
 function agoS(d){var diff=Date.now()-new Date(d).getTime();if(diff<3600000)return Math.floor(diff/60000)+'m ago';return Math.floor(diff/3600000)+'h ago';}
 function fadeIn(ts){var rem=Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);return rem<=0?'soon':h>0?h+'h':m+'m';}
-// ── FADE BAR helpers ──────────────────────────────────────────────────────────
-function _fadeRem(ts){return Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));}
-function _fadeBarColor(rem){
-  var pct=rem/86400000; // 1.0 = full, 0 = gone
-  if(pct>0.25)return'#d1d5db'; // neutral grey — plenty of time
-  if(pct>0.083)return'#f59e0b'; // amber — under 2h
-  return'#ef4444'; // red — under 30m
-}
-function _fadeSaturate(rem){
-  var pct=rem/86400000;
-  if(pct>0.25)return 1;          // full colour
-  if(pct>0.083)return 0.6+(pct-0.083)/(0.25-0.083)*0.4; // 2h→6h: 60%→100%
-  return 0.25+(pct/0.083)*0.35;  // 0→2h: 25%→60%
-}
-function _applyFadeBar(el,ts){
-  var rem=_fadeRem(ts);
-  var pct=Math.max(0,rem/86400000)*100;
-  var bar=el.querySelector('.fade-bar');
-  var wrap=el.querySelector('.fade-bar-wrap');
-  if(bar){bar.style.width=pct+'%';bar.style.backgroundColor=_fadeBarColor(rem);}
-  // desaturate
-  var sat=_fadeSaturate(rem);
-  el.style.filter=sat<1?'saturate('+sat+')':'';
-  // hide bar entirely if expired
-  if(wrap)wrap.style.opacity=rem<=0?'0':'1';
-}
-var _fadeTickInterval=null;
-function _startFadeTick(){
-  if(_fadeTickInterval)return;
-  _fadeTickInterval=setInterval(function(){
-    document.querySelectorAll('.post[data-pts]').forEach(function(el){
-      _applyFadeBar(el,el.dataset.pts);
-    });
-  },60000);
-}
 function bgClose(e,id){if(e.target.id===id||e.target.classList.contains('compose-dim'))closeSheet(id);}
 function closeSheet(id){var el=document.getElementById(id);var sheet=el&&el.querySelector('.sheet');if(sheet)sheet.style.transform='translateY(100%)';setTimeout(function(){if(el)el.style.display='none';},320);}
 function grow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,88)+'px';}
@@ -1791,6 +1767,7 @@ function applyDark(on, skipSave){
     r.style.setProperty('--inp-ph','#636366');
     r.style.setProperty('--bubble-them','#2C2C2E');
     r.style.setProperty('--bubble-them-text','#F2F2F7');
+    var _strip=document.getElementById('strip');if(_strip)_strip.style.background='rgba(28,28,30,0.82)';
   } else {
     r.style.setProperty('--bg','#ffffff');
     r.style.setProperty('--card','#ffffff');
@@ -1803,6 +1780,7 @@ function applyDark(on, skipSave){
     r.style.setProperty('--inp-ph','#AEAEAA');
     r.style.setProperty('--bubble-them','#F0F0F0');
     r.style.setProperty('--bubble-them-text','#111111');
+    var _strip=document.getElementById('strip');if(_strip)_strip.style.background='';
   }
   // Persist per-user so it survives reload but resets on logout
   if(!skipSave && profile){
@@ -1842,6 +1820,7 @@ function goTab(n){
   if(n==='search'){setTimeout(function(){var s=document.getElementById('sinp');if(s)s.focus();},350);showSearchHome();}
   if(n==='me')renderMe();
   if(n==='talk')renderTalkList();
+  var _ffo=document.getElementById('feed-fade-overlay');if(_ffo)_ffo.style.opacity=(n==='today'?'1':'0');
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -2993,7 +2972,7 @@ function renderFeed(){
   // Show skeleton placeholders
   var skHTML='';
   for(var si=0;si<4;si++){
-    skHTML+='<div class="skeleton-post" style="opacity:'+(1-si*0.18)+'"><div class="skeleton-post-hd"><div class="skeleton skeleton-avatar" style="width:38px;height:38px;flex-shrink:0"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="skeleton skeleton-text" style="width:38%"></div><div class="skeleton skeleton-text" style="width:22%"></div></div></div><div class="skeleton skeleton-text" style="width:75%"></div><div class="skeleton skeleton-text" style="width:55%"></div><div style="display:flex;gap:16px;padding-top:4px"><div class="skeleton skeleton-round" style="width:52px;height:20px"></div><div class="skeleton skeleton-round" style="width:52px;height:20px"></div></div></div>';
+    skHTML+='<div class="skeleton-post" style="opacity:'+(1-si*0.18)+'"><div class="skeleton-post-hd"><div class="skeleton skeleton-avatar" style="width:42px;height:42px;flex-shrink:0"></div><div style="flex:1;display:flex;flex-direction:column;gap:7px"><div class="skeleton skeleton-text" style="width:36%"></div><div class="skeleton skeleton-text" style="width:20%"></div></div></div>'+(si%2===0?'<div class="skeleton skeleton-img" style="width:100%;aspect-ratio:4/5;border-radius:0;margin:0 -16px;width:calc(100% + 32px)"></div>':'<div class="skeleton skeleton-text" style="width:78%"></div><div class="skeleton skeleton-text" style="width:58%"></div>')+'<div style="display:flex;gap:16px;padding-top:2px"><div class="skeleton skeleton-round" style="width:52px;height:20px"></div><div class="skeleton skeleton-round" style="width:52px;height:20px"></div></div></div>';
   }
   f.innerHTML=skHTML;
   _loadFeedPage(true);
@@ -3118,8 +3097,6 @@ function renderFeedRows(rows,likedIds,isFirst){
 }
 function buildPost(p, showDelete){
   var el=document.createElement('div');el.className='post';el.dataset.pid=p.id;
-  // Store post timestamp for the fade tick
-  el.dataset.pts=p.ts;
   var a=p.author||{};
   var uJ=JSON.stringify(USERS.find(function(x){return x.id===p.uid;})||{id:p.uid,username:a.username,display_name:a.display_name,avatar_url:null});
   var isOwn=profile&&p.uid===profile.id;
@@ -3139,16 +3116,7 @@ function buildPost(p, showDelete){
   var _ownerCmtPerm=isOwn?S.cmtPerm:(_postOwner.cmt_perm||'everyone');
   var canCmt=isOwn||(_ownerCmtPerm==='everyone')||(_ownerCmtPerm==='followers'&&following.has(p.uid));
   var acts='<div class="postacts"><button class="actbtn'+(p.liked?' liked':'')+'" id="lb-'+p.id+'" onclick="likePost(\''+p.id+'\',this)"><svg id="hi-'+p.id+'" width="24" height="24" fill="'+(p.liked?'currentColor':'none')+'" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+lc+'</button>'+(canCmt?'<button class="actbtn" onclick="openCS(\''+p.id+'\')"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0-9-9c0 1.68.46 3.25 1.27 4.6L3 21l4.4-1.27A8.96 8.96 0 0 0 12 21z"/></svg>'+cc+'</button>':'')+'</div>';
-  var rem=_fadeRem(p.ts);
-  var barPct=Math.max(0,rem/86400000)*100;
-  var barColor=_fadeBarColor(rem);
-  var barHTML='<div class="fade-bar-wrap"><div class="fade-bar" style="width:'+barPct+'%;background-color:'+barColor+'"></div></div>';
-  el.innerHTML=hdr+mediaHTML+textHTML+acts+barHTML;
-  // Apply initial desaturation
-  var sat=_fadeSaturate(rem);
-  if(sat<1)el.style.filter='saturate('+sat+')';
-  // Start global tick if not running
-  _startFadeTick();
+  el.innerHTML=hdr+mediaHTML+textHTML+acts;
   // Double-tap to like
   var _lastTap=0;
   el.addEventListener('touchend',function(e){
@@ -3187,7 +3155,24 @@ function likePost(id,btn){
   document.querySelectorAll('#lc-'+id).forEach(function(lc){lc.textContent=p.likes;});
   document.querySelectorAll('#hi-'+id).forEach(function(h){
     h.setAttribute('fill',p.liked?'currentColor':'none');
-    if(p.liked){h.classList.remove('anim-heart-pop');void h.offsetWidth;h.classList.add('anim-heart-pop');h.addEventListener('animationend',function(){h.classList.remove('anim-heart-pop');},{once:true});}
+    if(p.liked){
+      h.classList.remove('anim-heart-pop');void h.offsetWidth;h.classList.add('anim-heart-pop');
+      h.addEventListener('animationend',function(){h.classList.remove('anim-heart-pop');},{once:true});
+      // Particle burst
+      var hRect=h.getBoundingClientRect();
+      var cx=hRect.left+hRect.width/2,cy=hRect.top+hRect.height/2;
+      var colors=['#E8352A','#FF6B6B','#FF9F9F','#FFD1D1','#FF4E4E','#C0392B'];
+      for(var _pi=0;_pi<6;_pi++){
+        var _p=document.createElement('div');_p.className='heart-particle';
+        var angle=(_pi/6)*Math.PI*2;var dist=28+Math.random()*14;
+        _p.style.setProperty('--tx',(Math.cos(angle)*dist)+'px');
+        _p.style.setProperty('--ty',(Math.sin(angle)*dist)+'px');
+        _p.style.background=colors[_pi%colors.length];
+        _p.style.left=(cx-3)+'px';_p.style.top=(cy-3)+'px';_p.style.position='fixed';
+        document.body.appendChild(_p);
+        _p.addEventListener('animationend',function(){if(this.parentNode)this.parentNode.removeChild(this);});
+      }
+    }
   });
   SFX(p.liked?'like':'unlike');
   if(p.liked)haptic('like');
