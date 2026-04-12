@@ -26,6 +26,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',s
   body{display:flex;align-items:center;justify-content:center}
   #root{width:390px;max-width:390px;height:100dvh;box-shadow:0 0 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);overflow:hidden;flex-shrink:0}
 }
+@media(min-width:600px){
+  html,body{background:#111;overflow:hidden}
+  body{display:flex;align-items:center;justify-content:center}
+  #root{width:390px;max-width:390px;height:100dvh;box-shadow:0 0 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);overflow:hidden;flex-shrink:0}
+}
 #sw{position:absolute;inset:0;bottom:calc(var(--nav-h) + var(--nb));overflow:hidden}
 .screen{display:flex;flex-direction:column;overflow:hidden;position:absolute;inset:0;transform:translateX(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94);background:var(--bg)}
 .screen.active{transform:translateX(0)}
@@ -5102,6 +5107,9 @@ function renderMe(){
   // Wire Me avatar: tap=story/photo, hold=peek
   var meAvWrap=document.getElementById('me-av-wrap');
   attachAvatarInteractions(meAvWrap, profPhotoUrl||profile&&profile.avatar_url||null, true, profile&&profile.id);
+  // Stop + button clicks from bubbling to the avatar wrapper (inline onclick alone isn't enough on mobile)
+  var meAvPlus=b.querySelector('.me-av-plus');
+  if(meAvPlus){meAvPlus.addEventListener('click',function(e){e.stopPropagation();});}
   var g=document.getElementById('me-grid');
   g.innerHTML='';g.className='';g.style.cssText='background:var(--bg)';
   if(!mine.length){
@@ -6351,14 +6359,10 @@ function attachAvatarInteractions(el,avatarUrl,isOwn,uid){
     },500);
   }
   function endHold(){clearTimeout(holdTimer);}
-  function handleClick(){
+  function handleClick(e){
     if(didHold){didHold=false;return;}
-    if(isOwn){
-      // own profile — always open file picker to change photo
-      var inp=document.getElementById('me-photo-input');
-      if(inp)inp.click();
-      return;
-    }
+    // If click originated from the + label or the file input, let it through — don't open story
+    if(e&&e.target&&(e.target.closest('.me-av-plus')||e.target.id==='me-photo-input'))return;
     var gi=storyGIForUser(uid);
     if(gi>=0){
       // hide prof-screen behind SV, restore on closeSV
@@ -6368,6 +6372,11 @@ function attachAvatarInteractions(el,avatarUrl,isOwn,uid){
         ps.classList.remove('on');
       }
       openSV(gi);
+    }
+    else if(isOwn){
+      // own profile, no story — open file picker to change photo
+      var inp=document.getElementById('me-photo-input');
+      if(inp)inp.click();
     }
     else if(avatarUrl){openPhotoViewer(avatarUrl,{isProfile:true,canChange:false});}
   }
