@@ -7131,11 +7131,19 @@ function loadClips(){
   if(_clipsLoaded){return;}
   _clipsLoaded=true;
   feed.innerHTML='<div style="padding:48px 0;display:flex;justify-content:center"><div class="ptr-ring"></div></div>';
+  var _emptyState='<div class="empty anim-fade-up" style="padding:64px 28px;text-align:center"><div style="font-size:36px;margin-bottom:16px">🎬</div><div class="empt" style="font-size:17px;font-weight:700;margin-bottom:8px">No clips yet</div><div class="emps" style="font-size:14px;color:var(--sub);line-height:1.6">Be the first to share a moment.</div></div>';
+  var _resolved=false;
+  var _timeout=setTimeout(function(){
+    if(!_resolved){_resolved=true;feed.innerHTML=_emptyState;}
+  },10000);
   sb.from('clips').select('*,profiles(username,display_name,avatar_url,badge_type)').order('created_at',{ascending:false}).limit(40)
     .then(function(r){
+      if(_resolved)return;
+      _resolved=true;
+      clearTimeout(_timeout);
       feed.innerHTML='';
       if(r.error||!r.data||!r.data.length){
-        feed.innerHTML='<div class="empty anim-fade-up" style="padding:64px 28px;text-align:center"><div style="font-size:36px;margin-bottom:16px">🎬</div><div class="empt" style="font-size:17px;font-weight:700;margin-bottom:8px">No clips yet</div><div class="emps" style="font-size:14px;color:var(--sub);line-height:1.6">Be the first to share a moment.</div></div>';
+        feed.innerHTML=_emptyState;
         return;
       }
       // fetch liked ids
@@ -7278,8 +7286,10 @@ function openClipCompose(){
   var sheet=document.getElementById('clip-compose');
   var prev=document.getElementById('cc-preview');
   var capInp=document.getElementById('cc-caption');
+  var btn=document.getElementById('cc-post-btn');
   if(prev)prev.style.display='none';
   if(capInp)capInp.value='';
+  if(btn){btn.disabled=false;btn.textContent='Post Clip';}
   if(sheet)sheet.classList.add('open');
 }
 
@@ -7328,8 +7338,10 @@ function postClip(){
           _clipsLoaded=false;
           goTab('clips');
           T('Clip posted!');
-        });
-    });
+        })
+        .catch(function(e){T('Post failed: '+(e&&e.message?e.message:String(e)));if(btn){btn.disabled=false;btn.textContent='Post Clip';}});
+    })
+    .catch(function(e){T('Upload failed: '+(e&&e.message?e.message:String(e)));if(btn){btn.disabled=false;btn.textContent='Post Clip';}});
 }
 </script>
 
