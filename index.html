@@ -7130,31 +7130,23 @@ function loadClips(){
   if(!feed)return;
   if(_clipsLoaded){return;}
   _clipsLoaded=true;
-  feed.innerHTML='<div style="padding:48px 0;display:flex;justify-content:center"><div class="ptr-ring"></div></div>';
   var _emptyState='<div class="empty anim-fade-up" style="padding:64px 28px;text-align:center"><div style="font-size:36px;margin-bottom:16px">🎬</div><div class="empt" style="font-size:17px;font-weight:700;margin-bottom:8px">No clips yet</div><div class="emps" style="font-size:14px;color:var(--sub);line-height:1.6">Be the first to share a moment.</div></div>';
-  var _resolved=false;
-  var _timeout=setTimeout(function(){
-    if(!_resolved){_resolved=true;feed.innerHTML=_emptyState;}
-  },10000);
+  // Show empty state immediately — replaced by cards as soon as query resolves
+  if(!feed.children.length) feed.innerHTML=_emptyState;
   sb.from('clips').select('*,profiles(username,display_name,avatar_url,badge_type)').order('created_at',{ascending:false}).limit(40)
     .then(function(r){
-      if(_resolved)return;
-      _resolved=true;
-      clearTimeout(_timeout);
-      feed.innerHTML='';
       if(r.error||!r.data||!r.data.length){
         feed.innerHTML=_emptyState;
         return;
       }
-      // fetch liked ids
       var ids=r.data.map(function(c){return c.id;});
       var likedSet={};
       var afterLikes=function(data){
         if(data)data.forEach(function(l){likedSet[l.clip_id]=true;});
+        feed.innerHTML='';
         r.data.forEach(function(c){
           c._liked=!!likedSet[c.id];
-          var card=buildClipCard(c);
-          feed.appendChild(card);
+          feed.appendChild(buildClipCard(c));
         });
         setupClipAutoplay();
       };
@@ -7321,15 +7313,22 @@ function ccPickVideo(e){
 function postClip(){
   if(!_clipFile){T('Pick a video first');return;}
   if(!profile)return;
+  if(_clipFile.size>100*1024*1024){T('Video too large (max 100MB)');return;}
   var btn=document.getElementById('cc-post-btn');
-  if(btn){btn.disabled=true;btn.textContent='Posting…';}
+  if(btn){btn.disabled=true;btn.textContent='Uploading…';}
   var caption=document.getElementById('cc-caption');
   var capText=caption?caption.value.trim():'';
-  var ext=_clipFile.name.split('.').pop()||'mp4';
+  var ext=(_clipFile.name.split('.').pop()||'mp4').toLowerCase();
   var path='clips/'+profile.id+'/'+Date.now()+'.'+ext;
-  sb.storage.from('clips').upload(path,_clipFile,{contentType:_clipFile.type,upsert:false})
+  var _done=false;
+  var _tick=0;
+  var _dots=['.','..','...'];
+  var _timer=setInterval(function(){if(btn&&!_done)btn.textContent='Uploading'+_dots[_tick++%3];},600);
+  sb.storage.from('clips').upload(path,_clipFile,{contentType:_clipFile.type,upsert:true})
     .then(function(ur){
+      _done=true;clearInterval(_timer);
       if(ur.error){T('Upload failed: '+ur.error.message);if(btn){btn.disabled=false;btn.textContent='Post Clip';}return;}
+      if(btn)btn.textContent='Posting…';
       var pubUrl=sb.storage.from('clips').getPublicUrl(path).data.publicUrl;
       sb.from('clips').insert({user_id:profile.id,video_url:pubUrl,caption:capText||null,duration:_clipDuration,likes_count:0,comments_count:0})
         .then(function(ir){
@@ -7341,7 +7340,7 @@ function postClip(){
         })
         .catch(function(e){T('Post failed: '+(e&&e.message?e.message:String(e)));if(btn){btn.disabled=false;btn.textContent='Post Clip';}});
     })
-    .catch(function(e){T('Upload failed: '+(e&&e.message?e.message:String(e)));if(btn){btn.disabled=false;btn.textContent='Post Clip';}});
+    .catch(function(e){_done=true;clearInterval(_timer);T('Upload failed: '+(e&&e.message?e.message:String(e)));if(btn){btn.disabled=false;btn.textContent='Post Clip';}});
 }
 </script>
 
