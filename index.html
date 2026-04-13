@@ -4684,7 +4684,7 @@ function closeCtx(){document.getElementById('msg-ctx').style.display='none';docu
 function ctxReact(emoji){if(!_ctxMsg||!_ctxBsEl)return closeCtx();var m=_ctxMsg,bs=_ctxBsEl,isMine=_ctxIsMine;var removing=m.reaction===emoji;m.reaction=removing?null:emoji;if(!removing)SFX('react');var old=bs.querySelector('.rxn-badge');if(old)old.remove();if(m.reaction)bs.appendChild(makeBadge(m,isMine,bs));closeCtx();if(!removing)T(emoji+' added');_sb.from('messages').update({reaction:m.reaction}).eq('id',m.id).then(function(){});}
 function ctxReply(){if(!_ctxMsg)return closeCtx();_replyMsg=_ctxMsg;var sName=_ctxMsg.sid==='demo'?'You':(chatUser&&chatUser.display_name||'Them');_replyMsg._sName=sName;document.getElementById('reply-name').textContent=sName;document.getElementById('reply-preview').textContent=(_ctxMsg.text||(_ctxMsg.isPhoto?'📷 Photo':'')).slice(0,50)||'…';document.getElementById('reply-bar').classList.add('on');document.getElementById('chatinp').focus();closeCtx();}
 function cancelReplyBar(){_replyMsg=null;document.getElementById('reply-bar').classList.remove('on');}
-function ctxSavePhoto(){if(!_ctxMsg||!_ctxMsg.img)return closeCtx();var a=document.createElement('a');a.href=_ctxMsg.img;a.download='fade-photo.jpg';a.click();closeCtx();T('Photo saved');}
+function ctxSavePhoto(){if(!_ctxMsg||!_ctxMsg.img)return closeCtx();var url=_ctxMsg.img;closeCtx();T('Saving…');fetch(url).then(function(r){return r.blob();}).then(function(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fade-photo.jpg';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);document.body.removeChild(a);},1000);T('Photo saved');}).catch(function(){T('Could not save photo');});}
 function ctxCopy(){if(!_ctxMsg)return closeCtx();if(navigator.clipboard)navigator.clipboard.writeText(_ctxMsg.text||'').catch(function(){});T('Copied');closeCtx();}
 function ctxUnsend(){
   if(!_ctxMsg)return closeCtx();
@@ -6349,10 +6349,13 @@ function saveProfile(){if(!profile)return;var newName=document.getElementById('e
   saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';
   saveBtn.onclick=function(){
     var src=overlay._src;if(!src)return;
-    var a=document.createElement('a');a.href=src;a.download='fade-photo.jpg';a.click();
-    saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Saved';
-    saveBtn.style.background='rgba(255,255,255,.3)';
-    setTimeout(function(){saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';saveBtn.style.background='rgba(255,255,255,.15)';},2000);
+    fetch(src).then(function(r){return r.blob();}).then(function(blob){
+      var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='fade-photo.jpg';
+      document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);document.body.removeChild(a);},1000);
+      saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Saved';
+      saveBtn.style.background='rgba(255,255,255,.3)';
+      setTimeout(function(){saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';saveBtn.style.background='rgba(255,255,255,.15)';},2000);
+    }).catch(function(){var t=document.createElement('div');t.textContent='Could not save photo';document.body.appendChild(t);setTimeout(function(){document.body.removeChild(t);},2000);});
   };
   topBar.appendChild(closeBtn);topBar.appendChild(saveBtn);
   var img=document.createElement('img');
@@ -7311,36 +7314,8 @@ function ccPickVideo(e){
 }
 
 function postClip(){
-  if(!_clipFile){T('Pick a video first');return;}
-  if(!profile)return;
-  if(_clipFile.size>100*1024*1024){T('Video too large (max 100MB)');return;}
-  var btn=document.getElementById('cc-post-btn');
-  if(btn){btn.disabled=true;btn.textContent='Uploading…';}
-  var caption=document.getElementById('cc-caption');
-  var capText=caption?caption.value.trim():'';
-  var ext=(_clipFile.name.split('.').pop()||'mp4').toLowerCase();
-  var path='clips/'+profile.id+'/'+Date.now()+'.'+ext;
-  var _done=false;
-  var _tick=0;
-  var _dots=['.','..','...'];
-  var _timer=setInterval(function(){if(btn&&!_done)btn.textContent='Uploading'+_dots[_tick++%3];},600);
-  sb.storage.from('clips').upload(path,_clipFile,{contentType:_clipFile.type,upsert:true})
-    .then(function(ur){
-      _done=true;clearInterval(_timer);
-      if(ur.error){T('Upload failed: '+ur.error.message);if(btn){btn.disabled=false;btn.textContent='Post Clip';}return;}
-      if(btn)btn.textContent='Posting…';
-      var pubUrl=sb.storage.from('clips').getPublicUrl(path).data.publicUrl;
-      sb.from('clips').insert({user_id:profile.id,video_url:pubUrl,caption:capText||null,duration:_clipDuration,likes_count:0,comments_count:0})
-        .then(function(ir){
-          if(ir.error){T('Post failed: '+ir.error.message);if(btn){btn.disabled=false;btn.textContent='Post Clip';}return;}
-          closeClipCompose();
-          _clipsLoaded=false;
-          goTab('clips');
-          T('Clip posted!');
-        })
-        .catch(function(e){T('Post failed: '+(e&&e.message?e.message:String(e)));if(btn){btn.disabled=false;btn.textContent='Post Clip';}});
-    })
-    .catch(function(e){_done=true;clearInterval(_timer);T('Upload failed: '+(e&&e.message?e.message:String(e)));if(btn){btn.disabled=false;btn.textContent='Post Clip';}});
+  T('Clips posting coming soon 🎬');
+  closeClipCompose();
 }
 </script>
 
