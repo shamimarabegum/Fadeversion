@@ -845,6 +845,45 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     transition-duration:  0.01ms !important;
   }
 }
+
+/* ── CLIPS ──────────────────────────────────────────────────── */
+.clip-card{background:var(--card);margin:0 0 1px;position:relative;overflow:hidden}
+.clip-card-inner{position:relative;background:#000;border-radius:16px;overflow:hidden;margin:0 14px 8px}
+.clip-video{width:100%;display:block;aspect-ratio:9/16;object-fit:cover;max-height:420px;background:#000}
+.clip-unmute{position:absolute;bottom:12px;right:12px;background:rgba(0,0,0,.45);border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px)}
+.clip-dur{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.5);color:#fff;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.2px;pointer-events:none}
+.clip-header{display:flex;align-items:center;padding:10px 14px 6px;gap:10px}
+.clip-av{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--inp-bg);flex-shrink:0}
+.clip-meta{flex:1;min-width:0}
+.clip-name{font-size:13px;font-weight:600;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clip-time{font-size:11px;color:var(--sub)}
+.clip-caption{padding:0 14px 8px;font-size:14px;line-height:1.5;color:var(--text)}
+.clip-actions{display:flex;align-items:center;gap:16px;padding:4px 14px 14px}
+.clip-act{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;color:var(--sub);font-size:13px;font-weight:500;padding:0;font-family:'Inter',sans-serif;transition:color .15s}
+.clip-act.liked{color:#E53935}
+.clip-act svg{flex-shrink:0}
+
+/* Clips fullscreen viewer */
+#clip-fs{position:fixed;inset:0;z-index:900;background:#000;display:none;flex-direction:column}
+#clip-fs.open{display:flex}
+#clip-fs-video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+#clip-fs-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end}
+#clip-fs-top{position:absolute;top:0;left:0;right:0;padding:max(52px,env(safe-area-inset-top)) 16px 20px;background:linear-gradient(to bottom,rgba(0,0,0,.5),transparent)}
+#clip-fs-close{background:none;border:none;color:#fff;cursor:pointer;padding:4px;display:flex}
+#clip-fs-bottom{padding:0 16px max(24px,env(safe-area-inset-bottom)) 16px;background:linear-gradient(to top,rgba(0,0,0,.65),transparent);padding-top:60px}
+#clip-fs-username{color:#fff;font-size:14px;font-weight:700;margin-bottom:4px}
+#clip-fs-caption{color:rgba(255,255,255,.85);font-size:14px;line-height:1.5;margin-bottom:14px}
+#clip-fs-scrubber{width:100%;height:3px;-webkit-appearance:none;appearance:none;background:rgba(255,255,255,.3);border-radius:2px;outline:none;cursor:pointer;margin-bottom:10px}
+#clip-fs-scrubber::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#fff;border-radius:50%;margin-top:-5px}
+#clip-fs-time{color:rgba(255,255,255,.7);font-size:12px}
+
+/* Clips compose sheet */
+#clip-compose{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.55);display:none;align-items:flex-end}
+#clip-compose.open{display:flex}
+#clip-compose-sheet{background:var(--card);border-radius:24px 24px 0 0;width:100%;padding:20px 20px max(28px,env(safe-area-inset-bottom));animation:sheetUp .3s cubic-bezier(.25,.46,.45,.94) both}
+.cc-preview{position:relative;background:#000;border-radius:14px;overflow:hidden;margin-bottom:16px;display:none;aspect-ratio:9/16;max-height:300px}
+.cc-preview video{width:100%;height:100%;object-fit:cover;display:block}
+.cc-dur-badge{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:600;padding:3px 8px;border-radius:20px}
 </style>
 </head>
 <body>
@@ -923,6 +962,10 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     <div class="sbar"><div class="swrap"><span class="sico"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></span><input class="sinp" id="sinp" placeholder="Search people & posts..." oninput="doSearch(this.value)" onfocus="doSearch(this.value)" autocomplete="off" style="padding-right:38px"/><button id="sinp-clear" onclick="clearSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--sub);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;align-items:center;justify-content:center;padding:0;flex-shrink:0"><svg width="9" height="9" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 10 10"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button></div></div>
     <div class="scroller" id="sresults" style="padding-top:6px"></div>
   </div>
+  <div id="s-clips" class="screen">
+    <div class="topbar"><div class="tb-l" style="width:38px"></div><span class="tb-logo">Clips</span><div class="tb-r"><button class="ibtn" onclick="openClipCompose()"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div></div>
+    <div class="scroller" id="clips-feed" style="padding-top:4px"></div>
+  </div>
   <div id="s-talk" class="screen">
     <div class="page-hdr"><span class="page-title">Talk</span><button style="background:none;border:none;cursor:pointer;padding:7px;color:var(--text);display:flex" onclick="openNC()"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div>
     <div style="position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column">
@@ -945,6 +988,10 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   <button class="nbtn" id="nb-drop" onclick="openCompose()">
     <div class="nbtn-icon" id="nbi-drop"><svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0C18 9.5 12 3 12 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
     <span class="nbtn-label">Drop</span>
+  </button>
+  <button class="nbtn" id="nb-clips" onclick="goTab('clips')">
+    <div class="nbtn-icon" id="nbi-clips"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 10l4.553-2.277A1 1 0 0 1 21 8.645v6.71a1 1 0 0 1-1.447.894L15 14"/><rect x="2" y="6" width="13" height="12" rx="3"/></svg></div>
+    <span class="nbtn-label">Clips</span>
   </button>
   <button class="nbtn" id="nb-talk" onclick="goTab('talk')">
     <div class="nbtn-icon" id="nbi-talk"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
@@ -1614,7 +1661,7 @@ var SC_FONTS=[
   {l:'Script',ff:'Georgia,serif',fs:'italic',fw:'700'},
   {l:'Light',ff:'Inter,sans-serif',fs:'normal',fw:'300'},
 ];
-var TAB_IDX={today:0,search:1,talk:2,me:3};
+var TAB_IDX={today:0,search:1,clips:2,talk:3,me:4};
 var IC={
   person:'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
   key:'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
@@ -1841,6 +1888,7 @@ function goTab(n){
   if(n==='search'){setTimeout(function(){var s=document.getElementById('sinp');if(s)s.focus();},350);showSearchHome();}
   if(n==='me')renderMe();
   if(n==='talk')renderTalkList();
+  if(n==='clips')loadClips();
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -7021,6 +7069,309 @@ if('serviceWorker' in navigator){
     }).catch(function(e){console.log('SW failed:',e);});
   });
 }
+
+// ── CLIPS ─────────────────────────────────────────────────────────────────────
+var _clipsLoaded=false;
+var _clipObserver=null;
+
+function fmtDur(s){
+  var m=Math.floor(s/60),sec=Math.floor(s%60);
+  return m+':'+(sec<10?'0':'')+sec;
+}
+
+function buildClipCard(c){
+  var isMe=profile&&c.user_id===profile.id;
+  var av=c.profiles&&c.profiles.avatar_url?c.profiles.avatar_url:'';
+  var uname=c.profiles&&c.profiles.username?c.profiles.username:'';
+  var dispName=c.profiles&&c.profiles.display_name?c.profiles.display_name:uname;
+  var badge=c.profiles?getBadgeInline(c.profiles):'';
+  var ts=timeAgo(c.created_at);
+  var liked=c._liked?true:false;
+  var likes=c.likes_count||0;
+  var comments=c.comments_count||0;
+  var dur=c.duration?fmtDur(c.duration):'';
+  var capHtml=c.caption?'<div class="clip-caption">'+esc(c.caption)+'</div>':'';
+
+  var el=document.createElement('div');
+  el.className='clip-card anim-fade-up';
+  el.dataset.id=c.id;
+  el.innerHTML=
+    '<div class="clip-header">'+
+      '<img class="clip-av" src="'+esc(av)+'" onerror="this.src=\'\'"/>'+
+      '<div class="clip-meta">'+
+        '<div class="clip-name">'+esc(dispName)+badge+'</div>'+
+        '<div class="clip-time">'+ts+'</div>'+
+      '</div>'+
+      (isMe?'<button onclick="deleteClip(\''+c.id+'\')" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:4px;display:flex">'+IC.trash+'</button>':'')+ 
+    '</div>'+
+    '<div class="clip-card-inner">'+
+      '<video class="clip-video" src="'+esc(c.video_url)+'" playsinline muted loop preload="none" data-clip-id="'+c.id+'" onclick="openClipFS(\''+c.id+'\')"></video>'+
+      (dur?'<span class="clip-dur">'+dur+'</span>':'')+
+      '<button class="clip-unmute" onclick="toggleClipMute(this)" aria-label="Toggle mute">'+
+        '<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>'+
+      '</button>'+
+    '</div>'+
+    capHtml+
+    '<div class="clip-actions">'+
+      '<button class="clip-act'+(liked?' liked':'')+'" onclick="likeClip(\''+c.id+'\',this)">'+
+        '<svg width="18" height="18" fill="'+(liked?'#E53935':'none')+'" stroke="'+(liked?'#E53935':'currentColor')+'" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+
+        '<span>'+likes+'</span>'+
+      '</button>'+
+      '<button class="clip-act" onclick="openClipFS(\''+c.id+'\')">'+
+        '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+
+        '<span>'+comments+'</span>'+
+      '</button>'+
+    '</div>';
+  return el;
+}
+
+function loadClips(){
+  var feed=document.getElementById('clips-feed');
+  if(!feed)return;
+  if(_clipsLoaded){return;}
+  _clipsLoaded=true;
+  feed.innerHTML='<div style="padding:48px 0;display:flex;justify-content:center"><div class="ptr-ring"></div></div>';
+  sb.from('clips').select('*,profiles(username,display_name,avatar_url,badge_type)').order('created_at',{ascending:false}).limit(40)
+    .then(function(r){
+      feed.innerHTML='';
+      if(r.error||!r.data||!r.data.length){
+        feed.innerHTML='<div class="empty anim-fade-up" style="padding:64px 28px;text-align:center"><div style="font-size:36px;margin-bottom:16px">🎬</div><div class="empt" style="font-size:17px;font-weight:700;margin-bottom:8px">No clips yet</div><div class="emps" style="font-size:14px;color:var(--sub);line-height:1.6">Be the first to share a moment.</div></div>';
+        return;
+      }
+      // fetch liked ids
+      var ids=r.data.map(function(c){return c.id;});
+      var likedSet={};
+      var afterLikes=function(data){
+        if(data)data.forEach(function(l){likedSet[l.clip_id]=true;});
+        r.data.forEach(function(c){
+          c._liked=!!likedSet[c.id];
+          var card=buildClipCard(c);
+          feed.appendChild(card);
+        });
+        setupClipAutoplay();
+      };
+      if(profile){
+        sb.from('clip_likes').select('clip_id').eq('user_id',profile.id).in('clip_id',ids)
+          .then(function(lr){afterLikes(lr.data||[]);});
+      } else {
+        afterLikes([]);
+      }
+    });
+}
+
+function setupClipAutoplay(){
+  if(_clipObserver)_clipObserver.disconnect();
+  _clipObserver=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      var v=e.target;
+      if(e.isIntersecting){v.play().catch(function(){});}
+      else{v.pause();}
+    });
+  },{threshold:0.55});
+  document.querySelectorAll('.clip-video').forEach(function(v){
+    _clipObserver.observe(v);
+  });
+}
+
+function toggleClipMute(btn){
+  var card=btn.closest('.clip-card-inner');
+  var v=card?card.querySelector('.clip-video'):null;
+  if(!v)return;
+  v.muted=!v.muted;
+  btn.innerHTML=v.muted
+    ?'<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
+    :'<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>';
+}
+
+function likeClip(id,btn){
+  if(!profile)return;
+  var isLiked=btn.classList.contains('liked');
+  var span=btn.querySelector('span');
+  var svg=btn.querySelector('svg');
+  var cur=parseInt(span.textContent)||0;
+  if(isLiked){
+    btn.classList.remove('liked');
+    svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');
+    span.textContent=Math.max(0,cur-1);
+    sb.from('clip_likes').delete().eq('user_id',profile.id).eq('clip_id',id).then(function(){});
+    sb.from('clips').update({likes_count:Math.max(0,cur-1)}).eq('id',id).then(function(){});
+  } else {
+    btn.classList.add('liked');
+    svg.setAttribute('fill','#E53935');svg.setAttribute('stroke','#E53935');
+    span.textContent=cur+1;
+    sb.from('clip_likes').upsert({user_id:profile.id,clip_id:id}).then(function(){});
+    sb.from('clips').update({likes_count:cur+1}).eq('id',id).then(function(){});
+  }
+}
+
+function deleteClip(id){
+  if(!confirm('Delete this clip?'))return;
+  sb.from('clips').delete().eq('id',id).then(function(r){
+    if(r.error){T('Error deleting');return;}
+    var card=document.querySelector('.clip-card[data-id="'+id+'"]');
+    if(card)card.remove();
+    T('Deleted');
+  });
+}
+
+// ── CLIP FULLSCREEN ───────────────────────────────────────────────────────────
+var _fsClip=null;
+var _fsScrubTimer=null;
+
+function openClipFS(id){
+  // find clip data from feed card
+  var card=document.querySelector('.clip-card[data-id="'+id+'"]');
+  if(!card)return;
+  var v=card.querySelector('.clip-video');
+  var capEl=card.querySelector('.clip-caption');
+  var nameEl=card.querySelector('.clip-name');
+  if(!v)return;
+
+  var fs=document.getElementById('clip-fs');
+  if(!fs)return;
+  var fsv=document.getElementById('clip-fs-video');
+  fsv.src=v.src;
+  fsv.muted=false;
+  document.getElementById('clip-fs-username').textContent=nameEl?nameEl.textContent:'';
+  document.getElementById('clip-fs-caption').textContent=capEl?capEl.textContent:'';
+  document.getElementById('clip-fs-time').textContent='';
+  document.getElementById('clip-fs-scrubber').value=0;
+  fs.classList.add('open');
+  _fsClip=id;
+  fsv.play().catch(function(){});
+
+  fsv.ontimeupdate=function(){
+    if(!fsv.duration)return;
+    var pct=(fsv.currentTime/fsv.duration)*100;
+    document.getElementById('clip-fs-scrubber').value=pct;
+    document.getElementById('clip-fs-time').textContent=fmtDur(fsv.currentTime)+' / '+fmtDur(fsv.duration);
+  };
+
+  // swipe down to close
+  var startY=0;
+  fsv.ontouchstart=function(e){startY=e.touches[0].clientY;};
+  fsv.ontouchmove=function(e){if(e.touches[0].clientY-startY>80)closeClipFS();};
+  // tap to play/pause
+  fsv.onclick=function(){fsv.paused?fsv.play().catch(function(){}):fsv.pause();};
+}
+
+function closeClipFS(){
+  var fs=document.getElementById('clip-fs');
+  var fsv=document.getElementById('clip-fs-video');
+  if(fsv){fsv.pause();fsv.src='';}
+  if(fs)fs.classList.remove('open');
+  _fsClip=null;
+}
+
+function fsScrub(val){
+  var fsv=document.getElementById('clip-fs-video');
+  if(fsv&&fsv.duration)fsv.currentTime=(val/100)*fsv.duration;
+}
+
+// ── CLIP COMPOSE ─────────────────────────────────────────────────────────────
+var _clipFile=null;
+var _clipDuration=0;
+
+function openClipCompose(){
+  if(!profile){T('Sign in to post clips');return;}
+  _clipFile=null;_clipDuration=0;
+  var sheet=document.getElementById('clip-compose');
+  var prev=document.getElementById('cc-preview');
+  var capInp=document.getElementById('cc-caption');
+  if(prev)prev.style.display='none';
+  if(capInp)capInp.value='';
+  if(sheet)sheet.classList.add('open');
+}
+
+function closeClipCompose(){
+  var sheet=document.getElementById('clip-compose');
+  if(sheet)sheet.classList.remove('open');
+}
+
+function ccPickVideo(e){
+  var file=e.target.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('video/')){T('Please pick a video file');return;}
+  var url=URL.createObjectURL(file);
+  var tmpV=document.createElement('video');
+  tmpV.src=url;
+  tmpV.onloadedmetadata=function(){
+    if(tmpV.duration>60){T('Max 60 seconds');URL.revokeObjectURL(url);return;}
+    _clipFile=file;
+    _clipDuration=Math.round(tmpV.duration);
+    var prev=document.getElementById('cc-preview');
+    var prevV=document.getElementById('cc-prev-video');
+    var durBadge=document.getElementById('cc-dur-badge');
+    if(prevV)prevV.src=url;
+    if(durBadge)durBadge.textContent=fmtDur(_clipDuration);
+    if(prev)prev.style.display='block';
+  };
+}
+
+function postClip(){
+  if(!_clipFile){T('Pick a video first');return;}
+  if(!profile)return;
+  var btn=document.getElementById('cc-post-btn');
+  if(btn){btn.disabled=true;btn.textContent='Posting…';}
+  var caption=document.getElementById('cc-caption');
+  var capText=caption?caption.value.trim():'';
+  var ext=_clipFile.name.split('.').pop()||'mp4';
+  var path='clips/'+profile.id+'/'+Date.now()+'.'+ext;
+  sb.storage.from('clips').upload(path,_clipFile,{contentType:_clipFile.type,upsert:false})
+    .then(function(ur){
+      if(ur.error){T('Upload failed: '+ur.error.message);if(btn){btn.disabled=false;btn.textContent='Post Clip';}return;}
+      var pubUrl=sb.storage.from('clips').getPublicUrl(path).data.publicUrl;
+      sb.from('clips').insert({user_id:profile.id,video_url:pubUrl,caption:capText||null,duration:_clipDuration,likes_count:0,comments_count:0})
+        .then(function(ir){
+          if(ir.error){T('Post failed: '+ir.error.message);if(btn){btn.disabled=false;btn.textContent='Post Clip';}return;}
+          closeClipCompose();
+          _clipsLoaded=false;
+          goTab('clips');
+          T('Clip posted!');
+        });
+    });
+}
 </script>
+
+<!-- CLIP FULLSCREEN VIEWER -->
+<div id="clip-fs">
+  <video id="clip-fs-video" playsinline loop></video>
+  <div id="clip-fs-overlay">
+    <div id="clip-fs-top">
+      <button id="clip-fs-close" onclick="closeClipFS()">
+        <svg width="24" height="24" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+    </div>
+    <div id="clip-fs-bottom">
+      <div id="clip-fs-username"></div>
+      <div id="clip-fs-caption"></div>
+      <input id="clip-fs-scrubber" type="range" min="0" max="100" value="0" oninput="fsScrub(this.value)"/>
+      <div id="clip-fs-time"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIP COMPOSE SHEET -->
+<div id="clip-compose" onclick="if(event.target===this)closeClipCompose()">
+  <div id="clip-compose-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <span style="font-size:17px;font-weight:700">New Clip</span>
+      <button onclick="closeClipCompose()" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:4px;display:flex"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="cc-preview" id="cc-preview">
+      <video id="cc-prev-video" playsinline muted autoplay loop style="width:100%;height:100%;object-fit:cover;display:block"></video>
+      <span class="cc-dur-badge" id="cc-dur-badge"></span>
+    </div>
+    <label style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--inp-bg);border-radius:14px;padding:14px;cursor:pointer;margin-bottom:14px;font-size:14px;font-weight:500;color:var(--sub)">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 10l4.553-2.277A1 1 0 0 1 21 8.645v6.71a1 1 0 0 1-1.447.894L15 14"/><rect x="2" y="6" width="13" height="12" rx="3"/></svg>
+      Choose video (max 60s)
+      <input type="file" accept="video/*" style="display:none" onchange="ccPickVideo(event)"/>
+    </label>
+    <input id="cc-caption" class="inp" placeholder="Add a caption…" style="margin-bottom:16px" autocomplete="off"/>
+    <button id="cc-post-btn" onclick="postClip()" style="width:100%;background:var(--text);color:var(--card);border:none;border-radius:14px;padding:15px;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;cursor:pointer">Post Clip</button>
+  </div>
+</div>
+
+
 </body>
 </html>
