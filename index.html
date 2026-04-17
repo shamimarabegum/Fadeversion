@@ -964,7 +964,15 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 /* OFFLINE BAR */
 #offline-bar{position:fixed;top:0;left:0;right:0;z-index:9999;background:#1A1A1A;color:#fff;font-size:12.5px;font-weight:600;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px max(10px,env(safe-area-inset-top));transform:translateY(-100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94);pointer-events:none}
 #offline-bar.on{transform:translateY(0)}
-#offline-bar svg{flex-shrink:0;opacity:.75}</style>
+#offline-bar svg{flex-shrink:0;opacity:.75}
+/* VOICE NOTE RECORDING */
+.gif-btn.recording{background:#FFE8E8;color:#E8352A;animation:voicePulse 1s ease infinite}
+@keyframes voicePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.voice-bubble{display:flex;align-items:center;gap:9px;padding:10px 14px;min-width:140px}
+.voice-play{width:32px;height:32px;border-radius:50%;background:var(--bubble-me);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+.voice-wave{flex:1;height:28px;display:flex;align-items:center;gap:2px}
+.voice-wave span{display:block;background:rgba(255,255,255,.7);border-radius:2px;width:3px;flex-shrink:0}
+.voice-dur{font-size:11px;color:rgba(255,255,255,.75);font-weight:500;flex-shrink:0}</style>
 </head>
 <body>
 <div id="splash"><span class="splash-logo">Fade</span></div>
@@ -1154,9 +1162,12 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     <div class="chatrow">
       <label for="chat-photo-inp" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--inp-bg);cursor:pointer;flex-shrink:0;color:var(--sub)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></label>
       <input id="chat-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendPhoto(event)"/>
-      <button class="gif-btn" onclick="openGIFPicker('dm')" title="Send GIF">GIF</button>
-      <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping()" onkeydown="chatKD(event)"></textarea>
-      <button onclick="sendMsg()" style="width:38px;height:38px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end"><svg width="17" height="17" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
+      <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwToggleMediaBtns(this)" onkeydown="chatKD(event)"></textarea>
+      <div id="cw-media-btns" style="display:flex;align-items:flex-end;gap:5px;flex-shrink:0">
+        <button class="gif-btn" onclick="openGIFPicker('dm')" title="Send GIF">GIF</button>
+        <button class="gif-btn" id="cw-voice-btn" onclick="toggleVoiceRecord()" title="Voice note" style="font-size:17px;padding:0">🎤</button>
+      </div>
+      <button id="cw-send-btn" onclick="sendMsg()" style="width:38px;height:38px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end"><svg width="17" height="17" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
     </div>
   </div>
 </div>
@@ -4386,6 +4397,7 @@ function openChat(u){
           img:r.img_url||null,
           gif:r.gif_url||null,
           isPhoto:r.is_photo||false,
+          voiceUrl:(r.content&&r.content.startsWith('[voice:')&&r.img_url)?r.img_url:null,
           reaction:r.reaction||null,
           replyTo:replyToText,
           replyToSender:replyToSender,
@@ -4721,6 +4733,36 @@ function appendBubble(m){
     gifBadge.textContent='GIF';
     b.appendChild(gifEl);
     b.appendChild(gifBadge);
+    attachHold(b,m,wrap,bs,isMine);
+  } else if(m.voiceUrl||(m.img&&m.text&&m.text.startsWith('[voice:'))){    // Voice note bubble
+    var dur=0;
+    var src_=(m.voiceUrl||m.img);
+    var textMatch=(m.text||'').match(/\[voice:(\d+)s\]/);
+    if(textMatch)dur=parseInt(textMatch[1],10);
+    b=document.createElement('div');
+    b.className='bubble '+(isMine?'me':'them');
+    b.classList.add('anim-bubble-in','voice-bubble');
+    b.style.transformOrigin=isMine?'bottom right':'bottom left';
+    // Play button
+    var playBtn=document.createElement('button');
+    playBtn.className='voice-play';
+    playBtn.innerHTML='<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+    var _aud=null,_playing=false;
+    (function(url,pb){
+      pb.onclick=function(e){
+        e.stopPropagation();
+        if(!_aud){_aud=new Audio(url);_aud.onended=function(){_playing=false;pb.innerHTML='<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>';};}        if(_playing){_aud.pause();_aud.currentTime=0;_playing=false;pb.innerHTML='<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>';}
+        else{_aud.play();_playing=true;pb.innerHTML='<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';haptic();}
+      };
+    })(src_,playBtn);
+    // Waveform bars (decorative)
+    var wave=document.createElement('div');wave.className='voice-wave';
+    var bars=[4,8,14,10,18,12,7,16,9,14,6,11,15,8,12];
+    bars.forEach(function(h){var s=document.createElement('span');s.style.height=h+'px';wave.appendChild(s);});
+    // Duration label
+    var durEl=document.createElement('div');durEl.className='voice-dur';
+    durEl.textContent=dur>0?(Math.floor(dur/60)+':'+(dur%60<10?'0':'')+dur%60):'0:00';
+    b.appendChild(playBtn);b.appendChild(wave);b.appendChild(durEl);
     attachHold(b,m,wrap,bs,isMine);
   } else {
     b=document.createElement('div');
@@ -7623,7 +7665,7 @@ function postClip(){
 // GIF PICKER
 // ═══════════════════════════════════════════════════════════════════
 // Replace with your own Giphy key from https://developers.giphy.com/
-var GIPHY_KEY='dc6zaTOxFJmzC';
+var GIPHY_KEY='9f0DdNVMBhFuAvIJrBNTBfFMd3vVBXJU';
 var _gifContext='dm';
 var _gifSearchT=null;
 
@@ -8963,6 +9005,98 @@ function _startExpiryTick(){
   setInterval(tick,60000);
 }
 _startExpiryTick();
+
+
+// ── VOICE NOTE RECORDING ──────────────────────────────────────────────────────
+var _mediaRec=null, _audioChunks=[], _recStartT=0, _recTimer=null;
+
+function _cwToggleMediaBtns(ta){
+  var mediaBtns=document.getElementById('cw-media-btns');
+  if(!mediaBtns)return;
+  // Hide GIF+voice when there's typed text; show send only
+  if(ta.value.trim().length>0){
+    mediaBtns.style.display='none';
+  } else {
+    mediaBtns.style.display='flex';
+  }
+}
+
+function toggleVoiceRecord(){
+  if(_mediaRec&&_mediaRec.state==='recording'){
+    _stopVoiceRecord();
+  } else {
+    _startVoiceRecord();
+  }
+}
+
+function _startVoiceRecord(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    T('Microphone not supported on this device');return;
+  }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    _audioChunks=[];
+    _mediaRec=new MediaRecorder(stream,{mimeType:MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/mp4'});
+    _mediaRec.ondataavailable=function(e){if(e.data.size>0)_audioChunks.push(e.data);};
+    _mediaRec.onstop=function(){
+      stream.getTracks().forEach(function(t){t.stop();});
+      var blob=new Blob(_audioChunks,{type:_mediaRec.mimeType});
+      _sendVoiceNote(blob);
+    };
+    _mediaRec.start();
+    _recStartT=Date.now();
+    var btn=document.getElementById('cw-voice-btn');
+    if(btn)btn.classList.add('recording');
+    haptic('send');
+    // Show live timer in button
+    _recTimer=setInterval(function(){
+      var s=Math.floor((Date.now()-_recStartT)/1000);
+      var btn=document.getElementById('cw-voice-btn');
+      if(btn)btn.textContent=s+'s';
+      if(s>=60)_stopVoiceRecord(); // auto-stop at 60s
+    },1000);
+  }).catch(function(){
+    T('Microphone access denied');
+  });
+}
+
+function _stopVoiceRecord(){
+  if(_mediaRec&&_mediaRec.state==='recording')_mediaRec.stop();
+  clearInterval(_recTimer);
+  var btn=document.getElementById('cw-voice-btn');
+  if(btn){btn.classList.remove('recording');btn.textContent='🎤';}
+}
+
+function _sendVoiceNote(blob){
+  if(!chatUser||!profile){T('Not in a chat');return;}
+  if(blob.size<1000){T('Recording too short');return;}
+  // Upload to Supabase storage
+  var path='voices/'+profile.id+'-'+Date.now()+'.'+( blob.type.includes('webm')?'webm':'mp4');
+  T('Sending…');
+  _sb.storage.from('chat-media').upload(path,blob,{contentType:blob.type,upsert:false})
+    .then(function(res){
+      if(res.error){T('Upload failed');console.error(res.error);return;}
+      var pub=_sb.storage.from('chat-media').getPublicUrl(path);
+      var voiceUrl=pub.data.publicUrl;
+      // Send as a message with a special content prefix
+      var expires=new Date(Date.now()+86400000).toISOString();
+      var dur=Math.round((Date.now()-_recStartT)/1000);
+      var tempId='tmp-'+Date.now();
+      var m={id:tempId,sid:'demo',text:'[voice:'+dur+'s]',voiceUrl:voiceUrl,ts:Date.now()};
+      appendBubble(m);
+      SFX('send');haptic('send');
+      var msgs=document.getElementById('msgs');
+      if(msgs)msgs.scrollTop=msgs.scrollHeight;
+      _sb.from('messages').insert({
+        sender_id:profile.id,receiver_id:chatUser.id,
+        content:'[voice:'+dur+'s]',img_url:voiceUrl,is_read:false,expires_at:expires
+      }).then(function(ins){
+        if(ins.error){console.error('Voice DM insert:',ins.error);return;}
+        var newId=(ins.data&&ins.data[0]&&ins.data[0].id)||tempId;
+        var tmpEl=document.querySelector('[data-mid="'+tempId+'"]');
+        if(tmpEl)tmpEl.dataset.mid=newId;
+      });
+    });
+}
 
 </script>
 
