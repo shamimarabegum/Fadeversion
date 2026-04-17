@@ -227,8 +227,8 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .me-bs,.them-bs{display:flex;flex-direction:column;gap:1px;position:relative;padding-bottom:0}
 .me-bs{align-items:flex-end}
 .them-bs{align-items:flex-start}
-.tav{width:28px;height:28px;min-width:28px;border-radius:50%;overflow:hidden;align-self:flex-end;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
-.bubble{padding:10px 15px;font-size:15px;line-height:1.4;word-break:break-word;max-width:260px;display:inline-block;white-space:pre-wrap;cursor:pointer;user-select:none;animation:bubbleIn .22s cubic-bezier(.34,1.2,.64,1)}
+.tav{width:32px;height:32px;min-width:32px;border-radius:50%;overflow:hidden;align-self:flex-end;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.bubble{padding:11px 16px;font-size:15.5px;line-height:1.45;word-break:break-word;max-width:272px;display:inline-block;white-space:pre-wrap;cursor:pointer;user-select:none;animation:bubbleIn .22s cubic-bezier(.34,1.2,.64,1)}
 @keyframes bubbleIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
 .bubble.me{background:var(--bubble-me);color:#fff;border-radius:22px 22px 6px 22px}
 .bubble.them{background:var(--bubble-them);color:var(--bubble-them-text);border-radius:22px 22px 22px 6px}
@@ -958,34 +958,55 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 /* ── CHAT INPUT BAR ─────────────────────────────────────────── */
 .chatfoot{background:var(--card);flex-shrink:0;padding:10px 12px max(14px,env(safe-area-inset-bottom))}
 .chatrow{display:flex;align-items:flex-end;gap:8px}
-.chat-pill{flex:1;display:flex;align-items:flex-end;background:var(--inp-bg);border-radius:22px;padding:0 6px 0 4px;gap:2px;min-height:42px}
+.chat-pill{flex:1;display:flex;align-items:flex-end;background:var(--inp-bg);border-radius:22px;padding:0 6px 0 4px;gap:2px;min-height:46px}
 .chat-pill-emoji{background:none;border:none;cursor:pointer;color:var(--sub);padding:10px 6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;-webkit-tap-highlight-color:transparent}
 .chat-pill-emoji:active{opacity:.4}
-.chatinp{flex:1;border:none;background:transparent;padding:10px 4px;font-size:15px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:86px;line-height:1.4;-webkit-user-select:text;user-select:text}
+.chatinp{flex:1;border:none;background:transparent;padding:11px 4px;font-size:15.5px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:90px;line-height:1.4;-webkit-user-select:text;user-select:text}
 .chatinp::placeholder{color:var(--inp-ph)}
 .chat-pill-photo{background:none;border:none;cursor:pointer;color:var(--sub);padding:10px 6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;-webkit-tap-highlight-color:transparent}
 .chat-pill-photo:active{opacity:.4}
-.chat-send{width:42px;height:42px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s,transform .12s;-webkit-tap-highlight-color:transparent}
-.chat-send:active{opacity:.7;transform:scale(.9)}
+.chat-send{width:44px;height:44px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,transform .15s;-webkit-tap-highlight-color:transparent;flex-direction:column;gap:1px;touch-action:none;user-select:none;-webkit-user-select:none}
 /* Send morphs icon: mic when empty, arrow when typing */
 .chat-send .ic-send{display:none}
 .chat-send .ic-mic{display:flex}
 .chat-send.has-text .ic-send{display:flex}
 .chat-send.has-text .ic-mic{display:none}
-/* recording pulse */
-.chat-send.recording{background:#E8352A;animation:voicePulse 1s ease infinite}
+/* recording pulse on button */
+@keyframes voicePulse{0%,100%{box-shadow:0 0 0 0 rgba(232,53,42,.35)}50%{box-shadow:0 0 0 8px rgba(232,53,42,0)}}
+.chat-send.recording{background:#E8352A;transform:scale(1.12);animation:voicePulse 1.2s ease infinite}
+/* ── VOICE OVERLAY (hold-to-record UI) ── */
+#voice-overlay{position:fixed;inset:0;z-index:820;pointer-events:none;display:none}
+#voice-overlay.active{display:block}
+#voice-rec-bar{position:absolute;left:0;right:0;bottom:0;height:72px;background:var(--card);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 14px 0 16px;gap:0;opacity:0;transition:opacity .18s}
+#voice-rec-bar.show{opacity:1}
+#voice-rec-dot{width:8px;height:8px;border-radius:50%;background:#E8352A;flex-shrink:0;animation:recDotBlink 1s ease infinite}
+@keyframes recDotBlink{0%,100%{opacity:1}50%{opacity:.3}}
+#voice-rec-time{font-size:15px;font-weight:500;font-family:'Inter',sans-serif;color:var(--text);margin-left:10px;min-width:38px;flex-shrink:0}
+#voice-slide-hint{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--sub);font-size:13.5px;font-family:'Inter',sans-serif;transition:opacity .2s}
+#voice-slide-hint svg{flex-shrink:0}
+#voice-lock-track{position:absolute;right:19px;bottom:72px;width:44px;display:flex;flex-direction:column;align-items:center;gap:0;opacity:0;transition:opacity .22s;pointer-events:none}
+#voice-lock-track.show{opacity:1}
+#voice-lock-icon{width:36px;height:36px;border-radius:50%;background:var(--inp-bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--sub);transition:transform .2s,background .2s,color .2s}
+#voice-lock-icon.locked{background:var(--text);color:var(--card);border-color:var(--text)}
+#voice-lock-track-line{width:2px;height:52px;background:var(--border);border-radius:2px;margin-bottom:4px}
+#voice-locked-bar{position:absolute;left:0;right:0;bottom:0;height:72px;background:var(--card);border-top:1px solid var(--border);display:none;align-items:center;padding:0 14px 0 16px;gap:10px}
+#voice-locked-bar.show{display:flex}
+#voice-trash-btn{width:40px;height:40px;border-radius:50%;background:var(--inp-bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--sub);-webkit-tap-highlight-color:transparent;pointer-events:all}
+#voice-locked-time{font-size:15px;font-weight:500;font-family:'Inter',sans-serif;color:var(--text);min-width:38px}
+#voice-locked-dot{width:8px;height:8px;border-radius:50%;background:#E8352A;flex-shrink:0;animation:recDotBlink 1s ease infinite}
+#voice-send-btn{width:44px;height:44px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--card);margin-left:auto;-webkit-tap-highlight-color:transparent;pointer-events:all;flex-shrink:0}
 /* EMOJI PANEL */
-#emoji-panel{position:fixed;left:0;right:0;bottom:0;z-index:800;background:var(--card);border-top:1px solid var(--border);transform:translateY(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94);will-change:transform;display:flex;flex-direction:column}
+#emoji-panel{position:fixed;left:0;right:0;bottom:0;z-index:800;background:var(--card);border-top:1px solid var(--border);transform:translateY(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94);will-change:transform;display:flex;flex-direction:column;height:320px}
 #emoji-panel.on{transform:translateY(0)}
-.ep-cats{display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;height:44px;gap:2px;flex-shrink:0;overflow-x:auto}
+.ep-cats{display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;height:46px;gap:2px;flex-shrink:0;overflow-x:auto}
 .ep-cats::-webkit-scrollbar{display:none}
-.ep-cat{background:none;border:none;cursor:pointer;padding:8px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+.ep-cat{background:none;border:none;cursor:pointer;padding:8px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0;position:relative}
 .ep-cat.on{color:var(--text)}
 .ep-cat-line{width:100%;height:2px;background:var(--text);border-radius:2px;position:absolute;bottom:0;left:0;display:none}
 .ep-cat.on .ep-cat-line{display:block}
-.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:8px 4px max(20px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch}
+.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(7,1fr);padding:6px 4px max(16px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch}
 .ep-grid::-webkit-scrollbar{display:none}
-.ep-grid button{background:none;border:none;cursor:pointer;font-size:24px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .1s;-webkit-tap-highlight-color:transparent;padding:0}
+.ep-grid button{background:none;border:none;cursor:pointer;font-size:28px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .1s;-webkit-tap-highlight-color:transparent;padding:0}
 .ep-grid button:active{background:var(--inp-bg)}
 .ep-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;padding:8px 4px 4px}
 </style>
@@ -1177,20 +1198,55 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   <div class="chatfoot">
     <div class="chatrow">
       <div class="chat-pill">
-        <button class="chat-pill-emoji" onclick="toggleEmojiPanel()" aria-label="Emoji">
-          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <button class="chat-pill-emoji" id="emoji-toggle-btn" onclick="toggleEmojiPanel()" aria-label="Emoji">
+          <span class="ep-ico-emoji"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+          <span class="ep-ico-kbd" style="display:none"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="10" x2="10.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="10" x2="14.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="10" x2="18.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="14" x2="6.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="14" x2="18.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke-width="2.2" stroke-linecap="round"/></svg></span>
         </button>
-        <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)" onfocus="closeEmojiPanel()"></textarea>
+        <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)" onfocus="if(_epOpen)closeEmojiPanel()"></textarea>
         <label for="chat-photo-inp" class="chat-pill-photo" aria-label="Photo">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </label>
         <input id="chat-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendPhoto(event)"/>
       </div>
-      <button id="cw-send-btn" class="chat-send" onclick="_cwSendOrRecord()" aria-label="Send or record">
+      <button id="cw-send-btn" class="chat-send" aria-label="Send or record">
         <span class="ic-send"><svg width="17" height="17" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span>
         <span class="ic-mic"><svg width="16" height="16" fill="none" stroke="var(--card)" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span>
       </button>
     </div>
+  </div>
+</div>
+
+<!-- VOICE OVERLAY -->
+<div id="voice-overlay">
+  <!-- hold mode bar -->
+  <div id="voice-rec-bar">
+    <div id="voice-rec-dot"></div>
+    <span id="voice-rec-time">0:00</span>
+    <div id="voice-slide-hint">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Slide to cancel
+    </div>
+  </div>
+  <!-- lock track floating above mic -->
+  <div id="voice-lock-track">
+    <div id="voice-lock-icon">
+      <!-- unlocked state -->
+      <svg id="vlk-unlocked" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+      <!-- locked state -->
+      <svg id="vlk-locked" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div id="voice-lock-track-line"></div>
+  </div>
+  <!-- locked mode bar (replaces hold bar) -->
+  <div id="voice-locked-bar">
+    <button id="voice-trash-btn" onclick="_voiceDiscard()">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </button>
+    <div id="voice-locked-dot"></div>
+    <span id="voice-locked-time">0:00</span>
+    <button id="voice-send-btn" onclick="_voiceSend()">
+      <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+    </button>
   </div>
 </div>
 
@@ -8913,6 +8969,8 @@ _startExpiryTick();
 
 // ── VOICE NOTE RECORDING ──────────────────────────────────────────────────────
 var _mediaRec=null, _audioChunks=[], _recStartT=0, _recTimer=null;
+var _voiceLocked=false, _voiceCancelled=false, _voiceHolding=false;
+var _holdStartY=0, _holdStartX=0;
 
 function _cwUpdateSendBtn(){
   var ta=document.getElementById('chatinp');
@@ -8921,18 +8979,144 @@ function _cwUpdateSendBtn(){
   if(ta&&ta.value.trim().length>0){btn.classList.add('has-text');}
   else{btn.classList.remove('has-text');}
 }
-function _cwSendOrRecord(){
-  var ta=document.getElementById('chatinp');
-  if(ta&&ta.value.trim().length>0){sendMsg();}
-  else{toggleVoiceRecord();}
+
+// Wire send button: click = send text; hold = voice
+(function(){
+  function init(){
+    var btn=document.getElementById('cw-send-btn');
+    if(!btn)return;
+    // Text send on click when has-text
+    btn.addEventListener('click',function(e){
+      if(btn.classList.contains('has-text')){sendMsg();}
+    });
+    // Hold for voice
+    btn.addEventListener('touchstart',_voiceTouchStart,{passive:false});
+    btn.addEventListener('touchmove',_voiceTouchMove,{passive:false});
+    btn.addEventListener('touchend',_voiceTouchEnd,{passive:false});
+    btn.addEventListener('touchcancel',_voiceTouchEnd,{passive:false});
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
+  else{setTimeout(init,0);}
+})();
+
+function _voiceTouchStart(e){
+  var btn=document.getElementById('cw-send-btn');
+  if(btn&&btn.classList.contains('has-text'))return; // text mode: let click handle it
+  e.preventDefault();
+  var t=e.touches[0];
+  _holdStartY=t.clientY;
+  _holdStartX=t.clientX;
+  _voiceHolding=true;
+  _voiceLocked=false;
+  _voiceCancelled=false;
+  _startVoiceRecord();
 }
 
-function toggleVoiceRecord(){
-  if(_mediaRec&&_mediaRec.state==='recording'){
-    _stopVoiceRecord();
-  } else {
-    _startVoiceRecord();
+function _voiceTouchMove(e){
+  if(!_voiceHolding||_voiceLocked||_voiceCancelled)return;
+  e.preventDefault();
+  var t=e.touches[0];
+  var dy=_holdStartY-t.clientY; // positive = swiped up
+  var dx=_holdStartX-t.clientX; // positive = swiped left
+
+  // Move lock icon up visually with finger
+  var lockIcon=document.getElementById('voice-lock-icon');
+  if(lockIcon){
+    var lift=Math.min(Math.max(dy,0),60);
+    lockIcon.style.transform='translateY(-'+lift+'px)';
+    if(dy>30){lockIcon.classList.add('locked');document.getElementById('vlk-unlocked').style.display='none';document.getElementById('vlk-locked').style.display='';}
+    else{lockIcon.classList.remove('locked');document.getElementById('vlk-unlocked').style.display='';document.getElementById('vlk-locked').style.display='none';}
   }
+
+  // Swipe left → cancel
+  if(dx>80){_voiceCancel();return;}
+
+  // Swipe up → lock
+  if(dy>60){_voiceLockIn();}
+
+  // Fade slide hint as user swipes left
+  var hint=document.getElementById('voice-slide-hint');
+  if(hint)hint.style.opacity=Math.max(0,1-(dx/60))+'';
+}
+
+function _voiceTouchEnd(e){
+  if(!_voiceHolding)return;
+  _voiceHolding=false;
+  if(_voiceLocked||_voiceCancelled)return;
+  // Released without locking or cancelling → send
+  _voiceSend();
+}
+
+function _voiceLockIn(){
+  if(_voiceLocked)return;
+  _voiceLocked=true;
+  haptic('send');
+  // Snap lock icon to locked
+  var lockIcon=document.getElementById('voice-lock-icon');
+  if(lockIcon){lockIcon.classList.add('locked');lockIcon.style.transform='';}
+  document.getElementById('vlk-unlocked').style.display='none';
+  document.getElementById('vlk-locked').style.display='';
+  // Swap bars
+  var recBar=document.getElementById('voice-rec-bar');
+  var lockedBar=document.getElementById('voice-locked-bar');
+  var lockTrack=document.getElementById('voice-lock-track');
+  if(recBar)recBar.classList.remove('show');
+  if(lockTrack)setTimeout(function(){lockTrack.classList.remove('show');},200);
+  if(lockedBar)lockedBar.classList.add('show');
+}
+
+function _voiceCancel(){
+  if(_voiceCancelled)return;
+  _voiceCancelled=true;
+  _voiceHolding=false;
+  haptic();
+  _abortVoiceRecord();
+  _hideVoiceOverlay();
+  T('Recording cancelled');
+}
+
+function _voiceDiscard(){
+  _voiceCancelled=true;
+  _abortVoiceRecord();
+  _hideVoiceOverlay();
+}
+
+function _voiceSend(){
+  // Stop recording — onstop will call _sendVoiceNote
+  _voiceCancelled=false;
+  if(_mediaRec&&_mediaRec.state==='recording')_mediaRec.stop();
+  clearInterval(_recTimer);
+  _hideVoiceOverlay();
+}
+
+function _abortVoiceRecord(){
+  if(_mediaRec){
+    _mediaRec.onstop=null; // prevent send
+    if(_mediaRec.state==='recording')_mediaRec.stop();
+    _mediaRec=null;
+  }
+  clearInterval(_recTimer);
+  _audioChunks=[];
+}
+
+function _hideVoiceOverlay(){
+  var ov=document.getElementById('voice-overlay');
+  var btn=document.getElementById('cw-send-btn');
+  var recBar=document.getElementById('voice-rec-bar');
+  var lockTrack=document.getElementById('voice-lock-track');
+  var lockedBar=document.getElementById('voice-locked-bar');
+  var lockIcon=document.getElementById('voice-lock-icon');
+  if(ov)ov.classList.remove('active');
+  if(btn)btn.classList.remove('recording');
+  if(recBar)recBar.classList.remove('show');
+  if(lockTrack)lockTrack.classList.remove('show');
+  if(lockedBar)lockedBar.classList.remove('show');
+  if(lockIcon){lockIcon.classList.remove('locked');lockIcon.style.transform='';}
+  document.getElementById('vlk-unlocked').style.display='';
+  document.getElementById('vlk-locked').style.display='none';
+  // Update time displays
+  document.getElementById('voice-rec-time').textContent='0:00';
+  document.getElementById('voice-locked-time').textContent='0:00';
 }
 
 function _startVoiceRecord(){
@@ -8945,28 +9129,36 @@ function _startVoiceRecord(){
     _mediaRec.ondataavailable=function(e){if(e.data.size>0)_audioChunks.push(e.data);};
     _mediaRec.onstop=function(){
       stream.getTracks().forEach(function(t){t.stop();});
+      if(_voiceCancelled){_audioChunks=[];return;}
       var blob=new Blob(_audioChunks,{type:_mediaRec.mimeType});
       _sendVoiceNote(blob);
     };
     _mediaRec.start();
     _recStartT=Date.now();
-    var btn=document.getElementById('cw-send-btn');
-    if(btn)btn.classList.add('recording');
     haptic('send');
-    // Show live timer in button
+    // Show overlay
+    var ov=document.getElementById('voice-overlay');
+    var btn=document.getElementById('cw-send-btn');
+    var recBar=document.getElementById('voice-rec-bar');
+    var lockTrack=document.getElementById('voice-lock-track');
+    if(ov)ov.classList.add('active');
+    if(btn)btn.classList.add('recording');
+    requestAnimationFrame(function(){
+      if(recBar)recBar.classList.add('show');
+      if(lockTrack)lockTrack.classList.add('show');
+    });
+    // Live timer
     _recTimer=setInterval(function(){
-      if(Math.floor((Date.now()-_recStartT)/1000)>=60)_stopVoiceRecord();
+      var elapsed=Math.floor((Date.now()-_recStartT)/1000);
+      if(elapsed>=300){_voiceSend();return;}
+      var m=Math.floor(elapsed/60),s=elapsed%60;
+      var t=m+':'+(s<10?'0':'')+s;
+      var rt=document.getElementById('voice-rec-time');
+      var lt=document.getElementById('voice-locked-time');
+      if(rt)rt.textContent=t;
+      if(lt)lt.textContent=t;
     },1000);
-  }).catch(function(){
-    T('Microphone access denied');
-  });
-}
-
-function _stopVoiceRecord(){
-  if(_mediaRec&&_mediaRec.state==='recording')_mediaRec.stop();
-  clearInterval(_recTimer);
-  var btn=document.getElementById('cw-send-btn');
-  if(btn)btn.classList.remove('recording');
+  }).catch(function(){T('Microphone access denied');});
 }
 
 function _sendVoiceNote(blob){
@@ -9010,12 +9202,12 @@ try{_recentEmoji=JSON.parse(localStorage.getItem('fade_recent_emoji')||'[]');}ca
 var _EP_CATS=[
   {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg>',label:'Smileys',key:'smileys'},
   {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',label:'People',key:'people'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',label:'Nature',key:'nature'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>',label:'Nature',key:'nature'},
   {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>',label:'Food',key:'food'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',label:'Activity',key:'activity'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',label:'Travel',key:'travel'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8l4 4-4 4"/></svg>',label:'Activity',key:'activity'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',label:'Travel',key:'travel'},
   {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',label:'Objects',key:'objects'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',label:'Symbols',key:'symbols'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',label:'Symbols',key:'symbols'},
 ];
 
 var _EP_DATA={
@@ -9042,6 +9234,11 @@ function openEmojiPanel(){
   _buildEmojiPanel();
   panel.style.display='flex';
   requestAnimationFrame(function(){requestAnimationFrame(function(){panel.classList.add('on');});});
+  // Switch button icon to keyboard
+  var emojiIco=document.querySelector('.ep-ico-emoji');
+  var kbdIco=document.querySelector('.ep-ico-kbd');
+  if(emojiIco)emojiIco.style.display='none';
+  if(kbdIco)kbdIco.style.display='';
 }
 
 function closeEmojiPanel(){
@@ -9050,6 +9247,14 @@ function closeEmojiPanel(){
   _epOpen=false;
   panel.style.transform='translateY(100%)';
   setTimeout(function(){panel.classList.remove('on');panel.style.display='none';panel.style.transform='';},320);
+  // Restore smiley icon
+  var emojiIco=document.querySelector('.ep-ico-emoji');
+  var kbdIco=document.querySelector('.ep-ico-kbd');
+  if(emojiIco)emojiIco.style.display='';
+  if(kbdIco)kbdIco.style.display='none';
+  // Raise keyboard
+  var ta=document.getElementById('chatinp');
+  if(ta)setTimeout(function(){ta.focus();},50);
 }
 
 function _buildEmojiPanel(){
