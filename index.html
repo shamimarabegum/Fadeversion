@@ -481,24 +481,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .gender-opt{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:14px;border:1.5px solid var(--inp-border);background:var(--inp-bg);cursor:pointer;font-size:14px;font-weight:500;color:var(--sub);transition:all .18s;font-family:'Inter',sans-serif}
 .gender-opt.sel{border-color:var(--text);color:var(--text)}
 
-/* ── GIF PICKER ─────────────────────────────────────────────── */
-#gif-bg{display:none;position:fixed;inset:0;z-index:850;align-items:flex-end}
-#gif-bg.on{display:flex}
-.gif-dim{position:absolute;inset:0;background:rgba(0,0,0,.45);animation:dimIn .25s ease}
-#gif-sheet{position:relative;background:var(--card);width:100%;border-radius:20px 20px 0 0;height:72dvh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94);overflow:hidden}
-#gif-bg.on #gif-sheet{transform:translateY(0)}
-.gif-handle{width:34px;height:3px;background:var(--border);border-radius:2px;margin:12px auto 0;flex-shrink:0}
-.gif-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px 8px;flex-shrink:0}
-.gif-search{flex:1;background:var(--inp-bg);border:1.5px solid var(--inp-border);border-radius:22px;padding:9px 16px;font-size:14px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none}
-.gif-search::placeholder{color:var(--inp-ph)}
-.gif-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(2,1fr);gap:3px;padding:0 3px max(16px,env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
-.gif-grid::-webkit-scrollbar{display:none}
-.gif-item{border-radius:10px;overflow:hidden;cursor:pointer;background:var(--inp-bg);aspect-ratio:1;transition:opacity .12s,transform .12s}
-.gif-item:active{opacity:.7;transform:scale(.96)}
-.gif-item img{width:100%;height:100%;object-fit:cover;display:block}
-.gif-pow{display:flex;justify-content:center;align-items:center;padding:6px;color:var(--sub);font-size:11px;flex-shrink:0}
-.gif-btn{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--inp-bg);border:none;cursor:pointer;color:var(--sub);flex-shrink:0;font-size:11px;font-weight:800;letter-spacing:-.5px;font-family:'Inter',sans-serif;transition:opacity .15s}
-.gif-btn:active{opacity:.5}
+
 
 /* ── CIRCLES ─────────────────────────────────────────────────── */
 /* stacked avatar in Talk list */
@@ -966,13 +949,46 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #offline-bar.on{transform:translateY(0)}
 #offline-bar svg{flex-shrink:0;opacity:.75}
 /* VOICE NOTE RECORDING */
-.gif-btn.recording{background:#FFE8E8;color:#E8352A;animation:voicePulse 1s ease infinite}
 @keyframes voicePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
 .voice-bubble{display:flex;align-items:center;gap:9px;padding:10px 14px;min-width:140px}
 .voice-play{width:32px;height:32px;border-radius:50%;background:var(--bubble-me);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
 .voice-wave{flex:1;height:28px;display:flex;align-items:center;gap:2px}
 .voice-wave span{display:block;background:rgba(255,255,255,.7);border-radius:2px;width:3px;flex-shrink:0}
-.voice-dur{font-size:11px;color:rgba(255,255,255,.75);font-weight:500;flex-shrink:0}</style>
+.voice-dur{font-size:11px;color:rgba(255,255,255,.75);font-weight:500;flex-shrink:0}
+/* ── CHAT INPUT BAR ─────────────────────────────────────────── */
+.chatfoot{background:var(--card);flex-shrink:0;padding:10px 12px max(14px,env(safe-area-inset-bottom))}
+.chatrow{display:flex;align-items:flex-end;gap:8px}
+.chat-pill{flex:1;display:flex;align-items:flex-end;background:var(--inp-bg);border-radius:22px;padding:0 6px 0 4px;gap:2px;min-height:42px}
+.chat-pill-emoji{background:none;border:none;cursor:pointer;color:var(--sub);padding:10px 6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;-webkit-tap-highlight-color:transparent}
+.chat-pill-emoji:active{opacity:.4}
+.chatinp{flex:1;border:none;background:transparent;padding:10px 4px;font-size:15px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:86px;line-height:1.4;-webkit-user-select:text;user-select:text}
+.chatinp::placeholder{color:var(--inp-ph)}
+.chat-pill-photo{background:none;border:none;cursor:pointer;color:var(--sub);padding:10px 6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s;-webkit-tap-highlight-color:transparent}
+.chat-pill-photo:active{opacity:.4}
+.chat-send{width:42px;height:42px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s,transform .12s;-webkit-tap-highlight-color:transparent}
+.chat-send:active{opacity:.7;transform:scale(.9)}
+/* Send morphs icon: mic when empty, arrow when typing */
+.chat-send .ic-send{display:none}
+.chat-send .ic-mic{display:flex}
+.chat-send.has-text .ic-send{display:flex}
+.chat-send.has-text .ic-mic{display:none}
+/* recording pulse */
+.chat-send.recording{background:#E8352A;animation:voicePulse 1s ease infinite}
+/* EMOJI PANEL */
+#emoji-panel{position:fixed;left:0;right:0;bottom:0;z-index:800;background:var(--card);border-top:1px solid var(--border);transform:translateY(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94);will-change:transform;display:flex;flex-direction:column}
+#emoji-panel.on{transform:translateY(0)}
+.ep-cats{display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;height:44px;gap:2px;flex-shrink:0;overflow-x:auto}
+.ep-cats::-webkit-scrollbar{display:none}
+.ep-cat{background:none;border:none;cursor:pointer;padding:8px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+.ep-cat.on{color:var(--text)}
+.ep-cat-line{width:100%;height:2px;background:var(--text);border-radius:2px;position:absolute;bottom:0;left:0;display:none}
+.ep-cat.on .ep-cat-line{display:block}
+.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:8px 4px max(20px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch}
+.ep-grid::-webkit-scrollbar{display:none}
+.ep-grid button{background:none;border:none;cursor:pointer;font-size:24px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .1s;-webkit-tap-highlight-color:transparent;padding:0}
+.ep-grid button:active{background:var(--inp-bg)}
+.ep-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;padding:8px 4px 4px}
+</style>
 </head>
 <body>
 <div id="splash"><span class="splash-logo">Fade</span></div>
@@ -1160,14 +1176,20 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   <div class="reply-bar" id="reply-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span>Replying to <strong id="reply-name"></strong>: <span id="reply-preview"></span></span><button onclick="cancelReplyBar()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--sub);font-size:18px;padding:0 2px">×</button></div>
   <div class="chatfoot">
     <div class="chatrow">
-      <label for="chat-photo-inp" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--inp-bg);cursor:pointer;flex-shrink:0;color:var(--sub)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></label>
-      <input id="chat-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendPhoto(event)"/>
-      <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwToggleMediaBtns(this)" onkeydown="chatKD(event)"></textarea>
-      <div id="cw-media-btns" style="display:flex;align-items:flex-end;gap:5px;flex-shrink:0">
-        <button class="gif-btn" onclick="openGIFPicker('dm')" title="Send GIF">GIF</button>
-        <button class="gif-btn" id="cw-voice-btn" onclick="toggleVoiceRecord()" title="Voice note" style="font-size:17px;padding:0">🎤</button>
+      <div class="chat-pill">
+        <button class="chat-pill-emoji" onclick="toggleEmojiPanel()" aria-label="Emoji">
+          <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </button>
+        <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)" onfocus="closeEmojiPanel()"></textarea>
+        <label for="chat-photo-inp" class="chat-pill-photo" aria-label="Photo">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </label>
+        <input id="chat-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendPhoto(event)"/>
       </div>
-      <button id="cw-send-btn" onclick="sendMsg()" style="width:38px;height:38px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end"><svg width="17" height="17" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
+      <button id="cw-send-btn" class="chat-send" onclick="_cwSendOrRecord()" aria-label="Send or record">
+        <span class="ic-send"><svg width="17" height="17" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span>
+        <span class="ic-mic"><svg width="16" height="16" fill="none" stroke="var(--card)" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span>
+      </button>
     </div>
   </div>
 </div>
@@ -7579,20 +7601,6 @@ function postClip(){
 </div>
 
 
-<!-- GIF PICKER SHEET -->
-<div id="gif-bg" onclick="if(event.target===this||event.target.classList.contains('gif-dim'))closeGIFPicker()">
-  <div class="gif-dim"></div>
-  <div id="gif-sheet" onclick="event.stopPropagation()">
-    <div class="gif-handle"></div>
-    <div class="gif-hdr">
-      <input class="gif-search" id="gif-inp" placeholder="Search GIFs..." autocomplete="off" oninput="_gifSearchDebounce(this.value)"/>
-      <button onclick="closeGIFPicker()" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:4px;display:flex"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div class="gif-grid" id="gif-grid"></div>
-    <div class="gif-pow">Powered by GIPHY</div>
-  </div>
-</div>
-
 <!-- CIRCLE CHAT WINDOW -->
 <div id="circle-cw">
   <div class="circle-cwbar">
@@ -7618,11 +7626,14 @@ function postClip(){
   <div class="circle-chatfoot">
     <div id="mention-picker"></div>
     <div class="circle-chatrow">
-      <label for="circle-photo-inp" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:50%;background:var(--inp-bg);cursor:pointer;flex-shrink:0;color:var(--sub)"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></label>
-      <input id="circle-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendCirclePhoto(event)"/>
-      <button class="gif-btn" onclick="openGIFPicker('circle')" title="Send GIF">GIF</button>
-      <textarea class="circle-chatinp" id="circle-chatinp" placeholder="Message..." rows="1" oninput="grow(this);handleMentionInput(this)" onkeydown="circleKD(event)"></textarea>
-      <button onclick="sendCircleMsg()" style="width:38px;height:38px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end"><svg width="17" height="17" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button>
+      <div class="chat-pill">
+        <label for="circle-photo-inp" class="chat-pill-photo" aria-label="Photo">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </label>
+        <input id="circle-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendCirclePhoto(event)"/>
+        <textarea class="chatinp circle-chatinp" id="circle-chatinp" placeholder="Message..." rows="1" oninput="grow(this);handleMentionInput(this)" onkeydown="circleKD(event)"></textarea>
+      </div>
+      <button onclick="sendCircleMsg()" class="chat-send has-text" aria-label="Send"><span class="ic-send"><svg width="17" height="17" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span><span class="ic-mic" style="display:none"></span></button>
     </div>
   </div>
 </div>
@@ -7661,96 +7672,6 @@ function postClip(){
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════════
-// GIF PICKER
-// ═══════════════════════════════════════════════════════════════════
-// Replace with your own Giphy key from https://developers.giphy.com/
-var GIPHY_KEY='9f0DdNVMBhFuAvIJrBNTBfFMd3vVBXJU';
-var _gifContext='dm';
-var _gifSearchT=null;
-
-function openGIFPicker(ctx){
-  _gifContext=ctx||'dm';
-  var bg=document.getElementById('gif-bg');
-  var inp=document.getElementById('gif-inp');
-  bg.style.display='flex';
-  requestAnimationFrame(function(){requestAnimationFrame(function(){bg.classList.add('on');});});
-  inp.value='';
-  _loadGIFs('');
-  setTimeout(function(){inp.focus();},350);
-}
-
-function closeGIFPicker(){
-  var bg=document.getElementById('gif-bg');
-  bg.classList.remove('on');
-  setTimeout(function(){bg.style.display='none';},320);
-}
-
-function _gifSearchDebounce(q){
-  clearTimeout(_gifSearchT);
-  _gifSearchT=setTimeout(function(){_loadGIFs(q);},420);
-}
-
-function _loadGIFs(q){
-  var grid=document.getElementById('gif-grid');
-  if(!grid)return;
-  grid.innerHTML='<div style="grid-column:1/-1;display:flex;justify-content:center;padding:32px"><div class="ptr-ring"></div></div>';
-  var url=q
-    ?'https://api.giphy.com/v1/gifs/search?api_key='+GIPHY_KEY+'&q='+encodeURIComponent(q)+'&limit=20&rating=g'
-    :'https://api.giphy.com/v1/gifs/trending?api_key='+GIPHY_KEY+'&limit=20&rating=g';
-  fetch(url)
-    .then(function(r){return r.json();})
-    .then(function(data){
-      grid.innerHTML='';
-      if(!data.data||!data.data.length){
-        grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--sub);font-size:14px">No GIFs found</div>';
-        return;
-      }
-      data.data.forEach(function(gif){
-        var item=document.createElement('div');
-        item.className='gif-item';
-        var img=document.createElement('img');
-        img.src=gif.images.fixed_height_small?gif.images.fixed_height_small.url:gif.images.downsized.url;
-        img.loading='lazy';
-        var fullSrc=gif.images.fixed_height?gif.images.fixed_height.url:gif.images.original.url;
-        item.appendChild(img);
-        (function(url){item.onclick=function(){closeGIFPicker();_sendGIF(url);};})(fullSrc);
-        grid.appendChild(item);
-      });
-    })
-    .catch(function(){
-      grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--sub);font-size:14px">Could not load GIFs.<br><span style="font-size:12px">Add your Giphy key in the code.</span></div>';
-    });
-}
-
-function _sendGIF(gifUrl){
-  if(_gifContext==='circle'){sendCircleGIF(gifUrl);}
-  else{sendDMGIF(gifUrl);}
-}
-
-function sendDMGIF(gifUrl){
-  if(!chatUser||!profile)return;
-  var expires=new Date(Date.now()+86400000).toISOString();
-  var tempId='tmp-'+Date.now();
-  var m={id:tempId,sid:'demo',text:'',gif:gifUrl,ts:Date.now()};
-  appendBubble(m);
-  SFX('send');
-  var msgs=document.getElementById('msgs');
-  if(msgs)msgs.scrollTop=msgs.scrollHeight;
-  _sb.from('messages').insert({
-    sender_id:profile.id,receiver_id:chatUser.id,
-    content:null,gif_url:gifUrl,is_read:false,expires_at:expires
-  }).select('id').single().then(function(res){
-    if(res.error){T('GIF send failed');return;}
-    var el=document.querySelector('[data-msgid="'+tempId+'"]');
-    if(el)el.dataset.msgid=res.data.id;
-    m.id=res.data.id;
-    var cv=convos.find(function(x){return x.user.id===chatUser.id;});
-    if(cv){cv.lastMsg='GIF';cv.lastSid='demo';cv.ts=Date.now();}
-    else{convos.unshift({user:chatUser,lastMsg:'GIF',lastSid:'demo',ts:Date.now()});}
-  });
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // CIRCLES STATE
 // ═══════════════════════════════════════════════════════════════════
@@ -8262,23 +8183,6 @@ function sendCircleMsg(){
   });
 }
 
-function sendCircleGIF(gifUrl){
-  if(!activeCircle||!profile)return;
-  var expires=activeCircle.keep_messages?null:new Date(Date.now()+86400000).toISOString();
-  var tempId='tmp-'+Date.now();
-  var m={id:tempId,sid:profile.id,isMine:true,text:'',gif:gifUrl,img:null,isPhoto:false,reaction:null,replyTo:null,ts:Date.now()};
-  appendCircleBubble(m);SFX('send');
-  var msgs=document.getElementById('circle-msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;
-  _sb.from('circle_messages').insert({
-    circle_id:activeCircle.id,sender_id:profile.id,
-    content:null,gif_url:gifUrl,expires_at:expires
-  }).select('id').single().then(function(res){
-    if(res.error){T('GIF send failed');return;}
-    var el=document.querySelector('#circle-msgs [data-msgid="'+tempId+'"]');
-    if(el)el.dataset.msgid=res.data.id;
-    _updateCircleLastMsg(activeCircle.id,'GIF',profile.id,Date.now());
-  });
-}
 
 function sendCirclePhoto(e){
   var file=e.target.files&&e.target.files[0];
@@ -9010,15 +8914,17 @@ _startExpiryTick();
 // ── VOICE NOTE RECORDING ──────────────────────────────────────────────────────
 var _mediaRec=null, _audioChunks=[], _recStartT=0, _recTimer=null;
 
-function _cwToggleMediaBtns(ta){
-  var mediaBtns=document.getElementById('cw-media-btns');
-  if(!mediaBtns)return;
-  // Hide GIF+voice when there's typed text; show send only
-  if(ta.value.trim().length>0){
-    mediaBtns.style.display='none';
-  } else {
-    mediaBtns.style.display='flex';
-  }
+function _cwUpdateSendBtn(){
+  var ta=document.getElementById('chatinp');
+  var btn=document.getElementById('cw-send-btn');
+  if(!btn)return;
+  if(ta&&ta.value.trim().length>0){btn.classList.add('has-text');}
+  else{btn.classList.remove('has-text');}
+}
+function _cwSendOrRecord(){
+  var ta=document.getElementById('chatinp');
+  if(ta&&ta.value.trim().length>0){sendMsg();}
+  else{toggleVoiceRecord();}
 }
 
 function toggleVoiceRecord(){
@@ -9044,15 +8950,12 @@ function _startVoiceRecord(){
     };
     _mediaRec.start();
     _recStartT=Date.now();
-    var btn=document.getElementById('cw-voice-btn');
+    var btn=document.getElementById('cw-send-btn');
     if(btn)btn.classList.add('recording');
     haptic('send');
     // Show live timer in button
     _recTimer=setInterval(function(){
-      var s=Math.floor((Date.now()-_recStartT)/1000);
-      var btn=document.getElementById('cw-voice-btn');
-      if(btn)btn.textContent=s+'s';
-      if(s>=60)_stopVoiceRecord(); // auto-stop at 60s
+      if(Math.floor((Date.now()-_recStartT)/1000)>=60)_stopVoiceRecord();
     },1000);
   }).catch(function(){
     T('Microphone access denied');
@@ -9062,8 +8965,8 @@ function _startVoiceRecord(){
 function _stopVoiceRecord(){
   if(_mediaRec&&_mediaRec.state==='recording')_mediaRec.stop();
   clearInterval(_recTimer);
-  var btn=document.getElementById('cw-voice-btn');
-  if(btn){btn.classList.remove('recording');btn.textContent='🎤';}
+  var btn=document.getElementById('cw-send-btn');
+  if(btn)btn.classList.remove('recording');
 }
 
 function _sendVoiceNote(blob){
@@ -9098,7 +9001,124 @@ function _sendVoiceNote(blob){
     });
 }
 
+
+// ── EMOJI PANEL ──────────────────────────────────────────────────────────────
+var _epOpen=false;
+var _recentEmoji=[];
+try{_recentEmoji=JSON.parse(localStorage.getItem('fade_recent_emoji')||'[]');}catch(e){}
+
+var _EP_CATS=[
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg>',label:'Smileys',key:'smileys'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',label:'People',key:'people'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',label:'Nature',key:'nature'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>',label:'Food',key:'food'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',label:'Activity',key:'activity'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',label:'Travel',key:'travel'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',label:'Objects',key:'objects'},
+  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',label:'Symbols',key:'symbols'},
+];
+
+var _EP_DATA={
+  smileys:['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','☺️','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿'],
+  people:['👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💪','🦾','🦵','🦶','👂','🦻','👃','🫀','🫁','🧠','🦷','🦴','👀','👁','👅','👄','💋','🫦','👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','🧓','👴','👵'],
+  nature:['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐻‍❄️','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🦗','🕷','🦂','🐢','🐍','🦎','🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🐊','🐅','🌸','🌺','🌻','🌹','🌷','🍀','🌿','🍃','🍂','🍁','🌾','🌵','🌴','🌳','🌲'],
+  food:['🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶','🫑','🧄','🧅','🥔','🌽','🥕','🫛','🧆','🥚','🍳','🧇','🥞','🧈','🍞','🥐','🥨','🥯','🧀','🥗','🥙','🥪','🌮','🌯','🫔','🍔','🍟','🍕','🌭','🍿','🧂','🍱','🍣','🍤','🍙','🍚','🍛','🍜','🍝','🍠','🍢','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍩','🍪','🍦','🍨','🍧','🥧','🧁','☕','🍵','🧃','🥤','🧋','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🍾'],
+  activity:['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🥍','🏑','🪃','🥅','⛳','🪁','🎣','🤿','🎽','🎿','🛷','🥌','🎯','🪃','🎮','🕹','🎲','♟','🎭','🎨','🖼','🎪','🎤','🎧','🎼','🎹','🥁','🎷','🎺','🎸','🪕','🎻','🎬','🏹'],
+  travel:['🚗','🚕','🚙','🚌','🚎','🏎','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🏍','🛵','🛺','🚲','🛴','🛹','🚏','⛽','🚦','🚥','🗺','🧭','⛰','🌋','🏔','🗻','🏕','🏖','🏜','🏝','🏞','🏟','🏛','🏗','🏘','🏚','🏠','🏡','🏢','🏣','🏤','🏥','🏦','🏨','🏩','🏪','🏫','🏬','💒','🗼','🗽','⛪','🕌','🕍','⛩','🛕','🗾','🎌','⛲','⛺','🌁','🌃','🌄','🌅','🌆','🌇','🌉','🌌','🌠','🎇','🎆','🗺'],
+  objects:['⌚','📱','💻','⌨','🖥','🖨','🖱','🖲','🕹','💾','💿','📀','📷','📸','📹','🎥','📽','🎞','📞','☎','📟','📠','📺','📻','🧭','⏱','⏲','⏰','🕰','⌛','⏳','📡','🔋','🔌','💡','🔦','🕯','🪔','🧯','🛢','💰','💵','💳','💎','⚖','🪜','🔧','🪛','🔨','⛏','⚙','🗜','🔩','🪤','🔫','💣','🔪','🗡','🛡','🪚','🔑','🗝','🔐','🔏','🔒','🔓','🚪','🪞','🪟','🛏','🛋','🪑','🚽','🪠','🚿','🛁','🪤','🧴','🧷','🧹','🧺','🧻','🧼','🫧','🪥','🧽','🪣','🧲','🪜','🛒'],
+  symbols:['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','💕','💞','💓','💗','💖','💘','💝','💟','☮','✝','☪','🕉','✡','🔯','🕎','☯','☦','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛','🉑','☢','☣','📴','📳','🈶','🈚','🈸','🈺','🈷','✴','🆚','💮','🉐','㊙','㊗','🈴','🈵','🈹','🈲','🅰','🅱','🆎','🆑','🅾','🆘','⛔','📛','🚫','💯','❗','❕','❓','❔','‼','⁉','🔅','🔆','〽','⚠','🚸','🔱','♻','✅','❎','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','⬛','⬜'],
+};
+
+var _epCurCat='smileys';
+
+function toggleEmojiPanel(){
+  if(_epOpen){closeEmojiPanel();}else{openEmojiPanel();}
+}
+
+function openEmojiPanel(){
+  var panel=document.getElementById('emoji-panel');
+  if(!panel)return;
+  _epOpen=true;
+  _buildEmojiPanel();
+  panel.style.display='flex';
+  requestAnimationFrame(function(){requestAnimationFrame(function(){panel.classList.add('on');});});
+}
+
+function closeEmojiPanel(){
+  var panel=document.getElementById('emoji-panel');
+  if(!panel||!_epOpen)return;
+  _epOpen=false;
+  panel.style.transform='translateY(100%)';
+  setTimeout(function(){panel.classList.remove('on');panel.style.display='none';panel.style.transform='';},320);
+}
+
+function _buildEmojiPanel(){
+  _buildEpCats();
+  _buildEpGrid(_epCurCat);
+}
+
+function _buildEpCats(){
+  var el=document.getElementById('ep-cats');
+  if(!el)return;
+  el.innerHTML='';
+  // Recent tab
+  var rec=document.createElement('button');
+  rec.className='ep-cat'+(_epCurCat==='recent'?' on':'');
+  rec.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><div class="ep-cat-line"></div>';
+  rec.onclick=function(){_epCurCat='recent';_buildEpGrid('recent');_buildEpCats();};
+  el.appendChild(rec);
+  _EP_CATS.forEach(function(cat){
+    var btn=document.createElement('button');
+    btn.className='ep-cat'+(_epCurCat===cat.key?' on':'');
+    btn.innerHTML=cat.ico+'<div class="ep-cat-line"></div>';
+    btn.title=cat.label;
+    btn.onclick=(function(k){return function(){_epCurCat=k;_buildEpGrid(k);_buildEpCats();};})(cat.key);
+    el.appendChild(btn);
+  });
+}
+
+function _buildEpGrid(cat){
+  var el=document.getElementById('ep-grid');
+  if(!el)return;
+  el.innerHTML='';
+  var emojis=cat==='recent'?_recentEmoji:(_EP_DATA[cat]||[]);
+  if(cat==='recent'&&!emojis.length){
+    var empty=document.createElement('div');
+    empty.style.cssText='grid-column:1/-1;padding:28px 16px;text-align:center;color:var(--sub);font-size:13px';
+    empty.textContent='No recent emoji yet';
+    el.appendChild(empty);
+    return;
+  }
+  emojis.forEach(function(e){
+    var btn=document.createElement('button');
+    btn.textContent=e;
+    btn.onclick=function(){_insertEmoji(e);};
+    el.appendChild(btn);
+  });
+}
+
+function _insertEmoji(e){
+  var ta=document.getElementById('chatinp');
+  if(!ta)return;
+  var start=ta.selectionStart,end=ta.selectionEnd;
+  ta.value=ta.value.slice(0,start)+e+ta.value.slice(end);
+  ta.selectionStart=ta.selectionEnd=start+e.length;
+  ta.dispatchEvent(new Event('input'));
+  // Track recent
+  _recentEmoji=_recentEmoji.filter(function(x){return x!==e;});
+  _recentEmoji.unshift(e);
+  if(_recentEmoji.length>24)_recentEmoji=_recentEmoji.slice(0,24);
+  try{localStorage.setItem('fade_recent_emoji',JSON.stringify(_recentEmoji));}catch(e_){}
+  haptic();
+}
+
 </script>
 
+
+<!-- EMOJI PANEL -->
+<div id="emoji-panel">
+  <div class="ep-cats" id="ep-cats"></div>
+  <div class="ep-grid" id="ep-grid"></div>
+</div>
 </body>
 </html>
