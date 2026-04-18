@@ -966,71 +966,23 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 /* Hold bar */
 #voice-rec-bar{
   position:absolute;left:0;right:0;bottom:0;
-  height:72px;
+  height:68px;
   background:var(--card);
   border-top:1px solid var(--border);
   display:flex;align-items:center;
-  padding:0 70px 0 20px;
+  padding:0 80px 0 22px;gap:0;
   opacity:0;transform:translateY(100%);
   transition:opacity .18s,transform .22s cubic-bezier(.25,.46,.45,.94);
   pointer-events:all;
 }
 #voice-rec-bar.show{opacity:1;transform:translateY(0)}
 @keyframes recDotBlink{0%,100%{opacity:1}50%{opacity:.15}}
-#voice-rec-dot{width:8px;height:8px;border-radius:50%;background:#E8352A;flex-shrink:0;animation:recDotBlink 1s ease infinite}
-#voice-rec-time{font-size:15px;font-weight:700;color:var(--text);margin-left:8px;min-width:38px;font-variant-numeric:tabular-nums;flex-shrink:0}
+#voice-rec-dot{width:9px;height:9px;border-radius:50%;background:#E8352A;flex-shrink:0;animation:recDotBlink 1s ease infinite}
+#voice-rec-time{font-size:17px;font-weight:700;color:var(--text);margin-left:10px;min-width:44px;font-variant-numeric:tabular-nums;flex-shrink:0}
 #voice-slide-hint{
-  flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
-  color:var(--sub);font-size:13.5px;transition:opacity .15s;
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  color:var(--sub);font-size:14px;transition:opacity .15s;
 }
-
-/* Lock track */
-#voice-lock-track{
-  position:absolute;right:16px;bottom:78px;
-  width:44px;display:flex;flex-direction:column;align-items:center;
-  opacity:0;transition:opacity .2s;pointer-events:none;
-}
-#voice-lock-track.show{opacity:1}
-#voice-lock-icon{
-  width:40px;height:40px;border-radius:50%;
-  background:var(--card);border:1.5px solid var(--border);
-  box-shadow:0 2px 14px rgba(0,0,0,.12);
-  display:flex;align-items:center;justify-content:center;color:var(--sub);
-  transition:transform .2s cubic-bezier(.34,1.2,.64,1),background .18s,color .18s,border-color .18s;
-}
-#voice-lock-icon.locked{background:var(--text);color:var(--card);border-color:var(--text)}
-#voice-lock-track-line{width:1.5px;height:40px;background:var(--border);border-radius:2px;margin-bottom:6px}
-
-/* Locked bar */
-#voice-locked-bar{
-  position:absolute;left:0;right:0;bottom:0;
-  height:72px;
-  background:var(--card);
-  border-top:1px solid var(--border);
-  display:none;align-items:center;
-  padding:0 12px;gap:10px;
-}
-#voice-locked-bar.show{display:flex}
-#voice-trash-btn{
-  width:42px;height:42px;border-radius:13px;
-  background:var(--inp-bg);border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  color:var(--sub);pointer-events:all;flex-shrink:0;
-  transition:background .15s,color .15s;-webkit-tap-highlight-color:transparent;
-}
-#voice-trash-btn:active{background:#FEE2E2;color:#E8352A}
-#voice-locked-mid{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
-#voice-locked-dot{width:8px;height:8px;border-radius:50%;background:#E8352A;flex-shrink:0;animation:recDotBlink 1s ease infinite}
-#voice-locked-time{font-size:13px;font-weight:700;color:var(--text);flex-shrink:0;font-variant-numeric:tabular-nums;min-width:32px}
-#voice-waveform-canvas{flex:1;height:36px;display:block}
-#voice-send-btn{
-  width:46px;height:46px;border-radius:50%;
-  background:var(--text);border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  color:var(--card);pointer-events:all;flex-shrink:0;
-  transition:transform .12s,opacity .12s;-webkit-tap-highlight-color:transparent;
-}
-#voice-send-btn:active{transform:scale(.88);opacity:.8}
 /* ── CHAT INPUT BAR ─────────────────────────────────────────── */
 .chatfoot{background:var(--card);flex-shrink:0;padding:8px 12px max(12px,env(safe-area-inset-bottom))}
 .chatrow{display:flex;align-items:center;gap:8px}
@@ -1269,7 +1221,6 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 
 <!-- VOICE OVERLAY -->
 <div id="voice-overlay">
-  <!-- Hold bar: slides up behind mic button while holding -->
   <div id="voice-rec-bar">
     <div id="voice-rec-dot"></div>
     <span id="voice-rec-time">0:00</span>
@@ -1277,28 +1228,6 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
       <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
       Slide to cancel
     </div>
-  </div>
-  <!-- Lock track floating above mic button -->
-  <div id="voice-lock-track">
-    <div id="voice-lock-icon">
-      <svg id="vlk-unlocked" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
-      <svg id="vlk-locked" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-    </div>
-    <div id="voice-lock-track-line"></div>
-  </div>
-  <!-- Locked bar: trash | waveform canvas | time | send -->
-  <div id="voice-locked-bar">
-    <button id="voice-trash-btn" onclick="_voiceDiscard()">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-    </button>
-    <div id="voice-locked-mid">
-      <div id="voice-locked-dot"></div>
-      <span id="voice-locked-time">0:00</span>
-      <canvas id="voice-waveform-canvas"></canvas>
-    </div>
-    <button id="voice-send-btn" onclick="_voiceSend()">
-      <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
-    </button>
   </div>
 </div>
 
@@ -9019,12 +8948,11 @@ function _startExpiryTick(){
 _startExpiryTick();
 
 
-// ── VOICE NOTE RECORDING ──────────────────────────────────────────────────────
+// ── VOICE NOTE RECORDING ─────────────────────────────────────────────────────
+// Simple: hold = record, release = send, slide left = cancel. No lock.
 var _mediaRec=null, _audioChunks=[], _recStartT=0, _recTimer=null;
-var _voiceLocked=false, _voiceCancelled=false, _voiceHolding=false;
-var _holdStartY=0, _holdStartX=0;
-// AudioContext for live waveform
-var _audioCtx=null, _analyser=null, _audioSource=null, _waveRaf=null;
+var _voiceCancelled=false, _voiceHolding=false;
+var _holdStartX=0;
 
 function _cwUpdateSendBtn(){
   var ta=document.getElementById('chatinp');
@@ -9034,13 +8962,13 @@ function _cwUpdateSendBtn(){
   else{btn.classList.remove('has-text');}
 }
 
-// Wire send button: click = send text; hold = voice
+// Wire send button
 (function(){
   function init(){
     var btn=document.getElementById('cw-send-btn');
     if(!btn)return;
-    btn.addEventListener('click',function(e){
-      if(btn.classList.contains('has-text')){sendMsg();}
+    btn.addEventListener('click',function(){
+      if(btn.classList.contains('has-text'))sendMsg();
     });
     btn.addEventListener('touchstart',_voiceTouchStart,{passive:false});
     btn.addEventListener('touchmove',_voiceTouchMove,{passive:false});
@@ -9055,57 +8983,29 @@ function _voiceTouchStart(e){
   var btn=document.getElementById('cw-send-btn');
   if(btn&&btn.classList.contains('has-text'))return;
   e.preventDefault();
-  var t=e.touches[0];
-  _holdStartY=t.clientY;
-  _holdStartX=t.clientX;
+  _holdStartX=e.touches[0].clientX;
   _voiceHolding=true;
-  _voiceLocked=false;
   _voiceCancelled=false;
   _startVoiceRecord();
 }
 
 function _voiceTouchMove(e){
-  if(!_voiceHolding||_voiceLocked||_voiceCancelled)return;
+  if(!_voiceHolding||_voiceCancelled)return;
   e.preventDefault();
-  var t=e.touches[0];
-  var dy=_holdStartY-t.clientY;
-  var dx=_holdStartX-t.clientX;
-  var lockIcon=document.getElementById('voice-lock-icon');
-  if(lockIcon){
-    var lift=Math.min(Math.max(dy,0),60);
-    lockIcon.style.transform='translateY(-'+lift+'px)';
-    if(dy>30){lockIcon.classList.add('locked');document.getElementById('vlk-unlocked').style.display='none';document.getElementById('vlk-locked').style.display='';}
-    else{lockIcon.classList.remove('locked');document.getElementById('vlk-unlocked').style.display='';document.getElementById('vlk-locked').style.display='none';}
-  }
-  if(dx>80){_voiceCancel();return;}
-  if(dy>60){_voiceLockIn();}
+  var dx=_holdStartX-e.touches[0].clientX; // positive = swiped left
+  // Fade hint as they swipe
   var hint=document.getElementById('voice-slide-hint');
-  if(hint)hint.style.opacity=Math.max(0,1-(dx/60))+'';
+  if(hint)hint.style.opacity=Math.max(0,1-(dx/50))+'';
+  // Cancel if swiped left far enough
+  if(dx>80)_voiceCancel();
 }
 
 function _voiceTouchEnd(e){
   if(!_voiceHolding)return;
   _voiceHolding=false;
-  if(_voiceLocked||_voiceCancelled)return;
+  if(_voiceCancelled)return;
+  // Released → send
   _voiceSend();
-}
-
-function _voiceLockIn(){
-  if(_voiceLocked)return;
-  _voiceLocked=true;
-  haptic('send');
-  var lockIcon=document.getElementById('voice-lock-icon');
-  if(lockIcon){lockIcon.classList.add('locked');lockIcon.style.transform='';}
-  document.getElementById('vlk-unlocked').style.display='none';
-  document.getElementById('vlk-locked').style.display='';
-  var recBar=document.getElementById('voice-rec-bar');
-  var lockedBar=document.getElementById('voice-locked-bar');
-  var lockTrack=document.getElementById('voice-lock-track');
-  if(recBar)recBar.classList.remove('show');
-  if(lockTrack)setTimeout(function(){lockTrack.classList.remove('show');},200);
-  if(lockedBar)lockedBar.classList.add('show');
-  // Start canvas waveform
-  _startWaveformDraw();
 }
 
 function _voiceCancel(){
@@ -9118,25 +9018,14 @@ function _voiceCancel(){
   T('Recording cancelled');
 }
 
-function _voiceDiscard(){
-  _voiceCancelled=true;
-  _abortVoiceRecord();
-  _hideVoiceOverlay();
-}
-
 function _voiceSend(){
   _voiceCancelled=false;
   if(_mediaRec&&_mediaRec.state==='recording')_mediaRec.stop();
   clearInterval(_recTimer);
-  _stopWaveformDraw();
   _hideVoiceOverlay();
 }
 
 function _abortVoiceRecord(){
-  _stopWaveformDraw();
-  if(_audioSource){try{_audioSource.disconnect();}catch(e_){} _audioSource=null;}
-  if(_audioCtx){try{_audioCtx.close();}catch(e_){} _audioCtx=null;}
-  _analyser=null;
   if(_mediaRec){
     _mediaRec.onstop=null;
     if(_mediaRec.state==='recording')_mediaRec.stop();
@@ -9150,90 +9039,23 @@ function _hideVoiceOverlay(){
   var ov=document.getElementById('voice-overlay');
   var btn=document.getElementById('cw-send-btn');
   var recBar=document.getElementById('voice-rec-bar');
-  var lockTrack=document.getElementById('voice-lock-track');
-  var lockedBar=document.getElementById('voice-locked-bar');
-  var lockIcon=document.getElementById('voice-lock-icon');
   if(ov)ov.classList.remove('active');
   if(btn)btn.classList.remove('recording');
   if(recBar)recBar.classList.remove('show');
-  if(lockTrack)lockTrack.classList.remove('show');
-  if(lockedBar)lockedBar.classList.remove('show');
-  if(lockIcon){lockIcon.classList.remove('locked');lockIcon.style.transform='';}
-  document.getElementById('vlk-unlocked').style.display='';
-  document.getElementById('vlk-locked').style.display='none';
-  document.getElementById('voice-rec-time').textContent='0:00';
-  document.getElementById('voice-locked-time').textContent='0:00';
-}
-
-// ── Live waveform canvas ──────────────────────────────────────
-function _startWaveformDraw(){
-  var canvas=document.getElementById('voice-waveform-canvas');
-  if(!canvas||!_analyser)return;
-  var bufLen=_analyser.frequencyBinCount;
-  var freqData=new Uint8Array(bufLen);
-  // Use CSS color
-  var isDark=document.documentElement.classList.contains('dark');
-  function draw(){
-    _waveRaf=requestAnimationFrame(draw);
-    _analyser.getByteFrequencyData(freqData);
-    var W=canvas.offsetWidth*window.devicePixelRatio;
-    var H=canvas.offsetHeight*window.devicePixelRatio;
-    if(canvas.width!==W)canvas.width=W;
-    if(canvas.height!==H)canvas.height=H;
-    var ctx=canvas.getContext('2d');
-    ctx.clearRect(0,0,W,H);
-    var barW=Math.round(2.5*window.devicePixelRatio);
-    var gap=Math.round(2*window.devicePixelRatio);
-    var total=barW+gap;
-    var count=Math.floor(W/total);
-    var step=Math.floor(bufLen/count);
-    // Color: use text color
-    var style=getComputedStyle(document.body);
-    ctx.fillStyle=style.getPropertyValue('--text').trim()||'#1A1A1A';
-    for(var i=0;i<count;i++){
-      var val=freqData[i*step]/255;
-      // Minimum bar height so waveform always visible even in silence
-      var barH=Math.max(Math.round(2*window.devicePixelRatio),Math.round(val*H));
-      var x=i*total;
-      var y=Math.round((H-barH)/2);
-      ctx.beginPath();
-      if(ctx.roundRect){ctx.roundRect(x,y,barW,barH,Math.round(window.devicePixelRatio));}
-      else{ctx.rect(x,y,barW,barH);}
-      ctx.fill();
-    }
-  }
-  draw();
-}
-
-function _stopWaveformDraw(){
-  if(_waveRaf){cancelAnimationFrame(_waveRaf);_waveRaf=null;}
-  // Clear canvas
-  var canvas=document.getElementById('voice-waveform-canvas');
-  if(canvas){var ctx=canvas.getContext('2d');if(ctx)ctx.clearRect(0,0,canvas.width,canvas.height);}
+  var rt=document.getElementById('voice-rec-time');
+  if(rt)rt.textContent='0:00';
 }
 
 function _startVoiceRecord(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    T('Microphone not supported on this device');return;
+    T('Microphone not supported');return;
   }
   navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
     _audioChunks=[];
-    // Set up AudioContext for waveform analysis
-    try{
-      _audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-      _analyser=_audioCtx.createAnalyser();
-      _analyser.fftSize=256;
-      _analyser.smoothingTimeConstant=0.7;
-      _audioSource=_audioCtx.createMediaStreamSource(stream);
-      _audioSource.connect(_analyser);
-    }catch(e_){_analyser=null;}
     _mediaRec=new MediaRecorder(stream,{mimeType:MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/mp4'});
     _mediaRec.ondataavailable=function(e){if(e.data.size>0)_audioChunks.push(e.data);};
     _mediaRec.onstop=function(){
       stream.getTracks().forEach(function(t){t.stop();});
-      if(_audioSource){try{_audioSource.disconnect();}catch(e_){} _audioSource=null;}
-      if(_audioCtx){try{_audioCtx.close();}catch(e_){} _audioCtx=null;}
-      _analyser=null;
       if(_voiceCancelled){_audioChunks=[];return;}
       var blob=new Blob(_audioChunks,{type:_mediaRec.mimeType});
       _sendVoiceNote(blob);
@@ -9245,23 +9067,16 @@ function _startVoiceRecord(){
     var ov=document.getElementById('voice-overlay');
     var btn=document.getElementById('cw-send-btn');
     var recBar=document.getElementById('voice-rec-bar');
-    var lockTrack=document.getElementById('voice-lock-track');
     if(ov)ov.classList.add('active');
     if(btn)btn.classList.add('recording');
-    requestAnimationFrame(function(){
-      if(recBar)recBar.classList.add('show');
-      if(lockTrack)lockTrack.classList.add('show');
-    });
+    requestAnimationFrame(function(){if(recBar)recBar.classList.add('show');});
     // Live timer
     _recTimer=setInterval(function(){
       var elapsed=Math.floor((Date.now()-_recStartT)/1000);
       if(elapsed>=300){_voiceSend();return;}
       var m=Math.floor(elapsed/60),s=elapsed%60;
-      var t=m+':'+(s<10?'0':'')+s;
       var rt=document.getElementById('voice-rec-time');
-      var lt=document.getElementById('voice-locked-time');
-      if(rt)rt.textContent=t;
-      if(lt)lt.textContent=t;
+      if(rt)rt.textContent=m+':'+(s<10?'0':'')+s;
     },1000);
   }).catch(function(){T('Microphone access denied');});
 }
