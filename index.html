@@ -963,26 +963,33 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #voice-overlay{position:fixed;inset:0;z-index:820;pointer-events:none;display:none}
 #voice-overlay.active{display:block}
 
-/* Hold bar */
+/* Rec bar */
 #voice-rec-bar{
   position:absolute;left:0;right:0;bottom:0;
-  height:68px;
+  height:72px;
   background:var(--card);
   border-top:1px solid var(--border);
   display:flex;align-items:center;
-  padding:0 80px 0 22px;gap:0;
+  padding:0 16px;gap:12px;
   opacity:0;transform:translateY(100%);
   transition:opacity .18s,transform .22s cubic-bezier(.25,.46,.45,.94);
   pointer-events:all;
 }
 #voice-rec-bar.show{opacity:1;transform:translateY(0)}
 @keyframes recDotBlink{0%,100%{opacity:1}50%{opacity:.15}}
-#voice-rec-dot{width:9px;height:9px;border-radius:50%;background:#E8352A;flex-shrink:0;animation:recDotBlink 1s ease infinite}
-#voice-rec-time{font-size:17px;font-weight:700;color:var(--text);margin-left:10px;min-width:44px;font-variant-numeric:tabular-nums;flex-shrink:0}
-#voice-slide-hint{
-  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
-  color:var(--sub);font-size:14px;transition:opacity .15s;
+#voice-rec-dot{width:8px;height:8px;border-radius:50%;background:#E8352A;flex-shrink:0;animation:recDotBlink 1s ease infinite}
+#voice-rec-time{font-size:15px;font-weight:700;color:var(--text);min-width:36px;font-variant-numeric:tabular-nums;flex-shrink:0}
+/* Live waveform */
+#voice-live-wave{flex:1;display:flex;align-items:center;justify-content:center;gap:3px;height:36px}
+#voice-live-wave span{display:block;width:3px;border-radius:3px;background:#E8352A;height:4px;transition:height .08s ease}
+/* Cancel / Send action buttons */
+#voice-cancel-btn,#voice-send-btn{
+  width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
 }
+#voice-cancel-btn{background:var(--inp-bg);color:var(--sub)}
+#voice-send-btn{background:#E8352A;color:#fff}
 /* ── CHAT INPUT BAR ─────────────────────────────────────────── */
 .chatfoot{background:var(--card);flex-shrink:0;padding:8px 12px max(12px,env(safe-area-inset-bottom))}
 .chatrow{display:flex;align-items:center;gap:8px}
@@ -1222,12 +1229,19 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 <!-- VOICE OVERLAY -->
 <div id="voice-overlay">
   <div id="voice-rec-bar">
+    <button id="voice-cancel-btn" aria-label="Cancel recording">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </button>
     <div id="voice-rec-dot"></div>
     <span id="voice-rec-time">0:00</span>
-    <div id="voice-slide-hint">
-      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      Slide to cancel
+    <div id="voice-live-wave">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
     </div>
+    <button id="voice-send-btn" aria-label="Send voice message">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+    </button>
   </div>
 </div>
 
@@ -8949,10 +8963,12 @@ _startExpiryTick();
 
 
 // ── VOICE NOTE RECORDING ─────────────────────────────────────────────────────
-// Simple: hold = record, release = send, slide left = cancel. No lock.
+// Voice recording — tap mic to start, tap Cancel/Send to finish.
+// touchend on button does NOT auto-send; user must tap Send explicitly.
 var _mediaRec=null, _audioChunks=[], _recStartT=0, _recTimer=null;
-var _voiceCancelled=false, _voiceHolding=false;
+var _voiceCancelled=false, _voiceActive=false;
 var _holdStartX=0;
+var _waveAnim=null, _analyser=null, _waveData=null;
 
 function _cwUpdateSendBtn(){
   var ta=document.getElementById('chatinp');
@@ -8962,7 +8978,7 @@ function _cwUpdateSendBtn(){
   else{btn.classList.remove('has-text');}
 }
 
-// Wire send button
+// Wire send button and voice controls
 (function(){
   function init(){
     var btn=document.getElementById('cw-send-btn');
@@ -8974,6 +8990,18 @@ function _cwUpdateSendBtn(){
     btn.addEventListener('touchmove',_voiceTouchMove,{passive:false});
     btn.addEventListener('touchend',_voiceTouchEnd,{passive:false});
     btn.addEventListener('touchcancel',_voiceTouchEnd,{passive:false});
+
+    // Cancel / Send buttons inside the overlay bar
+    var cancelBtn=document.getElementById('voice-cancel-btn');
+    var sendBtn=document.getElementById('voice-send-btn');
+    if(cancelBtn){
+      cancelBtn.addEventListener('click',function(e){e.stopPropagation();_voiceCancel();});
+      cancelBtn.addEventListener('touchend',function(e){e.stopPropagation();e.preventDefault();_voiceCancel();},{passive:false});
+    }
+    if(sendBtn){
+      sendBtn.addEventListener('click',function(e){e.stopPropagation();_voiceSend();});
+      sendBtn.addEventListener('touchend',function(e){e.stopPropagation();e.preventDefault();_voiceSend();},{passive:false});
+    }
   }
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
   else{setTimeout(init,0);}
@@ -8982,46 +9010,43 @@ function _cwUpdateSendBtn(){
 function _voiceTouchStart(e){
   var btn=document.getElementById('cw-send-btn');
   if(btn&&btn.classList.contains('has-text'))return;
+  if(_voiceActive)return; // already recording
   e.preventDefault();
   _holdStartX=e.touches[0].clientX;
-  _voiceHolding=true;
-  _voiceCancelled=false;
   _startVoiceRecord();
 }
 
 function _voiceTouchMove(e){
-  if(!_voiceHolding||_voiceCancelled)return;
+  if(!_voiceActive||_voiceCancelled)return;
   e.preventDefault();
   var dx=_holdStartX-e.touches[0].clientX; // positive = swiped left
-  // Fade hint as they swipe
-  var hint=document.getElementById('voice-slide-hint');
-  if(hint)hint.style.opacity=Math.max(0,1-(dx/50))+'';
   // Cancel if swiped left far enough
   if(dx>80)_voiceCancel();
 }
 
+// Lifting finger keeps recording — user must tap Send or Cancel
 function _voiceTouchEnd(e){
-  if(!_voiceHolding)return;
-  _voiceHolding=false;
-  if(_voiceCancelled)return;
-  // Released → send
-  _voiceSend();
+  // Do nothing — recording stays active until user taps Send or Cancel
 }
 
 function _voiceCancel(){
-  if(_voiceCancelled)return;
+  if(!_voiceActive)return;
   _voiceCancelled=true;
-  _voiceHolding=false;
+  _voiceActive=false;
   haptic();
+  _stopWaveAnim();
   _abortVoiceRecord();
   _hideVoiceOverlay();
   T('Recording cancelled');
 }
 
 function _voiceSend(){
+  if(!_voiceActive)return;
+  _voiceActive=false;
   _voiceCancelled=false;
-  if(_mediaRec&&_mediaRec.state==='recording')_mediaRec.stop();
+  _stopWaveAnim();
   clearInterval(_recTimer);
+  if(_mediaRec&&_mediaRec.state==='recording')_mediaRec.stop();
   _hideVoiceOverlay();
 }
 
@@ -9046,13 +9071,55 @@ function _hideVoiceOverlay(){
   if(rt)rt.textContent='0:00';
 }
 
+// Live waveform via AnalyserNode
+function _startWaveAnim(stream){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var src=ctx.createMediaStreamSource(stream);
+    _analyser=ctx.createAnalyser();
+    _analyser.fftSize=32;
+    src.connect(_analyser);
+    _waveData=new Uint8Array(_analyser.frequencyBinCount);
+    var bars=document.querySelectorAll('#voice-live-wave span');
+    function tick(){
+      _waveAnim=requestAnimationFrame(tick);
+      _analyser.getByteFrequencyData(_waveData);
+      bars.forEach(function(bar,i){
+        var val=_waveData[i%_waveData.length]||0;
+        var h=Math.max(4,Math.round((val/255)*30));
+        bar.style.height=h+'px';
+      });
+    }
+    tick();
+  }catch(err){console.warn('Waveform err',err);}
+}
+
+function _stopWaveAnim(){
+  if(_waveAnim){cancelAnimationFrame(_waveAnim);_waveAnim=null;}
+  _analyser=null;_waveData=null;
+  // Reset bars
+  document.querySelectorAll('#voice-live-wave span').forEach(function(b){b.style.height='4px';});
+}
+
 function _startVoiceRecord(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     T('Microphone not supported');return;
   }
+  // Show overlay immediately (optimistic) so user sees feedback
+  _voiceActive=true;
+  _voiceCancelled=false;
+  var ov=document.getElementById('voice-overlay');
+  var btn=document.getElementById('cw-send-btn');
+  var recBar=document.getElementById('voice-rec-bar');
+  if(ov)ov.classList.add('active');
+  if(btn)btn.classList.add('recording');
+  requestAnimationFrame(function(){if(recBar)recBar.classList.add('show');});
+
   navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    if(!_voiceActive){stream.getTracks().forEach(function(t){t.stop();});return;}
     _audioChunks=[];
-    _mediaRec=new MediaRecorder(stream,{mimeType:MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/mp4'});
+    var mime=MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/mp4';
+    _mediaRec=new MediaRecorder(stream,{mimeType:mime});
     _mediaRec.ondataavailable=function(e){if(e.data.size>0)_audioChunks.push(e.data);};
     _mediaRec.onstop=function(){
       stream.getTracks().forEach(function(t){t.stop();});
@@ -9063,13 +9130,7 @@ function _startVoiceRecord(){
     _mediaRec.start();
     _recStartT=Date.now();
     haptic('send');
-    // Show overlay
-    var ov=document.getElementById('voice-overlay');
-    var btn=document.getElementById('cw-send-btn');
-    var recBar=document.getElementById('voice-rec-bar');
-    if(ov)ov.classList.add('active');
-    if(btn)btn.classList.add('recording');
-    requestAnimationFrame(function(){if(recBar)recBar.classList.add('show');});
+    _startWaveAnim(stream);
     // Live timer
     _recTimer=setInterval(function(){
       var elapsed=Math.floor((Date.now()-_recStartT)/1000);
@@ -9078,8 +9139,14 @@ function _startVoiceRecord(){
       var rt=document.getElementById('voice-rec-time');
       if(rt)rt.textContent=m+':'+(s<10?'0':'')+s;
     },1000);
-  }).catch(function(){T('Microphone access denied');});
+  }).catch(function(err){
+    console.error('Mic error',err);
+    _voiceActive=false;
+    _hideVoiceOverlay();
+    T('Microphone access denied');
+  });
 }
+
 function _sendVoiceNote(blob){
   if(!chatUser||!profile){T('Not in a chat');return;}
   if(blob.size<1000){T('Recording too short');return;}
