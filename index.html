@@ -1031,7 +1031,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #emoji-panel.on{transform:translateY(0)}
 .ep-cats{display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 4px;height:46px;gap:0;flex-shrink:0;overflow-x:auto}
 .ep-cats::-webkit-scrollbar{display:none}
-.ep-cat{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0;position:relative;line-height:1;min-width:36px;height:46px}
+.ep-cat{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0;position:relative;line-height:1;min-width:36px;height:46px}.ep-cat .ep-cat-ico{font-size:20px;line-height:1;filter:grayscale(1) opacity(0.45);transition:filter .15s}.ep-cat.on .ep-cat-ico{filter:grayscale(0) opacity(1)}
 .ep-cat.on{color:var(--text)}
 .ep-cat-line{width:100%;height:2px;background:var(--text);border-radius:2px;position:absolute;bottom:0;left:0;right:0;display:none}
 .ep-cat.on .ep-cat-line{display:block}
@@ -9351,13 +9351,13 @@ var _recentEmoji=[];
 try{_recentEmoji=JSON.parse(localStorage.getItem('fade_recent_emoji')||'[]');}catch(e){}
 
 var _EP_CATS=[
-  {ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.2" fill="currentColor" stroke="none"/><path d="M8.5 15c1 1.5 6 1.5 7 0" stroke-linecap="round"/></svg>',label:'Smileys & People',key:'smileys'},
-  {ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 21c-4.4 0-8-3.1-8-7.5C4 9 7.5 6 12 6s8 3 8 7.5C20 17.9 16.4 21 12 21z"/><path d="M8.5 6.5 7 4.5c1 .2 2 .8 2.5 1.5"/><path d="M15.5 6.5 17 4.5c-1 .2-2 .8-2.5 1.5"/><circle cx="9.5" cy="11" r="1.2" fill="currentColor" stroke="none"/><circle cx="14.5" cy="11" r="1.2" fill="currentColor" stroke="none"/><path d="M9.5 15c.8 1 4.2 1 5 0" stroke-linecap="round"/></svg>',label:'Animals & Nature',key:'nature'},
-  {ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 4c-2.5 0-4 1.8-4 4.5 0 2 1 3.5 2.5 4.2V15h3v-2.3C15 12 16 10.5 16 8.5 16 5.8 14.5 4 12 4z"/><path d="M9.5 4.5C9 3 7.5 3 7 3.5"/><path d="M14.5 4.5C15 3 16.5 3 17 3.5"/><path d="M10 15h4"/><path d="M10.5 17h3"/></svg>',label:'Food & Drink',key:'food'},
-  {ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M4.2 7.5Q8 10 12 9t7.8-1.5" stroke-linecap="round"/><path d="M4.2 16.5Q8 14 12 15t7.8 1.5" stroke-linecap="round"/></svg>',label:'Activity',key:'activity'},
-  {ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="9" width="20" height="9" rx="2"/><path d="M5 9V7.5C5 6.7 5.7 6 6.5 6h11c.8 0 1.5.7 1.5 1.5V9"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>',label:'Travel & Places',key:'travel'},
-  {ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6c0 2.2 1.1 4.1 2.8 5.3L9 17h6l.2-2.7A6.5 6.5 0 0 0 18 9a6 6 0 0 0-6-6z"/><line x1="9.5" y1="17" x2="14.5" y2="17"/><line x1="9.5" y1="19.5" x2="14.5" y2="19.5"/></svg>',label:'Objects',key:'objects'},
-  {ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',label:'Symbols',key:'symbols'},
+  {ico:'🙂',label:'Smileys & People',key:'smileys'},
+  {ico:'🐱',label:'Animals & Nature',key:'nature'},
+  {ico:'🍎',label:'Food & Drink',key:'food'},
+  {ico:'⚽',label:'Activity',key:'activity'},
+  {ico:'🚗',label:'Travel & Places',key:'travel'},
+  {ico:'💡',label:'Objects',key:'objects'},
+  {ico:'❤️',label:'Symbols',key:'symbols'},
 ];
 var _EP_DATA={
   smileys:['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','☺️','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💪','🦾','🦵','🦶','👂','🦻','👃','👀','👁','👅','👄','💋','👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','🧓','👴','👵'],
@@ -9700,17 +9700,17 @@ function _buildEpCats(){
   var el=document.getElementById('ep-cats');
   if(!el)return;
   el.innerHTML='';
-  // Recent tab — clock SVG
+  // Recent tab — clock emoji
   var rec=document.createElement('button');
   rec.className='ep-cat'+(_epCurCat==='recent'?' on':'');
-  rec.innerHTML='<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="ep-cat-line"></div>';
+  rec.innerHTML='<span class="ep-cat-ico">🕐</span><div class="ep-cat-line"></div>';
   rec.title='Recent';
   rec.onclick=function(){_epCurCat='recent';_buildEpGrid('recent');_buildEpCats();};
   el.appendChild(rec);
   _EP_CATS.forEach(function(cat){
     var btn=document.createElement('button');
     btn.className='ep-cat'+(_epCurCat===cat.key?' on':'');
-    btn.innerHTML=cat.ico+'<div class="ep-cat-line"></div>';
+    btn.innerHTML='<span class="ep-cat-ico">'+cat.ico+'</span><div class="ep-cat-line"></div>';
     btn.title=cat.label;
     btn.onclick=(function(k){return function(){_epCurCat=k;_buildEpGrid(k);_buildEpCats();};})(cat.key);
     el.appendChild(btn);
