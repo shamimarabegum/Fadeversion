@@ -1035,12 +1035,21 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .ep-cat.on{color:var(--text)}
 .ep-cat-line{width:100%;height:2px;background:var(--text);border-radius:2px;position:absolute;bottom:0;left:0;display:none}
 .ep-cat.on .ep-cat-line{display:block}
-.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(7,1fr);padding:6px 4px max(16px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch}
+.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:4px 2px max(12px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch;align-content:start}
 .ep-grid::-webkit-scrollbar{display:none}
-.ep-grid button{background:none;border:none;cursor:pointer;font-size:28px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:transform .1s,background .1s;-webkit-tap-highlight-color:transparent;padding:0;line-height:1}
-.ep-grid button:active{background:var(--inp-bg);transform:scale(.72)}
-@keyframes ep-pop{0%{transform:scale(1)}40%{transform:scale(1.28) rotate(-8deg)}70%{transform:scale(0.88) rotate(4deg)}100%{transform:scale(1) rotate(0deg)}}
-.ep-grid button.ep-tapped{animation:ep-pop .35s cubic-bezier(.25,.46,.45,.94) both}
+@keyframes ep-float{0%,100%{transform:translateY(0) scale(1)}35%{transform:translateY(-4px) scale(1.12)}65%{transform:translateY(-2px) scale(1.06)}}
+@keyframes ep-tap{0%{transform:scale(1)}30%{transform:scale(1.35) rotate(-10deg)}65%{transform:scale(0.85) rotate(5deg)}100%{transform:scale(1) rotate(0deg)}}
+.ep-grid button{background:none;border:none;cursor:pointer;font-size:26px;width:100%;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;padding:0;transition:background .1s;animation:ep-float 2.8s ease-in-out infinite;will-change:transform}
+.ep-grid button:nth-child(8n+1){animation-delay:0s}
+.ep-grid button:nth-child(8n+2){animation-delay:.18s}
+.ep-grid button:nth-child(8n+3){animation-delay:.36s}
+.ep-grid button:nth-child(8n+4){animation-delay:.54s}
+.ep-grid button:nth-child(8n+5){animation-delay:.72s}
+.ep-grid button:nth-child(8n+6){animation-delay:.9s}
+.ep-grid button:nth-child(8n+7){animation-delay:1.08s}
+.ep-grid button:nth-child(8n+8){animation-delay:1.26s}
+.ep-grid button:active{background:var(--inp-bg)}
+.ep-grid button.ep-tapped{animation:ep-tap .32s cubic-bezier(.25,.46,.45,.94) both!important}
 .ep-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;padding:8px 4px 4px}
 </style>
 </head>
@@ -1231,7 +1240,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   <div class="chatfoot">
     <div class="chatrow">
       <div class="chat-pill">
-        <button class="chat-pill-emoji" id="emoji-toggle-btn" onpointerdown="if(_epOpen){var _ta=document.getElementById('chatinp');if(_ta)_ta.focus();}" onclick="toggleEmojiPanel()" aria-label="Emoji">
+        <button class="chat-pill-emoji" id="emoji-toggle-btn" onpointerdown="_epKbdPD(event)" onclick="toggleEmojiPanel()" aria-label="Emoji">
           <span class="ep-ico-emoji"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg></span>
           <span class="ep-ico-kbd" style="display:none"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="10" x2="10.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="10" x2="14.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="10" x2="18.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="14" x2="6.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="14" x2="18.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke-width="2.2" stroke-linecap="round"/></svg></span>
         </button>
@@ -9448,24 +9457,28 @@ function closeEmojiPanel(){
   var panel=document.getElementById('emoji-panel');
   if(!panel||!_epOpen)return;
   _epOpen=false;
-  // Restore icons immediately
-  var emojiIco=document.getElementById('emoji-toggle-btn')&&document.getElementById('emoji-toggle-btn').querySelector('.ep-ico-emoji');
-  var kbdIco=document.getElementById('emoji-toggle-btn')&&document.getElementById('emoji-toggle-btn').querySelector('.ep-ico-kbd');
-  if(!emojiIco)emojiIco=document.querySelector('.ep-ico-emoji');
-  if(!kbdIco)kbdIco=document.querySelector('.ep-ico-kbd');
+  // Restore icons
+  var tb=document.getElementById('emoji-toggle-btn');
+  var emojiIco=tb?tb.querySelector('.ep-ico-emoji'):document.querySelector('.ep-ico-emoji');
+  var kbdIco=tb?tb.querySelector('.ep-ico-kbd'):document.querySelector('.ep-ico-kbd');
   if(emojiIco)emojiIco.style.display='';
   if(kbdIco)kbdIco.style.display='none';
-  // Remove footer push immediately
+  // Reset footer
   var foot=document.querySelector('#cw .chatfoot');
   if(foot)foot.style.marginBottom='';
   // Slide panel away
   panel.classList.remove('on');
-  panel.style.transform='';
-  panel.style.transition='';
-  setTimeout(function(){panel.style.display='none';panel.style.transform='';},300);
-  // Focus — called from pointerdown on button so keyboard should open
+  setTimeout(function(){panel.style.display='none';},300);
+}
+
+// Called on pointerdown of the toggle button — fires inside the raw touch gesture
+// so focus() is trusted by the browser to open the keyboard
+function _epKbdPD(e){
+  if(!_epOpen)return;
+  // Prevent the button's onclick from also firing closeEmojiPanel after we focus
+  // (we still need onclick to run for the toggle, so don't preventDefault fully)
   var ta=document.getElementById('chatinp');
-  if(ta){ta.focus();setTimeout(function(){if(document.activeElement!==ta)ta.focus();},80);}
+  if(ta)ta.focus();
 }
 
 function _buildEmojiPanel(){
@@ -9510,7 +9523,7 @@ function _buildEpGrid(cat){
     btn.textContent=e;
     btn.onclick=function(){
       btn.classList.remove('ep-tapped');
-      void btn.offsetWidth;
+      void btn.offsetWidth; // reflow to restart animation
       btn.classList.add('ep-tapped');
       _insertEmoji(e);
     };
