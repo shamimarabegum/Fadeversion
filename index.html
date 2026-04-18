@@ -1012,33 +1012,34 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #voice-pill .vp-bars{display:flex;align-items:center;gap:2px;}
 #voice-pill .vp-bars span{display:block;width:2.5px;border-radius:2px;background:rgba(255,255,255,.85);}
 /* ── CHAT INPUT BAR (shared base — circles) ──────────────────── */
-.chatfoot{background:var(--card);flex-shrink:0;padding:10px 12px max(14px,env(safe-area-inset-bottom));border-top:1px solid var(--border)}
+.chatfoot{background:var(--card);flex-shrink:0;padding:10px 16px max(16px,env(safe-area-inset-bottom))}
 .chatrow{display:flex;align-items:center;gap:9px}
-.chat-pill{flex:1;display:flex;align-items:center;background:var(--inp-bg);border-radius:26px;border:1.5px solid var(--inp-border);padding:0 6px 0 2px;gap:0;min-height:44px;transition:border-color .2s}
-.chat-pill:focus-within{border-color:rgba(44,44,44,.28)}
-.chat-pill-icon{background:none;border:none;cursor:pointer;color:var(--sub);width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:50%;transition:color .15s,background .15s;-webkit-tap-highlight-color:transparent}
-.chat-pill-icon:active{color:var(--text);background:var(--inp-border)}
-.chatinp{flex:1;border:none;background:transparent;padding:11px 8px 11px 2px;font-size:15px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:90px;line-height:1.45;-webkit-user-select:text;user-select:text;align-self:center}
+.chat-pill{flex:1;display:flex;align-items:center;background:var(--inp-bg);border-radius:26px;padding:0 6px 0 0;gap:0;min-height:46px;overflow:hidden}
+.chat-pill-icon{background:none;border:none;cursor:pointer;color:var(--sub);width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .15s;-webkit-tap-highlight-color:transparent}
+.chat-pill-icon:active{color:var(--text)}
+.chatinp{flex:1;border:none;background:transparent;padding:12px 6px 12px 2px;font-size:15px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:90px;line-height:1.45;-webkit-user-select:text;user-select:text;align-self:center}
 .chatinp::placeholder{color:var(--inp-ph)}
 
 /* ── DM CHAT ─────────────────────────────────────────────────── */
-#cw .chatfoot{padding:10px 14px max(16px,env(safe-area-inset-bottom));border-top:1px solid var(--border)}
-#cw .chatrow{gap:9px;align-items:center}
-#cw .chatinp{background:transparent;border-radius:0;padding:11px 8px 11px 2px;align-self:center}
-.chat-ico-btn{background:none;border:none;cursor:pointer;color:var(--sub);width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:50%;transition:color .15s,background .15s;-webkit-tap-highlight-color:transparent}
-.chat-ico-btn:active{color:var(--text);background:var(--inp-border)}
+#cw .chatfoot{padding:10px 16px max(16px,env(safe-area-inset-bottom))}
+#cw .chatrow{gap:0}
+#cw .chat-pill{border-radius:26px;padding:0 6px 0 0}
+#cw .chatinp{padding:12px 4px 12px 2px;align-self:center}
+.chat-ico-btn{background:none;border:none;cursor:pointer;color:var(--sub);width:44px;height:46px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .15s;-webkit-tap-highlight-color:transparent}
+.chat-ico-btn:active{color:var(--text)}
 
 /* ── SEND / MIC BUTTON ───────────────────────────────────────── */
-.chat-send{width:42px;height:42px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,transform .15s,border-color .2s;-webkit-tap-highlight-color:transparent;flex-direction:column;gap:1px;touch-action:none;user-select:none;-webkit-user-select:none}
+.chat-send{width:42px;height:42px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,transform .15s,width .18s,height .18s;-webkit-tap-highlight-color:transparent;flex-direction:column;gap:1px;touch-action:none;user-select:none;-webkit-user-select:none}
 .chat-send .ic-send{display:none}
 .chat-send .ic-mic{display:flex}
 .chat-send.has-text .ic-send{display:flex}
 .chat-send.has-text .ic-mic{display:none}
-/* DM — mic gets subtle background so it has visual weight; send fills solid */
-#cw .chat-send{background:var(--inp-bg);color:var(--sub);border:1.5px solid var(--inp-border);width:42px;height:42px}
-#cw .chat-send.has-text{background:var(--text);color:var(--card);border-color:var(--text)}
-#cw .chat-send.recording{background:#E8352A !important;border-color:#E8352A !important;color:#fff}
-#cw .chat-send:active{opacity:.7;transform:scale(.9)}
+/* DM idle: flat mic icon, no bg, no border */
+#cw .chat-send{background:none;border:none;color:var(--sub);width:40px;height:40px;border-radius:50%;margin-right:2px}
+/* DM typing: compact filled circle — brand-native */
+#cw .chat-send.has-text{background:var(--text);color:var(--card);width:32px;height:32px}
+#cw .chat-send.recording{background:#E8352A !important;color:#fff;width:38px;height:38px}
+#cw .chat-send:active{opacity:.7;transform:scale(.88)}
 /* EMOJI PANEL */
 #emoji-panel{position:fixed;left:0;right:0;bottom:0;z-index:830;background:var(--card);border-top:1px solid var(--border);border-radius:16px 16px 0 0;transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94);will-change:transform;display:flex;flex-direction:column;height:320px}.ep-handle{width:36px;height:4px;background:var(--border);border-radius:4px;margin:10px auto 2px;flex-shrink:0}
 #emoji-panel.on{transform:translateY(0)}
@@ -1254,11 +1255,11 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
         </label>
         <input id="chat-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendPhoto(event)"/>
         <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)"></textarea>
+        <button id="cw-send-btn" class="chat-send" aria-label="Send or record">
+          <span class="ic-send"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span>
+          <span class="ic-mic"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span>
+        </button>
       </div>
-      <button id="cw-send-btn" class="chat-send" aria-label="Send or record">
-        <span class="ic-send"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span>
-        <span class="ic-mic"><svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span>
-      </button>
     </div>
   </div>
 </div>
