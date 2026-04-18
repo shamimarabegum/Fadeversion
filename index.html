@@ -1026,6 +1026,10 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .cd-card-track{width:100%;height:2px;background:rgba(255,255,255,0.12);border-radius:2px;overflow:hidden;margin-top:2px}
 .cd-card-bar{height:100%;background:rgba(255,255,255,0.5);border-radius:2px;transition:width 1s linear}
 .cd-card-expired{font-size:13px;font-weight:500;color:rgba(255,255,255,0.35);margin-top:2px}
+/* countdown picker digit boxes */
+.cd-digit-box{width:64px;height:76px;background:var(--inp-bg);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;cursor:pointer;transition:background .15s,box-shadow .15s;user-select:none;-webkit-tap-highlight-color:transparent}
+.cd-digit-box.active{background:var(--inp-bg);box-shadow:0 0 0 2px #7C3AED}
+.cd-digit-box:active{background:var(--border)}
 .chat-send{width:44px;height:44px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,transform .15s;-webkit-tap-highlight-color:transparent;flex-direction:column;gap:1px;touch-action:none;user-select:none;-webkit-user-select:none}
 .chat-send .ic-send{display:none}
 .chat-send .ic-mic{display:flex}
@@ -4879,7 +4883,7 @@ function appendBubble(m){
     durEl.textContent=dur>0?(Math.floor(dur/60)+':'+(dur%60<10?'0':'')+dur%60):'0:00';
     b.appendChild(playBtn);b.appendChild(wave);b.appendChild(durEl);
     attachHold(b,m,wrap,bs,isMine);
-  } else if(m._cdEndsAt || (m.text && _parseCD(m.text))) {
+  } else if(m._cdEndsAt || (m.text && m.text.indexOf('[countdown:')===0 && _parseCD(m.text))) {
     var cdData = m._cdEndsAt ? {endsAt:m._cdEndsAt,total:m._cdTotal||0,label:m._cdLabel||''} : _parseCD(m.text);
     b = buildCDCard(cdData.endsAt, cdData.total, cdData.label, isMine);
     attachHold(b,m,wrap,bs,isMine);
@@ -5152,32 +5156,60 @@ function sendMsg(){
 /* ── COUNTDOWN ────────────────────────────────────────────── */
 var _cdH=0,_cdM=5,_cdTick=null;
 
+// digit boxes: _cdDigits = [h0,h1,m0,m1], _cdActive = index 0-3
+var _cdDigits=[0,0,0,5],_cdActive=0;
+var _cdBoxIds=['cd-box-h0','cd-box-h1','cd-box-m0','cd-dm1-box'];
+var _cdSpanIds=['cd-dh0','cd-dh1','cd-dm0','cd-dm1'];
+
 function openCountdownSheet(){
   var sheet=document.getElementById('countdown-sheet');
   var inner=document.getElementById('countdown-inner');
   document.getElementById('cd-label').value='';
-  _cdH=0;_cdM=5;_cdRender();
+  _cdDigits=[0,0,0,5];_cdActive=0;
+  _cdRenderDigits();_cdSetActive(0);
   sheet.style.display='block';
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     inner.style.transform='translateY(0)';
+    setTimeout(function(){document.getElementById('cd-hidden-inp').focus();},200);
   });});
 }
 function closeCountdownSheet(){
   var inner=document.getElementById('countdown-inner');
   inner.style.transform='translateY(100%)';
+  document.getElementById('cd-hidden-inp').blur();
   setTimeout(function(){document.getElementById('countdown-sheet').style.display='none';},300);
 }
-function _cdAdj(unit,delta){
-  if(unit==='h') _cdH=Math.max(0,Math.min(23,_cdH+delta));
-  else _cdM=Math.max(0,Math.min(59,_cdM+delta));
-  _cdRender();
+function _cdFocus(box){
+  var map={h0:0,h1:1,m0:2};
+  var idx=map[box]!==undefined?map[box]:3;
+  _cdSetActive(idx);
+  document.getElementById('cd-hidden-inp').focus();
 }
-function _cdRender(){
-  document.getElementById('cd-h').textContent=String(_cdH).padStart(2,'0');
-  document.getElementById('cd-m').textContent=String(_cdM).padStart(2,'0');
+function _cdSetActive(idx){
+  _cdBoxIds.forEach(function(id,i){
+    var el=document.getElementById(id);
+    if(el) el.classList.toggle('active',i===idx);
+  });
+  _cdActive=idx;
+}
+function _cdDigitInput(val){
+  var n=parseInt(val,10);
+  if(isNaN(n)) return;
+  _cdDigits[_cdActive]=n;
+  _cdRenderDigits();
+  // auto advance
+  if(_cdActive<3) _cdSetActive(_cdActive+1);
+}
+function _cdRenderDigits(){
+  _cdSpanIds.forEach(function(id,i){
+    var el=document.getElementById(id);
+    if(el) el.textContent=_cdDigits[i];
+  });
 }
 function sendCountdown(){
-  var totalSec=_cdH*3600+_cdM*60;
+  var h=_cdDigits[0]*10+_cdDigits[1];
+  var m=_cdDigits[2]*10+_cdDigits[3];
+  var totalSec=h*3600+m*60;
   if(totalSec<60){T('Set at least 1 minute');return;}
   var label=document.getElementById('cd-label').value.trim();
   var endsAt=Date.now()+totalSec*1000;
@@ -5201,10 +5233,14 @@ function sendCountdown(){
   });
 }
 function _parseCD(text){
-  if(!text) return null;
-  var m=text.match(/^\[countdown:(\d+):(\d+):(.*)\]$/);
-  if(!m) return null;
-  return{endsAt:parseInt(m[1],10),total:parseInt(m[2],10),label:decodeURIComponent(m[3]||'')};
+  if(!text||text.indexOf('[countdown:')<0) return null;
+  // 3-part: [countdown:endsAt:totalMs:label]
+  var m3=text.match(/^\[countdown:(\d+):(\d+):(.*)\]$/);
+  if(m3) return{endsAt:parseInt(m3[1],10),total:parseInt(m3[2],10),label:decodeURIComponent(m3[3]||'')};
+  // 2-part fallback: [countdown:endsAt:label]
+  var m2=text.match(/^\[countdown:(\d+):(.*)\]$/);
+  if(m2) return{endsAt:parseInt(m2[1],10),total:0,label:decodeURIComponent(m2[2]||'')};
+  return null;
 }
 function _fmtCD(ms){
   if(ms<=0) return null;
@@ -9861,33 +9897,25 @@ function _buildEpCats(){
 </div>
 
 <!-- COUNTDOWN SHEET -->
-<div id="countdown-sheet" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.4)" onclick="closeCountdownSheet()">
-  <div id="countdown-inner" style="position:absolute;bottom:0;left:0;right:0;background:var(--card);border-radius:20px 20px 0 0;padding:0 0 max(28px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.25,.46,.45,.94)" onclick="event.stopPropagation()">
-    <div style="width:36px;height:4px;background:var(--border);border-radius:4px;margin:12px auto 24px"></div>
-    <div style="padding:0 20px">
-      <p style="font-size:16px;font-weight:600;color:var(--text);margin:0 0 2px">Countdown</p>
-      <p style="font-size:13px;color:var(--sub);margin:0 0 24px">Set a timer to share in chat</p>
-      <input id="cd-label" type="text" placeholder="Label (optional)" maxlength="30" style="width:100%;box-sizing:border-box;background:var(--inp-bg);border:none;border-radius:12px;padding:13px 16px;font-size:15px;font-family:Inter,sans-serif;color:var(--text);outline:none;margin-bottom:32px">
-      <div style="display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:36px">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
-          <button onclick="_cdAdj('h',1)" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:4px 24px;font-size:22px;line-height:1;-webkit-tap-highlight-color:transparent">+</button>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
-            <span id="cd-h" style="font-size:44px;font-weight:700;color:var(--text);line-height:1;min-width:72px;text-align:center;font-variant-numeric:tabular-nums">00</span>
-            <span style="font-size:11px;color:var(--sub);letter-spacing:.6px;text-transform:uppercase">hours</span>
-          </div>
-          <button onclick="_cdAdj('h',-1)" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:4px 24px;font-size:22px;line-height:1;-webkit-tap-highlight-color:transparent">−</button>
-        </div>
-        <span style="font-size:40px;font-weight:300;color:var(--sub);margin:0 8px;padding-bottom:20px;line-height:1">:</span>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
-          <button onclick="_cdAdj('m',1)" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:4px 24px;font-size:22px;line-height:1;-webkit-tap-highlight-color:transparent">+</button>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
-            <span id="cd-m" style="font-size:44px;font-weight:700;color:var(--text);line-height:1;min-width:72px;text-align:center;font-variant-numeric:tabular-nums">05</span>
-            <span style="font-size:11px;color:var(--sub);letter-spacing:.6px;text-transform:uppercase">min</span>
-          </div>
-          <button onclick="_cdAdj('m',-1)" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:4px 24px;font-size:22px;line-height:1;-webkit-tap-highlight-color:transparent">−</button>
-        </div>
+<div id="countdown-sheet" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.45)" onclick="closeCountdownSheet()">
+  <div id="countdown-inner" style="position:absolute;bottom:0;left:0;right:0;background:var(--card);border-radius:24px 24px 0 0;padding:0 0 max(32px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94)" onclick="event.stopPropagation()">
+    <div style="width:36px;height:4px;background:var(--border);border-radius:4px;margin:14px auto 28px"></div>
+    <div style="padding:0 24px">
+      <input id="cd-label" type="text" placeholder="Countdown name" maxlength="30"
+        style="width:100%;box-sizing:border-box;background:none;border:none;border-bottom:1.5px solid var(--border);padding:0 0 12px;font-size:17px;font-weight:500;font-family:Inter,sans-serif;color:var(--text);outline:none;margin-bottom:32px;letter-spacing:.1px">
+      <!-- Digit boxes: HH : MM -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:36px">
+        <div class="cd-digit-box" onclick="_cdFocus('h0')" id="cd-box-h0"><span id="cd-dh0">0</span></div>
+        <div class="cd-digit-box" onclick="_cdFocus('h1')" id="cd-box-h1"><span id="cd-dh1">0</span></div>
+        <span style="font-size:32px;font-weight:300;color:var(--sub);margin:0 2px;padding-bottom:4px">:</span>
+        <div class="cd-digit-box" onclick="_cdFocus('m0')" id="cd-box-m0"><span id="cd-dm0">0</span></div>
+        <div class="cd-digit-box" onclick="_cdFocus('m1')" id="cd-dm1-box"><span id="cd-dm1">5</span></div>
       </div>
-      <button onclick="sendCountdown()" style="width:100%;background:#7C3AED;color:#fff;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;letter-spacing:.2px">Send</button>
+      <!-- hidden input captures keystrokes -->
+      <input id="cd-hidden-inp" type="tel" inputmode="numeric" maxlength="1"
+        style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;left:0"
+        oninput="_cdDigitInput(this.value);this.value=''">
+      <button onclick="sendCountdown()" style="width:100%;background:#7C3AED;color:#fff;border:none;border-radius:14px;padding:16px;font-size:15px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent;letter-spacing:.2px">Send</button>
     </div>
   </div>
 </div>
