@@ -1031,7 +1031,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #emoji-panel.on{transform:translateY(0)}
 .ep-cats{display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;height:46px;gap:2px;flex-shrink:0;overflow-x:auto}
 .ep-cats::-webkit-scrollbar{display:none}
-.ep-cat{background:none;border:none;cursor:pointer;padding:8px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0;position:relative}
+.ep-cat{background:none;border:none;cursor:pointer;padding:8px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0;position:relative;font-size:18px;line-height:1}
 .ep-cat.on{color:var(--text)}
 .ep-cat-line{width:100%;height:2px;background:var(--text);border-radius:2px;position:absolute;bottom:0;left:0;display:none}
 .ep-cat.on .ep-cat-line{display:block}
@@ -9344,16 +9344,15 @@ var _recentEmoji=[];
 try{_recentEmoji=JSON.parse(localStorage.getItem('fade_recent_emoji')||'[]');}catch(e){}
 
 var _EP_CATS=[
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg>',label:'Smileys',key:'smileys'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',label:'People',key:'people'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>',label:'Nature',key:'nature'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>',label:'Food',key:'food'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8l4 4-4 4"/></svg>',label:'Activity',key:'activity'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',label:'Travel',key:'travel'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',label:'Objects',key:'objects'},
-  {ico:'<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',label:'Symbols',key:'symbols'},
-];
-
+  {ico:'😀',label:'Smileys',key:'smileys'},
+  {ico:'👋',label:'People',key:'people'},
+  {ico:'🐶',label:'Nature',key:'nature'},
+  {ico:'🍎',label:'Food',key:'food'},
+  {ico:'⚽',label:'Activity',key:'activity'},
+  {ico:'🚗',label:'Travel',key:'travel'},
+  {ico:'💡',label:'Objects',key:'objects'},
+  {ico:'❤️',label:'Symbols',key:'symbols'},
+]
 var _EP_DATA={
   smileys:['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','☺️','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿'],
   people:['👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💪','🦾','🦵','🦶','👂','🦻','👃','🫀','🫁','🧠','🦷','🦴','👀','👁','👅','👄','💋','🫦','👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','🧓','👴','👵'],
@@ -9447,9 +9446,11 @@ function closeEmojiPanel(){
   var panel=document.getElementById('emoji-panel');
   if(!panel||!_epOpen)return;
   _epOpen=false;
+  // Focus textarea SYNCHRONOUSLY inside the gesture so mobile browser opens keyboard
+  var ta=document.getElementById('chatinp');
+  if(ta)ta.focus();
   // Remove .on → CSS transition slides panel down
   panel.classList.remove('on');
-  // Clear inline transform/transition if set
   panel.style.transform='';
   panel.style.transition='';
   setTimeout(function(){
@@ -9466,9 +9467,6 @@ function closeEmojiPanel(){
   // Remove footer push
   var foot=document.querySelector('#cw .chatfoot');
   if(foot)foot.style.marginBottom='';
-  // Raise keyboard
-  var ta=document.getElementById('chatinp');
-  if(ta)setTimeout(function(){ta.focus();},30);
 }
 
 function _buildEmojiPanel(){
@@ -9483,7 +9481,7 @@ function _buildEpCats(){
   // Recent tab
   var rec=document.createElement('button');
   rec.className='ep-cat'+(_epCurCat==='recent'?' on':'');
-  rec.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><div class="ep-cat-line"></div>';
+  rec.innerHTML='🕐<div class="ep-cat-line"></div>';
   rec.onclick=function(){_epCurCat='recent';_buildEpGrid('recent');_buildEpCats();};
   el.appendChild(rec);
   _EP_CATS.forEach(function(cat){
