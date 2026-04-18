@@ -1041,7 +1041,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:4px 4px 4px;gap:0;-webkit-overflow-scrolling:touch;align-content:start}
 .ep-grid::-webkit-scrollbar{display:none}
 .ep-grid button{background:none;border:none;cursor:pointer;width:100%;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;padding:0;transition:background .1s,transform .12s;overflow:hidden;position:relative}
-.ep-grid button img{width:32px;height:32px;display:block;pointer-events:none}
+.ep-grid button img{width:28px;height:28px;display:block;pointer-events:none}
 .ep-grid button span.ep-fb{font-size:26px;line-height:1;pointer-events:none}
 .ep-grid button:active{background:var(--inp-bg);transform:scale(.78)}
 @keyframes ep-tap{0%{transform:scale(1)}30%{transform:scale(1.45) rotate(-10deg)}65%{transform:scale(0.82) rotate(5deg)}100%{transform:scale(1)}}
@@ -1241,7 +1241,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     <div class="chatrow">
       <div class="chat-pill">
         <button class="chat-pill-emoji" id="emoji-open-btn" onclick="openEmojiPanel()" aria-label="Emoji" style="position:relative;overflow:hidden">
-          <span id="ep-ico-emoji" style="display:flex;align-items:center;justify-content:center;transition:opacity .22s,transform .22s cubic-bezier(.34,1.56,.64,1)"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f60a/512.webp" width="26" height="26" alt="😊" style="display:block" onerror="this.parentNode.innerHTML='<svg width=22 height=22 fill=none stroke=currentColor stroke-width=1.6 viewBox=&quot;0 0 24 24&quot;><circle cx=12 cy=12 r=9/><path d=&quot;M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2&quot;/><line x1=9 y1=9.5 x2=9.01 y2=9.5 stroke-width=2.5 stroke-linecap=round/><line x1=15 y1=9.5 x2=15.01 y2=9.5 stroke-width=2.5 stroke-linecap=round/></svg>'"/></span>
+          <span id="ep-ico-emoji" style="display:flex;align-items:center;justify-content:center;transition:opacity .22s,transform .22s cubic-bezier(.34,1.56,.64,1)"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg></span>
           <span id="ep-ico-kbd" style="display:flex;align-items:center;justify-content:center;position:absolute;opacity:0;transform:scale(.6) rotate(-15deg);transition:opacity .22s,transform .22s cubic-bezier(.34,1.56,.64,1)"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="10" x2="10.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="10" x2="14.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="10" x2="18.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="14" x2="6.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="14" x2="18.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke-width="2.2" stroke-linecap="round"/></svg></span>
         </button>
         <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)" onfocus="if(_epOpen){_epCloseAndShowEmoji();}"></textarea>
@@ -9608,10 +9608,29 @@ function _notoUrl(emoji){
   for(var i=0;i<emoji.length;){
     var cp=emoji.codePointAt(i);
     var hex=cp.toString(16);
-    if(hex!=='fe0f')cps.push(hex); // skip variation selector
+    if(hex!=='fe0f')cps.push(hex);
     i+=cp>0xFFFF?2:1;
   }
-  return 'https://fonts.gstatic.com/s/e/notoemoji/latest/'+cps.join('_')+'/512.webp';
+  // Use 128px WebP — much smaller file, loads fast, still animated
+  return 'https://fonts.gstatic.com/s/e/notoemoji/latest/'+cps.join('_')+'/128.webp';
+}
+
+// Lazy-load observer — only load images when they scroll into view
+var _epObserver=null;
+function _epStartObserver(){
+  if(_epObserver){_epObserver.disconnect();_epObserver=null;}
+  var grid=document.getElementById('ep-grid');
+  if(!grid||!('IntersectionObserver' in window))return;
+  _epObserver=new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(!entry.isIntersecting)return;
+      var img=entry.target;
+      var src=img.dataset.lazySrc;
+      if(src){img.src=src;delete img.dataset.lazySrc;}
+      _epObserver.unobserve(img);
+    });
+  },{root:grid,rootMargin:'120px',threshold:0});
+  grid.querySelectorAll('img[data-lazy-src]').forEach(function(img){_epObserver.observe(img);});
 }
 
 function _epSetTab(tab){
@@ -9666,15 +9685,14 @@ var _EP_NAMES={
 
 function _buildEpBtn(grid,e){
   var btn=document.createElement('button');
-  var url=_notoUrl(e);
   var img=document.createElement('img');
-  img.src=url;
   img.alt=e;
-  img.width=32;img.height=32;
-  img.style.cssText='display:block;width:32px;height:32px';
+  img.width=28;img.height=28;
+  img.style.cssText='display:block;width:28px;height:28px';
+  // Lazy load: store URL in data attribute, IntersectionObserver will set src
+  img.dataset.lazySrc=_notoUrl(e);
   img.onerror=function(){
-    // fallback to text emoji
-    btn.removeChild(img);
+    if(btn.contains(img))btn.removeChild(img);
     var fb=document.createElement('span');
     fb.className='ep-fb';
     fb.textContent=e;
@@ -9702,6 +9720,8 @@ function _buildEpGrid(cat){
     return;
   }
   emojis.forEach(function(e){_buildEpBtn(el,e);});
+  // Start lazy loading after DOM is painted
+  requestAnimationFrame(function(){_epStartObserver();});
 }
 
 function _insertEmoji(e){
