@@ -1027,22 +1027,22 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .chat-send.has-text .ic-send{display:flex}
 .chat-send.has-text .ic-mic{display:none}
 /* EMOJI PANEL */
-#emoji-panel{position:fixed;left:0;right:0;bottom:0;z-index:810;background:var(--card);border-top:1px solid var(--border);transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94);will-change:transform;display:flex;flex-direction:column;height:320px}
+#emoji-panel{position:fixed;left:0;right:0;bottom:0;z-index:810;background:var(--card);border-top:1px solid var(--border);border-radius:16px 16px 0 0;transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94);will-change:transform;display:flex;flex-direction:column;height:320px}.ep-handle{width:36px;height:4px;background:var(--border);border-radius:4px;margin:10px auto 2px;flex-shrink:0}
 #emoji-panel.on{transform:translateY(0)}
-.ep-cats{display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 4px;height:46px;gap:0;flex-shrink:0;overflow-x:auto}
+.ep-cats{display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 4px;height:50px;gap:0;flex-shrink:0;overflow-x:auto}
 .ep-cats::-webkit-scrollbar{display:none}
-.ep-cat{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0;position:relative;line-height:1;min-width:36px;height:46px}.ep-cat .ep-cat-ico{font-size:20px;line-height:1;filter:grayscale(1) opacity(0.45);transition:filter .15s}.ep-cat.on .ep-cat-ico{filter:grayscale(0) opacity(1)}
+.ep-cats::-webkit-scrollbar{display:none}.ep-cat{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s,transform .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0;position:relative;line-height:1;min-width:38px;height:50px}.ep-cat .ep-cat-ico{font-size:20px;line-height:1;filter:grayscale(1) opacity(0.4);transition:filter .2s,transform .2s;display:block}.ep-cat.on .ep-cat-ico{filter:grayscale(0) opacity(1);transform:scale(1.18)}.ep-cat:active .ep-cat-ico{transform:scale(0.88)}
 .ep-cat.on{color:var(--text)}
-.ep-cat-line{width:100%;height:2px;background:var(--text);border-radius:2px;position:absolute;bottom:0;left:0;right:0;display:none}
+.ep-cat-line{width:60%;height:3px;background:var(--text);border-radius:3px;position:absolute;bottom:0;left:20%;right:20%;display:none}
 .ep-cat.on .ep-cat-line{display:block}
-#ep-search-bar{display:flex;align-items:center;gap:8px;margin:7px 10px 4px;background:var(--inp-bg);border-radius:12px;padding:9px 12px;flex-shrink:0;color:var(--sub)}
+#ep-search-bar{display:flex;align-items:center;gap:8px;margin:8px 12px 4px;background:var(--inp-bg);border-radius:22px;padding:10px 14px;flex-shrink:0;color:var(--sub);border:1px solid var(--border)}
 #ep-search-inp{flex:1;border:none;background:none;outline:none;font-size:14px;font-family:'Inter',sans-serif;color:var(--inp-text)}
 #ep-search-inp::placeholder{color:var(--inp-ph)}
-.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:4px 4px 4px;gap:0;-webkit-overflow-scrolling:touch;align-content:start}
+.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:6px 2px 8px;gap:2px;-webkit-overflow-scrolling:touch;align-content:start}
 .ep-grid::-webkit-scrollbar{display:none}
-.ep-grid button{background:none;border:none;cursor:pointer;width:100%;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;padding:0;transition:background .1s,transform .12s;overflow:hidden;position:relative}
-.ep-grid button span.ep-fb{font-size:28px;line-height:1;pointer-events:none;display:block}
-.ep-grid button:active{background:var(--inp-bg);transform:scale(.78)}
+.ep-grid button{background:none;border:none;cursor:pointer;width:100%;height:46px;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;padding:0;transition:background .08s,transform .1s;overflow:hidden;position:relative}
+.ep-grid button span.ep-fb{font-size:30px;line-height:1;pointer-events:none;display:block}
+.ep-grid button:active{background:var(--inp-bg);transform:scale(.72)}
 @keyframes ep-tap{0%{transform:scale(1)}30%{transform:scale(1.45) rotate(-10deg)}65%{transform:scale(0.82) rotate(5deg)}100%{transform:scale(1)}}
 .ep-grid button.ep-tapped{animation:ep-tap .32s cubic-bezier(.25,.46,.45,.94) both}
 .ep-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;padding:8px 4px 4px}
@@ -9722,6 +9722,7 @@ function _buildEpCats(){
 
 <!-- EMOJI PANEL -->
 <div id="emoji-panel">
+  <div class="ep-handle"></div>
   <div class="ep-cats" id="ep-cats"></div>
   <div id="ep-search-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="ep-search-inp" type="text" placeholder="Search emoji" oninput="_epSearch(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/></div>
   <div class="ep-grid" id="ep-grid"></div>
