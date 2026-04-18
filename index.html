@@ -1027,19 +1027,30 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .chat-send.has-text .ic-send{display:flex}
 .chat-send.has-text .ic-mic{display:none}
 /* EMOJI PANEL */
-#emoji-panel{position:fixed;left:0;right:0;bottom:0;z-index:810;background:var(--card);border-top:1px solid var(--border);transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94);will-change:transform;display:flex;flex-direction:column;height:280px}
+#emoji-panel{position:fixed;left:0;right:0;bottom:0;z-index:810;background:var(--card);border-top:1px solid var(--border);transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94);will-change:transform;display:flex;flex-direction:column;height:320px}
 #emoji-panel.on{transform:translateY(0)}
-.ep-cats{display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 8px;height:46px;gap:2px;flex-shrink:0;overflow-x:auto}
+.ep-cats{display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 4px;height:46px;gap:0;flex-shrink:0;overflow-x:auto}
 .ep-cats::-webkit-scrollbar{display:none}
-.ep-cat{background:none;border:none;cursor:pointer;padding:8px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0;position:relative;font-size:18px;line-height:1}
+.ep-cat{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:8px;color:var(--sub);display:flex;align-items:center;justify-content:center;transition:color .15s;-webkit-tap-highlight-color:transparent;flex-shrink:0;position:relative;line-height:1;min-width:36px;height:46px}
 .ep-cat.on{color:var(--text)}
-.ep-cat-line{width:100%;height:2px;background:var(--text);border-radius:2px;position:absolute;bottom:0;left:0;display:none}
+.ep-cat-line{width:100%;height:2px;background:var(--text);border-radius:2px;position:absolute;bottom:0;left:0;right:0;display:none}
 .ep-cat.on .ep-cat-line{display:block}
-.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(7,1fr);padding:6px 4px max(16px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch}
+#ep-search-bar{display:flex;align-items:center;gap:8px;margin:7px 10px 4px;background:var(--inp-bg);border-radius:12px;padding:9px 12px;flex-shrink:0;color:var(--sub)}
+#ep-search-inp{flex:1;border:none;background:none;outline:none;font-size:14px;font-family:'Inter',sans-serif;color:var(--inp-text)}
+#ep-search-inp::placeholder{color:var(--inp-ph)}
+.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:4px 4px 4px;gap:0;-webkit-overflow-scrolling:touch;align-content:start}
 .ep-grid::-webkit-scrollbar{display:none}
-.ep-grid button{background:none;border:none;cursor:pointer;font-size:28px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .1s;-webkit-tap-highlight-color:transparent;padding:0}
-.ep-grid button:active{background:var(--inp-bg)}
+.ep-grid button{background:none;border:none;cursor:pointer;width:100%;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;padding:0;transition:background .1s,transform .12s;overflow:hidden;position:relative}
+.ep-grid button img{width:32px;height:32px;display:block;pointer-events:none}
+.ep-grid button span.ep-fb{font-size:26px;line-height:1;pointer-events:none}
+.ep-grid button:active{background:var(--inp-bg);transform:scale(.78)}
+@keyframes ep-tap{0%{transform:scale(1)}30%{transform:scale(1.45) rotate(-10deg)}65%{transform:scale(0.82) rotate(5deg)}100%{transform:scale(1)}}
+.ep-grid button.ep-tapped{animation:ep-tap .32s cubic-bezier(.25,.46,.45,.94) both}
 .ep-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;padding:8px 4px 4px}
+#ep-bottom-tabs{display:flex;align-items:stretch;border-top:1px solid var(--border);flex-shrink:0;height:44px}
+.ep-tab{flex:1;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:14px;font-weight:500;color:var(--sub);transition:color .15s;-webkit-tap-highlight-color:transparent;position:relative}
+.ep-tab.on{color:var(--text);font-weight:700}
+.ep-tab.on::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--text);border-radius:2px}
 </style>
 </head>
 <body>
@@ -1230,7 +1241,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     <div class="chatrow">
       <div class="chat-pill">
         <button class="chat-pill-emoji" id="emoji-open-btn" onclick="openEmojiPanel()" aria-label="Emoji" style="position:relative;overflow:hidden">
-          <span id="ep-ico-emoji" style="display:flex;align-items:center;justify-content:center;transition:opacity .22s,transform .22s cubic-bezier(.34,1.56,.64,1)"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+          <span id="ep-ico-emoji" style="display:flex;align-items:center;justify-content:center;transition:opacity .22s,transform .22s cubic-bezier(.34,1.56,.64,1)"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f60a/512.webp" width="26" height="26" alt="😊" style="display:block" onerror="this.parentNode.innerHTML='<svg width=22 height=22 fill=none stroke=currentColor stroke-width=1.6 viewBox=&quot;0 0 24 24&quot;><circle cx=12 cy=12 r=9/><path d=&quot;M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2&quot;/><line x1=9 y1=9.5 x2=9.01 y2=9.5 stroke-width=2.5 stroke-linecap=round/><line x1=15 y1=9.5 x2=15.01 y2=9.5 stroke-width=2.5 stroke-linecap=round/></svg>'"/></span>
           <span id="ep-ico-kbd" style="display:flex;align-items:center;justify-content:center;position:absolute;opacity:0;transform:scale(.6) rotate(-15deg);transition:opacity .22s,transform .22s cubic-bezier(.34,1.56,.64,1)"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="10" x2="10.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="10" x2="14.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="10" x2="18.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="14" x2="6.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="14" x2="18.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke-width="2.2" stroke-linecap="round"/></svg></span>
         </button>
         <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)" onfocus="if(_epOpen){_epCloseAndShowEmoji();}"></textarea>
@@ -9344,15 +9355,15 @@ var _recentEmoji=[];
 try{_recentEmoji=JSON.parse(localStorage.getItem('fade_recent_emoji')||'[]');}catch(e){}
 
 var _EP_CATS=[
-  {ico:'😀',label:'Smileys',key:'smileys'},
-  {ico:'👋',label:'People',key:'people'},
-  {ico:'🐶',label:'Nature',key:'nature'},
-  {ico:'🍎',label:'Food',key:'food'},
-  {ico:'⚽',label:'Activity',key:'activity'},
-  {ico:'🚗',label:'Travel',key:'travel'},
-  {ico:'💡',label:'Objects',key:'objects'},
-  {ico:'❤️',label:'Symbols',key:'symbols'},
-]
+  {ico:'<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9" stroke-width="3" stroke-linecap="round"/><line x1="15" y1="9" x2="15.01" y2="9" stroke-width="3" stroke-linecap="round"/></svg>',label:'Smileys',key:'smileys'},
+  {ico:'<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',label:'People',key:'people'},
+  {ico:'<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 3C9 3 5 5.5 5 10c0 3 1.5 5.5 4 7v2h6v-2c2.5-1.5 4-4 4-7 0-4.5-4-7-7-7z"/><path d="M9 10c-.5.5-1.5.5-2 .5"/><path d="M15 10c.5.5 1.5.5 2 .5"/><path d="M7 8l1.5 1.5"/><path d="M17 8l-1.5 1.5"/><circle cx="9.5" cy="11" r=".7" fill="currentColor"/><circle cx="14.5" cy="11" r=".7" fill="currentColor"/></svg>',label:'Nature',key:'nature'},
+  {ico:'<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 11.5c0 3.59-2.24 6.5-5 6.5S7 15.09 7 11.5C7 7.91 9.24 5 12 5s5 2.91 5 6.5z"/><path d="M12 5V2.5"/><path d="M10.5 3c0 .5.67 1.5 1.5 1.5S13.5 3.5 13.5 3"/></svg>',label:'Food',key:'food'},
+  {ico:'<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M5.3 7.2A10 10 0 0 1 18.7 7.2"/><path d="M5.3 16.8A10 10 0 0 0 18.7 16.8"/><path d="M2 12h20"/></svg>',label:'Activity',key:'activity'},
+  {ico:'<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',label:'Travel',key:'travel'},
+  {ico:'<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><line x1="9" y1="18" x2="15" y2="18"/><line x1="12" y1="22" x2="12" y2="18"/><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17h8v-2.26C17.81 13.47 19 11.38 19 9a7 7 0 0 0-7-7z"/></svg>',label:'Objects',key:'objects'},
+  {ico:'<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',label:'Symbols',key:'symbols'},
+];
 var _EP_DATA={
   smileys:['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','☺️','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿'],
   people:['👋','🤚','🖐','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💪','🦾','🦵','🦶','👂','🦻','👃','🫀','🫁','🧠','🦷','🦴','👀','👁','👅','👄','💋','🫦','👶','🧒','👦','👧','🧑','👱','👨','🧔','👩','🧓','👴','👵'],
@@ -9591,21 +9602,97 @@ var _EP_LIVE={};
 
 })();
 
-// Grid CSS update
-(function(){
-  var s=document.createElement('style');
-  s.textContent='.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:4px 2px max(12px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch;align-content:start}.ep-grid::-webkit-scrollbar{display:none}'
-  +'.ep-grid button{background:none;border:none;cursor:pointer;font-size:26px;width:100%;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;padding:0;transition:background .1s;overflow:hidden}'
-  +'.ep-grid button:active{background:var(--inp-bg);transform:scale(.8)}'
-  +'@keyframes ep-tap{0%{transform:scale(1)}30%{transform:scale(1.4) rotate(-10deg)}65%{transform:scale(0.85) rotate(5deg)}100%{transform:scale(1)}}'
-  +'.ep-grid button.ep-tapped{animation:ep-tap .3s cubic-bezier(.25,.46,.45,.94) both}';
-  document.head.appendChild(s);
-})();
+// ── Noto Animated Emoji URL helper ───────────────────────────────────────────
+function _notoUrl(emoji){
+  var cps=[];
+  for(var i=0;i<emoji.length;){
+    var cp=emoji.codePointAt(i);
+    var hex=cp.toString(16);
+    if(hex!=='fe0f')cps.push(hex); // skip variation selector
+    i+=cp>0xFFFF?2:1;
+  }
+  return 'https://fonts.gstatic.com/s/e/notoemoji/latest/'+cps.join('_')+'/512.webp';
+}
+
+function _epSetTab(tab){
+  ['emoji','gifs','stickers'].forEach(function(t){
+    var b=document.getElementById('ep-tab-'+t);
+    if(b)b.classList.toggle('on',t===tab);
+  });
+  var grid=document.getElementById('ep-grid');
+  var cats=document.getElementById('ep-cats');
+  var search=document.getElementById('ep-search-bar');
+  if(tab==='emoji'){
+    if(grid)grid.style.display='';
+    if(cats)cats.style.display='';
+    if(search)search.style.display='';
+    _buildEpGrid(_epCurCat);
+  } else {
+    if(grid){grid.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--sub);font-size:14px;gap:8px;padding:20px"><svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Coming soon</div>';grid.style.display='flex';grid.style.alignItems='center';}
+    if(cats)cats.style.display='none';
+    if(search)search.style.display='none';
+  }
+}
+
+function _epSearch(q){
+  var grid=document.getElementById('ep-grid');
+  if(!grid)return;
+  q=q.trim().toLowerCase();
+  if(!q){_buildEpGrid(_epCurCat);return;}
+  // Search across all categories
+  var all=[];
+  _EP_CATS.forEach(function(cat){(_EP_DATA[cat.key]||[]).forEach(function(e){if(all.indexOf(e)<0)all.push(e);});});
+  // Simple filter: match emoji name via unicode description — we match against a keyword map
+  var matches=all.filter(function(e){
+    var name=_EP_NAMES[e]||'';
+    return name.toLowerCase().indexOf(q)>-1||e===q;
+  });
+  grid.innerHTML='';
+  if(!matches.length){
+    var empty=document.createElement('div');
+    empty.style.cssText='grid-column:1/-1;padding:24px 16px;text-align:center;color:var(--sub);font-size:13px';
+    empty.textContent='No emoji found';
+    grid.appendChild(empty);
+    return;
+  }
+  matches.forEach(function(e){_buildEpBtn(grid,e);});
+}
+
+// Lightweight emoji name map for search
+var _EP_NAMES={
+  '😀':'grinning face','😃':'big eyes','😄':'grin','😁':'beaming','😆':'squinting laugh','😅':'sweat smile','🤣':'rofl rolling','😂':'joy tears laugh','🙂':'slightly smile','🙃':'upside down','😉':'wink','😊':'blush smile','😇':'angel halo','🥰':'hearts love','😍':'heart eyes love','🤩':'star struck','😘':'kiss face','😗':'kissing','☺️':'relaxed','😚':'kiss eyes','😙':'kiss','🥲':'smile tear','😋':'yum tongue','😛':'tongue out','😜':'wink tongue','🤪':'crazy','😝':'squint tongue','🤑':'money dollar','🤗':'hug','🤭':'oops hand','🤫':'shh quiet','🤔':'thinking','🤐':'zipper mouth','🤨':'eyebrow','😐':'neutral','😑':'expressionless','😶':'no mouth','😏':'smirk','😒':'unamused','🙄':'eye roll','😬':'grimace','🤥':'lying nose','😌':'relieved','😔':'pensive','😪':'sleepy','🤤':'drool','😴':'sleeping','😷':'mask sick','🤒':'thermometer','🤕':'bandage','🤢':'nauseated','🤮':'vomit','🤧':'sneeze','🥵':'hot','🥶':'cold','🥴':'woozy','😵':'dizzy','🤯':'exploding head','🤠':'cowboy','🥳':'party','🥸':'disguise','😎':'cool sunglasses','🤓':'nerd','🧐':'monocle','😕':'confused','😟':'worried','🙁':'frown','☹️':'sad','😮':'open mouth','😯':'hushed','😲':'astonished','😳':'flushed','🥺':'pleading','😦':'frowning','😧':'anguished','😨':'fearful','😰':'sweat','😥':'sad sweat','😢':'crying tear','😭':'loud crying sob','😱':'scream horror','😖':'confounded','😣':'persevere','😞':'disappointed','😓':'downcast sweat','😩':'weary','😫':'tired','🥱':'yawn','😤':'angry steam','😡':'rage','😠':'angry','🤬':'swearing','😈':'devil smiling','👿':'angry devil',
+  '❤️':'red heart love','🧡':'orange heart','💛':'yellow heart','💚':'green heart','💙':'blue heart','💜':'purple heart','🖤':'black heart','🤍':'white heart','🤎':'brown heart','💔':'broken heart','💕':'two hearts','💞':'revolving hearts','💓':'beating heart','💗':'growing heart','💖':'sparkling heart','💘':'arrow heart','💝':'ribbon heart','🔥':'fire','✨':'sparkles','⭐':'star','🌟':'glowing star','💫':'dizzy star','💥':'collision boom','💢':'anger','💬':'speech bubble','👋':'wave hand','👍':'thumbs up','👎':'thumbs down','👏':'clapping hands','🙌':'raised hands','🤝':'handshake','🙏':'folded hands pray','✌️':'peace victory','👌':'ok hand','🤌':'pinched fingers','💪':'muscle arm','👀':'eyes','😺':'cat grin','😸':'cat joy','😹':'cat tears joy','😻':'cat heart eyes','😼':'cat smirk','😽':'cat kiss','🙀':'cat weary','😿':'cat crying','😾':'cat pouting','🐶':'dog','🐱':'cat','🐭':'mouse','🐹':'hamster','🐰':'rabbit','🦊':'fox','🐻':'bear','🐼':'panda','🐨':'koala','🐯':'tiger','🦁':'lion','🐮':'cow','🐷':'pig','🐸':'frog','🐵':'monkey','🐔':'chicken','🐧':'penguin','🐦':'bird','🐤':'chick','🦆':'duck','🦉':'owl','🐺':'wolf','🐴':'horse','🦄':'unicorn','🌸':'blossom','🌺':'hibiscus','🌻':'sunflower','🌹':'rose','🍎':'apple','🍊':'orange','🍋':'lemon','🍌':'banana','🍉':'watermelon','🍇':'grapes','🍓':'strawberry','🍒':'cherries','🍕':'pizza','🍔':'burger','🍟':'fries','🌮':'taco','🍜':'noodles','☕':'coffee','🍺':'beer','🎂':'birthday cake','🍰':'cake','⚽':'soccer ball','🏀':'basketball','🏈':'football','⚾':'baseball','🎾':'tennis','🏆':'trophy','🎮':'game controller','🎯':'bullseye','🚗':'car','🚀':'rocket','✈️':'plane','🏠':'house','💻':'laptop','📱':'phone','🎵':'music','🎸':'guitar','🎤':'microphone','🌍':'earth globe','🌈':'rainbow','☀️':'sun','🌙':'moon','⭐':'star','❄️':'snowflake','🌊':'wave','🌲':'tree','🌴':'palm tree',
+};
+
+function _buildEpBtn(grid,e){
+  var btn=document.createElement('button');
+  var url=_notoUrl(e);
+  var img=document.createElement('img');
+  img.src=url;
+  img.alt=e;
+  img.width=32;img.height=32;
+  img.style.cssText='display:block;width:32px;height:32px';
+  img.onerror=function(){
+    // fallback to text emoji
+    btn.removeChild(img);
+    var fb=document.createElement('span');
+    fb.className='ep-fb';
+    fb.textContent=e;
+    btn.appendChild(fb);
+  };
+  btn.appendChild(img);
+  btn.onclick=function(){
+    btn.classList.remove('ep-tapped');void btn.offsetWidth;btn.classList.add('ep-tapped');
+    _insertEmoji(e);
+  };
+  grid.appendChild(btn);
+}
 
 function _buildEpGrid(cat){
   var el=document.getElementById('ep-grid');
   if(!el)return;
   el.innerHTML='';
+  el.style.display='';
   var emojis=cat==='recent'?_recentEmoji:(_EP_DATA[cat]||[]);
   if(cat==='recent'&&!emojis.length){
     var empty=document.createElement('div');
@@ -9614,19 +9701,7 @@ function _buildEpGrid(cat){
     el.appendChild(empty);
     return;
   }
-  emojis.forEach(function(e){
-    var btn=document.createElement('button');
-    if(_EP_LIVE[e]){
-      btn.innerHTML=_EP_LIVE[e];
-    } else {
-      btn.textContent=e;
-    }
-    btn.onclick=function(){
-      btn.classList.remove('ep-tapped');void btn.offsetWidth;btn.classList.add('ep-tapped');
-      _insertEmoji(e);
-    };
-    el.appendChild(btn);
-  });
+  emojis.forEach(function(e){_buildEpBtn(el,e);});
 }
 
 function _insertEmoji(e){
@@ -9647,10 +9722,11 @@ function _buildEpCats(){
   var el=document.getElementById('ep-cats');
   if(!el)return;
   el.innerHTML='';
-  // Recent tab
+  // Recent tab — clock SVG
   var rec=document.createElement('button');
   rec.className='ep-cat'+(_epCurCat==='recent'?' on':'');
-  rec.innerHTML='🕐<div class="ep-cat-line"></div>';
+  rec.innerHTML='<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="ep-cat-line"></div>';
+  rec.title='Recent';
   rec.onclick=function(){_epCurCat='recent';_buildEpGrid('recent');_buildEpCats();};
   el.appendChild(rec);
   _EP_CATS.forEach(function(cat){
@@ -9663,48 +9739,15 @@ function _buildEpCats(){
   });
 }
 
-function _buildEpGrid(cat){
-  var el=document.getElementById('ep-grid');
-  if(!el)return;
-  el.innerHTML='';
-  var emojis=cat==='recent'?_recentEmoji:(_EP_DATA[cat]||[]);
-  if(cat==='recent'&&!emojis.length){
-    var empty=document.createElement('div');
-    empty.style.cssText='grid-column:1/-1;padding:28px 16px;text-align:center;color:var(--sub);font-size:13px';
-    empty.textContent='No recent emoji yet';
-    el.appendChild(empty);
-    return;
-  }
-  emojis.forEach(function(e){
-    var btn=document.createElement('button');
-    btn.textContent=e;
-    btn.onclick=function(){_insertEmoji(e);};
-    el.appendChild(btn);
-  });
-}
-
-function _insertEmoji(e){
-  var ta=document.getElementById('chatinp');
-  if(!ta)return;
-  var start=ta.selectionStart,end=ta.selectionEnd;
-  ta.value=ta.value.slice(0,start)+e+ta.value.slice(end);
-  ta.selectionStart=ta.selectionEnd=start+e.length;
-  ta.dispatchEvent(new Event('input'));
-  // Track recent
-  _recentEmoji=_recentEmoji.filter(function(x){return x!==e;});
-  _recentEmoji.unshift(e);
-  if(_recentEmoji.length>24)_recentEmoji=_recentEmoji.slice(0,24);
-  try{localStorage.setItem('fade_recent_emoji',JSON.stringify(_recentEmoji));}catch(e_){}
-  haptic();
-}
-
 </script>
 
 
 <!-- EMOJI PANEL -->
 <div id="emoji-panel">
   <div class="ep-cats" id="ep-cats"></div>
+  <div id="ep-search-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="ep-search-inp" type="text" placeholder="Search emoji" oninput="_epSearch(this.value)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/></div>
   <div class="ep-grid" id="ep-grid"></div>
+  <div id="ep-bottom-tabs"><button class="ep-tab on" id="ep-tab-emoji" onclick="_epSetTab('emoji')">Emoji</button><button class="ep-tab" id="ep-tab-gifs" onclick="_epSetTab('gifs')">GIFs</button><button class="ep-tab" id="ep-tab-stickers" onclick="_epSetTab('stickers')">Stickers</button></div>
 </div>
 </body>
 </html>
