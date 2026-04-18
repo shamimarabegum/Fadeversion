@@ -1035,43 +1035,10 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .ep-cat.on{color:var(--text)}
 .ep-cat-line{width:100%;height:2px;background:var(--text);border-radius:2px;position:absolute;bottom:0;left:0;display:none}
 .ep-cat.on .ep-cat-line{display:block}
-.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:4px 2px max(12px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch;align-content:start}
+.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(7,1fr);padding:6px 4px max(16px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch}
 .ep-grid::-webkit-scrollbar{display:none}
-
-/* === PERSONALITY KEYFRAMES === */
-@keyframes ep-laugh{0%,100%{transform:rotate(0deg) scale(1)}20%{transform:rotate(-8deg) scale(1.1)}40%{transform:rotate(8deg) scale(1.15)}60%{transform:rotate(-6deg) scale(1.1)}80%{transform:rotate(4deg) scale(1.05)}}
-@keyframes ep-cry{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(3px) scale(0.93)}70%{transform:translateY(1px) scale(0.97)}}
-@keyframes ep-love{0%,100%{transform:scale(1)}30%{transform:scale(1.22)}60%{transform:scale(0.92)}80%{transform:scale(1.1)}}
-@keyframes ep-angry{0%,100%{transform:translateX(0)}15%{transform:translateX(-3px) rotate(-3deg)}30%{transform:translateX(3px) rotate(3deg)}45%{transform:translateX(-2px)}60%{transform:translateX(2px)}75%{transform:translateX(-1px)}}
-@keyframes ep-think{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-12deg) translateY(-2px)}}
-@keyframes ep-wink{0%,100%{transform:scale(1) rotate(0deg)}40%{transform:scale(1.08) rotate(6deg)}70%{transform:scale(0.96) rotate(-3deg)}}
-@keyframes ep-sick{0%,100%{transform:translateY(0) rotate(0deg)}35%{transform:translateY(2px) rotate(-5deg)}65%{transform:translateY(1px) rotate(2deg)}}
-@keyframes ep-cool{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.06) rotate(-4deg)}}
-@keyframes ep-idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-@keyframes ep-tap{0%{transform:scale(1)}25%{transform:scale(1.4) rotate(-12deg)}60%{transform:scale(0.82) rotate(6deg)}100%{transform:scale(1) rotate(0deg)}}
-
-.ep-grid button{background:none;border:none;cursor:pointer;font-size:26px;width:100%;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;padding:0;transition:background .1s;will-change:transform}
+.ep-grid button{background:none;border:none;cursor:pointer;font-size:28px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .1s;-webkit-tap-highlight-color:transparent;padding:0}
 .ep-grid button:active{background:var(--inp-bg)}
-.ep-grid button.ep-tapped{animation:ep-tap .32s cubic-bezier(.25,.46,.45,.94) both!important}
-
-/* Laugh — 😀😃😄😁😆😅🤣😂 */
-.ep-grid button[data-ep="laugh"]{animation:ep-laugh 1.6s ease-in-out infinite}
-/* Cry / sad */
-.ep-grid button[data-ep="cry"]{animation:ep-cry 2s ease-in-out infinite}
-/* Love / heart eyes */
-.ep-grid button[data-ep="love"]{animation:ep-love 1.2s ease-in-out infinite}
-/* Angry */
-.ep-grid button[data-ep="angry"]{animation:ep-angry 0.9s ease-in-out infinite}
-/* Think */
-.ep-grid button[data-ep="think"]{animation:ep-think 2.4s ease-in-out infinite}
-/* Wink / cheeky */
-.ep-grid button[data-ep="wink"]{animation:ep-wink 1.8s ease-in-out infinite}
-/* Sick / dizzy */
-.ep-grid button[data-ep="sick"]{animation:ep-sick 2.2s ease-in-out infinite}
-/* Cool / chill */
-.ep-grid button[data-ep="cool"]{animation:ep-cool 2.8s ease-in-out infinite}
-/* Default idle float */
-.ep-grid button[data-ep="idle"]{animation:ep-idle 2.2s ease-in-out infinite}
 .ep-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;padding:8px 4px 4px}
 </style>
 </head>
@@ -1262,13 +1229,11 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   <div class="chatfoot">
     <div class="chatrow">
       <div class="chat-pill">
-        <button class="chat-pill-emoji" id="emoji-open-btn" onclick="openEmojiPanel()" aria-label="Emoji">
-          <span><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+        <button class="chat-pill-emoji" id="emoji-open-btn" onclick="openEmojiPanel()" aria-label="Emoji" style="position:relative;overflow:hidden">
+          <span id="ep-ico-emoji" style="display:flex;align-items:center;justify-content:center;transition:opacity .22s,transform .22s cubic-bezier(.34,1.56,.64,1)"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg></span>
+          <span id="ep-ico-kbd" style="display:flex;align-items:center;justify-content:center;position:absolute;opacity:0;transform:scale(.6) rotate(-15deg);transition:opacity .22s,transform .22s cubic-bezier(.34,1.56,.64,1)"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="10" x2="10.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="10" x2="14.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="10" x2="18.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="14" x2="6.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="14" x2="18.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke-width="2.2" stroke-linecap="round"/></svg></span>
         </button>
-        <button class="chat-pill-emoji" id="emoji-kbd-btn" style="display:none" onclick="_epSwitchToKeyboard()" aria-label="Keyboard">
-          <span><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="10" x2="10.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="10" x2="14.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="10" x2="18.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="14" x2="6.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="14" x2="18.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke-width="2.2" stroke-linecap="round"/></svg></span>
-        </button>
-        <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)" onfocus="if(_epOpen){_epSwitchToKeyboard();}"></textarea>
+        <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)" onfocus="if(_epOpen){_epCloseAndShowEmoji();}"></textarea>
         <label for="chat-photo-inp" class="chat-pill-photo" aria-label="Photo">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </label>
@@ -9422,19 +9387,61 @@ var _kbHeight=300; // last known keyboard height, fallback 300
 })();
 
 function toggleEmojiPanel(){
-  if(_epOpen){closeEmojiPanel();}else{openEmojiPanel();}
+  if(_epOpen){_epCloseAndShowEmoji();}else{openEmojiPanel();}
+}
+
+// Show keyboard icon (crossfade)
+function _epShowKbdIcon(){
+  var ei=document.getElementById('ep-ico-emoji');
+  var ki=document.getElementById('ep-ico-kbd');
+  if(ei){ei.style.opacity='0';ei.style.transform='scale(.6) rotate(15deg)';}
+  if(ki){ki.style.opacity='1';ki.style.transform='scale(1) rotate(0deg)';}
+  // Change button's onclick to switch to keyboard
+  var btn=document.getElementById('emoji-open-btn');
+  if(btn)btn.onclick=_epSwitchToKeyboard;
+}
+
+// Show emoji icon (crossfade)
+function _epShowEmojiIcon(){
+  var ei=document.getElementById('ep-ico-emoji');
+  var ki=document.getElementById('ep-ico-kbd');
+  if(ei){ei.style.opacity='1';ei.style.transform='scale(1) rotate(0deg)';}
+  if(ki){ki.style.opacity='0';ki.style.transform='scale(.6) rotate(-15deg)';}
+  var btn=document.getElementById('emoji-open-btn');
+  if(btn)btn.onclick=openEmojiPanel;
+}
+
+// Called when keyboard btn clicked — separate function so it's a clean direct gesture
+function _epSwitchToKeyboard(){
+  var panel=document.getElementById('emoji-panel');
+  _epOpen=false;
+  _epShowEmojiIcon();
+  var foot=document.querySelector('#cw .chatfoot');
+  if(foot)foot.style.marginBottom='';
+  if(panel){panel.classList.remove('on');setTimeout(function(){panel.style.display='none';},280);}
+  // Direct gesture focus — keyboard opens
+  var ta=document.getElementById('chatinp');
+  if(ta)ta.focus();
+}
+
+// Called from textarea onfocus when panel was open (e.g. user tapped message area)
+function _epCloseAndShowEmoji(){
+  var panel=document.getElementById('emoji-panel');
+  _epOpen=false;
+  _epShowEmojiIcon();
+  var foot=document.querySelector('#cw .chatfoot');
+  if(foot)foot.style.marginBottom='';
+  if(panel){panel.classList.remove('on');setTimeout(function(){panel.style.display='none';},280);}
 }
 
 function openEmojiPanel(){
   var panel=document.getElementById('emoji-panel');
   if(!panel)return;
   var ta=document.getElementById('chatinp');
-
   var kbH=0;
   if(window.visualViewport)kbH=Math.round(window.innerHeight-window.visualViewport.height);
   if(kbH<150)kbH=_kbHeight;
   if(kbH<150)kbH=300;
-
   _epOpen=true;
   _buildEmojiPanel();
   panel.style.height=kbH+'px';
@@ -9442,71 +9449,198 @@ function openEmojiPanel(){
   panel.style.transform='translateY(0)';
   panel.style.display='flex';
   ta.blur();
-  requestAnimationFrame(function(){
-    requestAnimationFrame(function(){
-      panel.style.transition='';
-      panel.style.transform='';
-      panel.classList.add('on');
-    });
-  });
-
-  // Show keyboard button, hide emoji button
-  var emojiBtn=document.getElementById('emoji-open-btn');
-  var kbdBtn=document.getElementById('emoji-kbd-btn');
-  if(emojiBtn)emojiBtn.style.display='none';
-  if(kbdBtn)kbdBtn.style.display='';
-
+  requestAnimationFrame(function(){requestAnimationFrame(function(){
+    panel.style.transition='';panel.style.transform='';panel.classList.add('on');
+  });});
+  _epShowKbdIcon();
   var foot=document.querySelector('#cw .chatfoot');
   if(foot)foot.style.marginBottom=kbH+'px';
   var msgs=document.getElementById('msgs');
   if(msgs)setTimeout(function(){msgs.scrollTop=msgs.scrollHeight;},60);
 }
 
-// THIS is the critical function — keyboard button has its OWN onclick
-// It is a completely separate button element, so its onclick fires as a
-// direct user gesture. ta.focus() inside a direct onclick opens the keyboard on Android.
-function _epSwitchToKeyboard(){
-  var panel=document.getElementById('emoji-panel');
-  _epOpen=false;
-
-  // Restore buttons
-  var emojiBtn=document.getElementById('emoji-open-btn');
-  var kbdBtn=document.getElementById('emoji-kbd-btn');
-  if(emojiBtn)emojiBtn.style.display='';
-  if(kbdBtn)kbdBtn.style.display='none';
-
-  // Reset footer
-  var foot=document.querySelector('#cw .chatfoot');
-  if(foot)foot.style.marginBottom='';
-
-  // Slide panel away
-  if(panel){
-    panel.classList.remove('on');
-    setTimeout(function(){panel.style.display='none';},280);
-  }
-
-  // Focus — direct gesture call, keyboard WILL open
-  var ta=document.getElementById('chatinp');
-  if(ta)ta.focus();
-}
-
 function closeEmojiPanel(){
   var panel=document.getElementById('emoji-panel');
   if(!panel||!_epOpen)return;
-  _epOpen=false;
-  var emojiBtn=document.getElementById('emoji-open-btn');
-  var kbdBtn=document.getElementById('emoji-kbd-btn');
-  if(emojiBtn)emojiBtn.style.display='';
-  if(kbdBtn)kbdBtn.style.display='none';
-  var foot=document.querySelector('#cw .chatfoot');
-  if(foot)foot.style.marginBottom='';
-  panel.classList.remove('on');
-  setTimeout(function(){panel.style.display='none';},280);
+  _epCloseAndShowEmoji();
 }
 
 function _buildEmojiPanel(){
   _buildEpCats();
   _buildEpGrid(_epCurCat);
+}
+
+// ── SVG Live Emoji definitions ──────────────────────────────────────
+// Each key is an emoji char. Value is an HTML string (animated SVG).
+// For emojis not in this map, we fall back to the text character.
+var _EP_LIVE={};
+(function(){
+  // Shared face base builder
+  function face(skinHex,eyeEls,mouthEl,extraEls,anims){
+    return '<svg viewBox="0 0 36 36" width="30" height="30" xmlns="http://www.w3.org/2000/svg">'
+      +'<style>'+anims+'</style>'
+      +'<circle cx="18" cy="18" r="16" fill="'+skinHex+'"/>'
+      +eyeEls+mouthEl+(extraEls||'')
+      +'</svg>';
+  }
+  var Y='#FFCC4D'; // yellow
+  var OR='#E67E22'; // orange-red shading
+
+  // 😂 Laughing with tears
+  _EP_LIVE['😂']=face(Y,
+    '<g><animateTransform attributeName="transform" type="rotate" values="0 18 18;-4 18 18;4 18 18;0 18 18" dur="0.5s" repeatCount="indefinite"/>'
+    +'<ellipse cx="12" cy="15" rx="3" ry="2" fill="#664500"/>'
+    +'<ellipse cx="24" cy="15" rx="3" ry="2" fill="#664500"/></g>',
+    '<path d="M10 22 Q18 31 26 22" stroke="#664500" stroke-width="2" fill="#EF5350"/>',
+    // tears
+    '<ellipse cx="7" cy="13" rx="2.5" ry="3.5" fill="#5DADE2" opacity="0"><animate attributeName="cy" values="13;20;13" dur="0.7s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur="0.7s" repeatCount="indefinite"/></ellipse>'
+    +'<ellipse cx="29" cy="13" rx="2.5" ry="3.5" fill="#5DADE2" opacity="0"><animate attributeName="cy" values="13;20;13" dur="0.7s" begin="0.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;0" dur="0.7s" begin="0.2s" repeatCount="indefinite"/></ellipse>',
+    '@keyframes laugh{0%,100%{transform:rotate(0deg) translateY(0)}25%{transform:rotate(-5deg) translateY(-1px)}75%{transform:rotate(5deg) translateY(-1px)}} svg{animation:laugh 0.45s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+  // 😢 Crying
+  _EP_LIVE['😢']=face(Y,
+    '<circle cx="12" cy="15" r="2.5" fill="#664500"/><circle cx="24" cy="15" r="2.5" fill="#664500"/>',
+    '<path d="M12 26 Q18 22 24 26" stroke="#664500" stroke-width="2" fill="none"/>',
+    '<path d="M10 10 Q8 7 6 9" stroke="#664500" stroke-width="1.5" fill="none"/><path d="M26 10 Q28 7 30 9" stroke="#664500" stroke-width="1.5" fill="none"/>'
+    +'<ellipse cx="14" cy="21" rx="2" ry="3" fill="#5DADE2" opacity="0"><animate attributeName="cy" values="21;30;21" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.9;0;0.9" dur="1.2s" repeatCount="indefinite"/></ellipse>',
+    '@keyframes droop{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}} svg{animation:droop 1.4s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+  // 😡 Angry
+  _EP_LIVE['😡']=face('#E74C3C',
+    '<rect x="9" y="14" width="6" height="3" rx="1.5" fill="#7B241C"/><rect x="21" y="14" width="6" height="3" rx="1.5" fill="#7B241C"/>',
+    '<path d="M11 26 Q18 22 25 26" stroke="#7B241C" stroke-width="2" fill="none"/>',
+    '<path d="M8 10 L14 13" stroke="#7B241C" stroke-width="2" stroke-linecap="round"/><path d="M28 10 L22 13" stroke="#7B241C" stroke-width="2" stroke-linecap="round"/>',
+    '@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-3px) rotate(-3deg)}40%{transform:translateX(3px) rotate(3deg)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}} svg{animation:shake 0.4s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+  // 😍 Heart eyes
+  _EP_LIVE['😍']=face(Y,
+    // heart eyes
+    '<text x="9" y="19" font-size="10" text-anchor="middle"><animate attributeName="font-size" values="10;12;10" dur="0.8s" repeatCount="indefinite"/>❤</text>'
+    +'<text x="27" y="19" font-size="10" text-anchor="middle"><animate attributeName="font-size" values="10;12;10" dur="0.8s" begin="0.1s" repeatCount="indefinite"/>❤</text>',
+    '<path d="M10 24 Q18 30 26 24" stroke="#664500" stroke-width="2" fill="#EF5350"/>',
+    '',
+    '@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}} svg{animation:pulse 0.8s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+  // 😎 Cool sunglasses
+  _EP_LIVE['😎']=face(Y,
+    '<rect x="7" y="12" width="8" height="6" rx="3" fill="#1A1A1A"/><rect x="21" y="12" width="8" height="6" rx="3" fill="#1A1A1A"/><line x1="15" y1="15" x2="21" y2="15" stroke="#1A1A1A" stroke-width="1.5"/>',
+    '<path d="M12 25 Q18 28 24 25" stroke="#664500" stroke-width="2" fill="none"/>',
+    '',
+    '@keyframes cool{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-4deg)}} svg{animation:cool 2s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+  // 🤔 Thinking
+  _EP_LIVE['🤔']=face(Y,
+    '<circle cx="12" cy="15" r="2.5" fill="#664500"/><circle cx="24" cy="15" r="2.5" fill="#664500"/>',
+    '<path d="M13 25 Q16 22 20 24" stroke="#664500" stroke-width="2" fill="none"/>',
+    '<text x="26" y="14" font-size="8">💭<animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/></text>'
+    +'<path d="M22 12 Q26 9 27 11" stroke="#664500" stroke-width="1.5" fill="none"/>',
+    '@keyframes think{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-8deg) translateX(-1px)}} svg{animation:think 1.8s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+  // 😴 Sleeping
+  _EP_LIVE['😴']=face(Y,
+    '<line x1="9" y1="15" x2="15" y2="15" stroke="#664500" stroke-width="2.5" stroke-linecap="round"/>'
+    +'<line x1="21" y1="15" x2="27" y2="15" stroke="#664500" stroke-width="2.5" stroke-linecap="round"/>',
+    '<path d="M13 24 Q18 27 23 24" stroke="#664500" stroke-width="2" fill="none"/>',
+    '<text x="27" y="10" font-size="7" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/><animate attributeName="y" values="10;5;10" dur="1.5s" repeatCount="indefinite"/>z</text>'
+    +'<text x="29" y="7" font-size="5" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="y" values="7;3;7" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>z</text>',
+    '@keyframes nod{0%,100%{transform:rotate(0deg)}50%{transform:rotate(6deg)}} svg{animation:nod 2s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+  // 🥰 Smiling with hearts
+  _EP_LIVE['🥰']=face(Y,
+    '<circle cx="12" cy="15" r="2.5" fill="#664500"/><circle cx="24" cy="15" r="2.5" fill="#664500"/>',
+    '<path d="M10 22 Q18 30 26 22" stroke="#664500" stroke-width="2" fill="#EF5350"/>',
+    '<text x="6" y="10" font-size="6"><animate attributeName="y" values="10;6;10" dur="1s" repeatCount="indefinite"/>❤</text>'
+    +'<text x="16" y="7" font-size="7"><animate attributeName="y" values="7;3;7" dur="1s" begin="0.3s" repeatCount="indefinite"/>❤</text>'
+    +'<text x="26" y="10" font-size="6"><animate attributeName="y" values="10;6;10" dur="1s" begin="0.15s" repeatCount="indefinite"/>❤</text>',
+    '@keyframes hug{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}} svg{animation:hug 1s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+  // 😆 Grinning squinting
+  _EP_LIVE['😆']=face(Y,
+    '<path d="M9 13 Q12 11 15 13" stroke="#664500" stroke-width="2" fill="none"/>'
+    +'<path d="M21 13 Q24 11 27 13" stroke="#664500" stroke-width="2" fill="none"/>',
+    '<path d="M9 21 Q18 31 27 21" stroke="#664500" stroke-width="2" fill="#EF5350"/>',
+    '',
+    '@keyframes giggle{0%,100%{transform:scaleX(1)}33%{transform:scaleX(1.06) scaleY(0.96)}66%{transform:scaleX(0.96) scaleY(1.04)}} svg{animation:giggle 0.4s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+  // 😱 Shocked/screaming
+  _EP_LIVE['😱']=face('#FFDD67',
+    '<circle cx="12" cy="14" r="3.5" fill="white"/><circle cx="12" cy="14" r="2" fill="#1A1A1A"/>'
+    +'<circle cx="24" cy="14" r="3.5" fill="white"/><circle cx="24" cy="14" r="2" fill="#1A1A1A"/>',
+    '<ellipse cx="18" cy="25" rx="5" ry="5" fill="#1A1A1A"/>',
+    '',
+    '@keyframes shock{0%,100%{transform:scale(1)}50%{transform:scale(1.06) translateY(-2px)}} svg{animation:shock 0.5s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+  // 😘 Blowing kiss
+  _EP_LIVE['😘']=face(Y,
+    '<circle cx="12" cy="15" r="2.5" fill="#664500"/>'
+    +'<line x1="21" y1="13" x2="27" y2="13" stroke="#664500" stroke-width="2.5" stroke-linecap="round"/>',
+    '<path d="M11 24 Q15 28 19 24" stroke="#664500" stroke-width="2" fill="#EF5350"/>',
+    '<text x="24" y="24" font-size="8" opacity="0"><animate attributeName="x" values="24;30;36" dur="1s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;1;0" dur="1s" repeatCount="indefinite"/><animate attributeName="font-size" values="8;5;3" dur="1s" repeatCount="indefinite"/>💋</text>',
+    '@keyframes kiss{0%,100%{transform:scale(1)}30%{transform:scale(1.05) rotate(-3deg)}70%{transform:scale(1.02) rotate(2deg)}} svg{animation:kiss 1.2s ease-in-out infinite;transform-origin:18px 18px}'
+  );
+
+})();
+
+// Grid CSS update
+(function(){
+  var s=document.createElement('style');
+  s.textContent='.ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:4px 2px max(12px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch;align-content:start}.ep-grid::-webkit-scrollbar{display:none}'
+  +'.ep-grid button{background:none;border:none;cursor:pointer;font-size:26px;width:100%;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;padding:0;transition:background .1s;overflow:hidden}'
+  +'.ep-grid button:active{background:var(--inp-bg);transform:scale(.8)}'
+  +'@keyframes ep-tap{0%{transform:scale(1)}30%{transform:scale(1.4) rotate(-10deg)}65%{transform:scale(0.85) rotate(5deg)}100%{transform:scale(1)}}'
+  +'.ep-grid button.ep-tapped{animation:ep-tap .3s cubic-bezier(.25,.46,.45,.94) both}';
+  document.head.appendChild(s);
+})();
+
+function _buildEpGrid(cat){
+  var el=document.getElementById('ep-grid');
+  if(!el)return;
+  el.innerHTML='';
+  var emojis=cat==='recent'?_recentEmoji:(_EP_DATA[cat]||[]);
+  if(cat==='recent'&&!emojis.length){
+    var empty=document.createElement('div');
+    empty.style.cssText='grid-column:1/-1;padding:28px 16px;text-align:center;color:var(--sub);font-size:13px';
+    empty.textContent='No recent emoji yet';
+    el.appendChild(empty);
+    return;
+  }
+  emojis.forEach(function(e){
+    var btn=document.createElement('button');
+    if(_EP_LIVE[e]){
+      btn.innerHTML=_EP_LIVE[e];
+    } else {
+      btn.textContent=e;
+    }
+    btn.onclick=function(){
+      btn.classList.remove('ep-tapped');void btn.offsetWidth;btn.classList.add('ep-tapped');
+      _insertEmoji(e);
+    };
+    el.appendChild(btn);
+  });
+}
+
+function _insertEmoji(e){
+  var ta=document.getElementById('chatinp');
+  if(!ta)return;
+  var start=ta.selectionStart,end=ta.selectionEnd;
+  ta.value=ta.value.slice(0,start)+e+ta.value.slice(end);
+  ta.selectionStart=ta.selectionEnd=start+e.length;
+  ta.dispatchEvent(new Event('input'));
+  _recentEmoji=_recentEmoji.filter(function(x){return x!==e;});
+  _recentEmoji.unshift(e);
+  if(_recentEmoji.length>24)_recentEmoji=_recentEmoji.slice(0,24);
+  try{localStorage.setItem('fade_recent_emoji',JSON.stringify(_recentEmoji));}catch(e_){}
+  haptic();
 }
 
 function _buildEpCats(){
@@ -9529,20 +9663,6 @@ function _buildEpCats(){
   });
 }
 
-// Emoji personality map — defines which animation each emoji gets
-var _EP_PERSONALITY={
-  '😀':'laugh','😃':'laugh','😄':'laugh','😁':'laugh','😆':'laugh','😅':'laugh','🤣':'laugh','😂':'laugh',
-  '😢':'cry','😭':'cry','😥':'cry','😓':'cry','😩':'cry','😫':'cry','🥺':'cry','😿':'cry',
-  '😰':'cry','😨':'cry','😦':'cry','😧':'cry',
-  '🥰':'love','😍':'love','🤩':'love','😘':'love','😗':'love','😚':'love','😙':'love','💕':'love','❤️':'love','🧡':'love','💛':'love','💚':'love','💙':'love','💜':'love','🖤':'love','💔':'love','💗':'love','💖':'love','💘':'love','💝':'love',
-  '😡':'angry','😠':'angry','🤬':'angry','😤':'angry','👿':'angry','😈':'angry',
-  '🤔':'think','🧐':'think','🤨':'think','🤭':'think','🤫':'think',
-  '😜':'wink','😛':'wink','🤪':'wink','😝':'wink','😋':'wink','😏':'wink','😉':'wink',
-  '🤢':'sick','🤮':'sick','🤧':'sick','🥴':'sick','😵':'sick','🤯':'sick','🥵':'sick','🥶':'sick',
-  '😎':'cool','🤓':'cool','🥸':'cool','🤠':'cool','🥳':'cool',
-};
-function _epGetPersonality(e){return _EP_PERSONALITY[e]||'idle';}
-
 function _buildEpGrid(cat){
   var el=document.getElementById('ep-grid');
   if(!el)return;
@@ -9555,19 +9675,10 @@ function _buildEpGrid(cat){
     el.appendChild(empty);
     return;
   }
-  emojis.forEach(function(e,i){
+  emojis.forEach(function(e){
     var btn=document.createElement('button');
     btn.textContent=e;
-    var p=_epGetPersonality(e);
-    btn.setAttribute('data-ep',p);
-    // Stagger the animation so they don't all move in sync
-    btn.style.animationDelay=(i*0.07%1.4)+'s';
-    btn.onclick=function(){
-      btn.classList.remove('ep-tapped');
-      void btn.offsetWidth;
-      btn.classList.add('ep-tapped');
-      _insertEmoji(e);
-    };
+    btn.onclick=function(){_insertEmoji(e);};
     el.appendChild(btn);
   });
 }
