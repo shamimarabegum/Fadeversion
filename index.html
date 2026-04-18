@@ -1019,13 +1019,6 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .chat-pill-icon:active{color:var(--text)}
 .chatinp{flex:1;border:none;background:transparent;padding:12px 8px 12px 4px;font-size:15.5px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:90px;line-height:1.4;-webkit-user-select:text;user-select:text;align-self:center}
 .chatinp::placeholder{color:var(--inp-ph)}
-/* countdown card */
-.cd-card{display:inline-flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 18px 12px;background:#1A1A1A;border-radius:18px;min-width:150px;cursor:default}
-.cd-card-label{font-size:11px;font-weight:500;color:rgba(255,255,255,0.45);letter-spacing:.6px;text-transform:uppercase}
-.cd-card-time{font-size:32px;font-weight:700;color:#fff;letter-spacing:1.5px;font-variant-numeric:tabular-nums;line-height:1}
-.cd-card-track{width:100%;height:2px;background:rgba(255,255,255,0.12);border-radius:2px;overflow:hidden;margin-top:2px}
-.cd-card-bar{height:100%;background:rgba(255,255,255,0.5);border-radius:2px;transition:width 1s linear}
-.cd-card-expired{font-size:13px;font-weight:500;color:rgba(255,255,255,0.35);margin-top:2px}
 
 .chat-send{width:44px;height:44px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,transform .15s;-webkit-tap-highlight-color:transparent;flex-direction:column;gap:1px;touch-action:none;user-select:none;-webkit-user-select:none}
 .chat-send .ic-send{display:none}
@@ -1242,9 +1235,6 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   <div class="chatfoot">
     <div class="chatrow">
       <div class="chat-pill">
-        <button class="chat-pill-icon" onclick="openCountdownSheet()" aria-label="Countdown">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 12"/></svg>
-        </button>
         <label for="chat-photo-inp" class="chat-pill-icon" aria-label="Photo">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </label>
@@ -4880,10 +4870,6 @@ function appendBubble(m){
     durEl.textContent=dur>0?(Math.floor(dur/60)+':'+(dur%60<10?'0':'')+dur%60):'0:00';
     b.appendChild(playBtn);b.appendChild(wave);b.appendChild(durEl);
     attachHold(b,m,wrap,bs,isMine);
-  } else if(m._cdEndsAt || (m.text && m.text.indexOf('[countdown:')===0 && _parseCD(m.text))) {
-    var cdData = m._cdEndsAt ? {endsAt:m._cdEndsAt,total:m._cdTotal||0,label:m._cdLabel||''} : _parseCD(m.text);
-    b = buildCDCard(cdData.endsAt, cdData.total, cdData.label, isMine);
-    attachHold(b,m,wrap,bs,isMine);
   } else {
     b=document.createElement('div');
     b.className='bubble '+(isMine?'me':'them');
@@ -5150,131 +5136,9 @@ function sendMsg(){
 }
 
 
-/* ── COUNTDOWN ────────────────────────────────────────────── */
-var _cdH=0,_cdM=5,_cdTick=null;
 
-var _cdH=0,_cdM=5;
-function openCountdownSheet(){
-  var sheet=document.getElementById('countdown-sheet');
-  var inner=document.getElementById('countdown-inner');
-  document.getElementById('cd-label').value='';
-  _cdH=0;_cdM=5;_cdRender();
-  sheet.style.display='block';
-  requestAnimationFrame(function(){requestAnimationFrame(function(){
-    inner.style.transform='translateY(0)';
-  });});
-}
-function closeCountdownSheet(){
-  var inner=document.getElementById('countdown-inner');
-  inner.style.transform='translateY(100%)';
-  setTimeout(function(){document.getElementById('countdown-sheet').style.display='none';},300);
-}
-function _cdAdj(unit,delta){
-  if(unit==='h') _cdH=Math.max(0,Math.min(23,_cdH+delta));
-  else _cdM=Math.max(0,Math.min(59,_cdM+delta));
-  _cdRender();
-}
-function _cdRender(){
-  document.getElementById('cd-h').textContent=String(_cdH).padStart(2,'0');
-  document.getElementById('cd-m').textContent=String(_cdM).padStart(2,'0');
-}
-function sendCountdown(){
-  var totalSec=_cdH*3600+_cdM*60;
-  if(totalSec<60){T('Set at least 1 minute');return;}
-  var label=document.getElementById('cd-label').value.trim();
-  var endsAt=Date.now()+totalSec*1000;
-  closeCountdownSheet();
-  var expires=new Date(Date.now()+86400000).toISOString();
-  var tempId='tmp-'+Date.now();
-  var m={id:tempId,sid:'demo',ts:Date.now(),_cdEndsAt:endsAt,_cdLabel:label,_cdTotal:totalSec*1000,
-         text:'[countdown:'+endsAt+':'+totalSec*1000+':'+encodeURIComponent(label)+']'};
-  appendBubble(m);
-  SFX('send');haptic('send');
-  var msgs=document.getElementById('msgs');
-  if(msgs) msgs.scrollTop=msgs.scrollHeight;
-  _sb.from('messages').insert({
-    sender_id:profile.id,receiver_id:chatUser.id,
-    content:m.text,is_read:false,expires_at:expires
-  }).select('id').single().then(function(res){
-    if(res.error){T('Send failed');return;}
-    var el=document.querySelector('[data-msgid="'+tempId+'"]');
-    if(el) el.dataset.msgid=res.data.id;
-    m.id=res.data.id;
-  });
-}
-function _parseCD(text){
-  if(!text||text.indexOf('[countdown:')<0) return null;
-  // 3-part: [countdown:endsAt:totalMs:label]
-  var m3=text.match(/^\[countdown:(\d+):(\d+):(.*)\]$/);
-  if(m3) return{endsAt:parseInt(m3[1],10),total:parseInt(m3[2],10),label:decodeURIComponent(m3[3]||'')};
-  // 2-part fallback: [countdown:endsAt:label]
-  var m2=text.match(/^\[countdown:(\d+):(.*)\]$/);
-  if(m2) return{endsAt:parseInt(m2[1],10),total:0,label:decodeURIComponent(m2[2]||'')};
-  return null;
-}
-function _fmtCD(ms){
-  if(ms<=0) return null;
-  var s=Math.floor(ms/1000),h=Math.floor(s/3600);
-  s-=h*3600;var min=Math.floor(s/60);s-=min*60;
-  if(h>0) return String(h).padStart(2,'0')+':'+String(min).padStart(2,'0')+':'+String(s).padStart(2,'0');
-  return String(min).padStart(2,'0')+':'+String(s).padStart(2,'0');
-}
-function _startCDTick(){
-  if(_cdTick) return;
-  _cdTick=setInterval(function(){
-    document.querySelectorAll('.cd-card[data-ends]').forEach(function(card){
-      var endsAt=parseInt(card.dataset.ends,10);
-      var total=parseInt(card.dataset.total,10)||1;
-      var rem=endsAt-Date.now();
-      var timeEl=card.querySelector('.cd-card-time');
-      var bar=card.querySelector('.cd-card-bar');
-      var exp=card.querySelector('.cd-card-expired');
-      if(!timeEl) return;
-      if(rem<=0){
-        timeEl.style.display='none';
-        if(bar) bar.parentNode.style.display='none';
-        if(exp) exp.style.display='block';
-      } else {
-        timeEl.textContent=_fmtCD(rem);
-        if(bar) bar.style.width=Math.max(0,(rem/total)*100)+'%';
-      }
-    });
-  },1000);
-}
-function buildCDCard(endsAt,total,label,isMine){
-  _startCDTick();
-  var rem=endsAt-Date.now();
-  var card=document.createElement('div');
-  card.className='cd-card anim-bubble-in';
-  card.dataset.ends=endsAt;
-  card.dataset.total=total||rem;
-  card.style.transformOrigin=isMine?'bottom right':'bottom left';
-  if(label){
-    var lEl=document.createElement('div');
-    lEl.className='cd-card-label';
-    lEl.textContent=label;
-    card.appendChild(lEl);
-  }
-  var timeEl=document.createElement('div');
-  timeEl.className='cd-card-time';
-  timeEl.textContent=rem>0?_fmtCD(rem):'';
-  timeEl.style.display=rem>0?'block':'none';
-  card.appendChild(timeEl);
-  var track=document.createElement('div');
-  track.className='cd-card-track';
-  var bar=document.createElement('div');
-  bar.className='cd-card-bar';
-  bar.style.width=rem>0?Math.max(0,(rem/(total||rem))*100)+'%':'0%';
-  track.appendChild(bar);
-  card.appendChild(track);
-  var exp=document.createElement('div');
-  exp.className='cd-card-expired';
-  exp.textContent='faded';
-  exp.style.display=rem<=0?'block':'none';
-  card.appendChild(exp);
-  return card;
-}
-/* ── END COUNTDOWN ────────────────────────────────────────── */
+
+
 function closeCW(){
   if(_chatChannel){_sb.removeChannel(_chatChannel);_chatChannel=null;}
   hideTypingBubble();
@@ -9866,35 +9730,7 @@ function _buildEpCats(){
 
 </div>
 
-<!-- COUNTDOWN SHEET -->
-<div id="countdown-sheet" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.45)" onclick="closeCountdownSheet()">
-  <div id="countdown-inner" style="position:absolute;bottom:0;left:0;right:0;background:var(--card);border-radius:20px 20px 0 0;padding:0 0 max(28px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.25,.46,.45,.94)" onclick="event.stopPropagation()">
-    <div style="width:36px;height:4px;background:var(--border);border-radius:4px;margin:12px auto 24px"></div>
-    <div style="padding:0 24px">
-      <p style="font-size:15px;font-weight:600;color:var(--text);margin:0 0 20px">Countdown</p>
-      <input id="cd-label" type="text" placeholder="Label (optional)" maxlength="30" class="inp" style="margin-bottom:28px">
-      <div style="display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:32px">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-          <button onclick="_cdAdj('h',1)" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:6px 28px;font-size:20px;font-weight:300;line-height:1;-webkit-tap-highlight-color:transparent">+</button>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-            <span id="cd-h" style="font-size:40px;font-weight:600;color:var(--text);line-height:1;min-width:68px;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-1px">00</span>
-            <span style="font-size:11px;color:var(--sub);letter-spacing:.4px;text-transform:uppercase;font-weight:400">hr</span>
-          </div>
-          <button onclick="_cdAdj('h',-1)" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:6px 28px;font-size:20px;font-weight:300;line-height:1;-webkit-tap-highlight-color:transparent">−</button>
-        </div>
-        <span style="font-size:34px;font-weight:300;color:var(--border);margin:0 4px;padding-bottom:16px;line-height:1">:</span>
-        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-          <button onclick="_cdAdj('m',1)" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:6px 28px;font-size:20px;font-weight:300;line-height:1;-webkit-tap-highlight-color:transparent">+</button>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-            <span id="cd-m" style="font-size:40px;font-weight:600;color:var(--text);line-height:1;min-width:68px;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-1px">05</span>
-            <span style="font-size:11px;color:var(--sub);letter-spacing:.4px;text-transform:uppercase;font-weight:400">min</span>
-          </div>
-          <button onclick="_cdAdj('m',-1)" style="background:none;border:none;cursor:pointer;color:var(--sub);padding:6px 28px;font-size:20px;font-weight:300;line-height:1;-webkit-tap-highlight-color:transparent">−</button>
-        </div>
-      </div>
-      <button onclick="sendCountdown()" class="btn btn-dark">Send</button>
-    </div>
-  </div>
-</div>
+
+
 </body>
 </html>
