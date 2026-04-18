@@ -995,7 +995,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .trash-lid-g{
   transform-box:fill-box;
   transform-origin:50% 100%; /* hinge from bottom of lid */
-  transition:transform .18s cubic-bezier(.25,.46,.45,.94);
+  transition:transform .28s cubic-bezier(.25,.46,.45,.94);
 }
 #voice-cancel-btn.trash-open .trash-lid-g{transform:rotate(-52deg);}
 @keyframes trashShake{0%{transform:scale(1)}30%{transform:scale(1.18)}65%{transform:scale(0.92)}100%{transform:scale(1)}}
@@ -9043,8 +9043,17 @@ function _voiceTouchStart(e){
   if(btn&&btn.classList.contains('has-text'))return;
   if(_voiceActive)return; // already recording
   e.preventDefault();
-  _holdStartX=e.touches[0].clientX;
-  _startVoiceRecord();
+  // Dismiss keyboard so rec bar is never hidden behind it
+  var inp=document.getElementById('chatinp');
+  if(inp&&document.activeElement===inp){
+    inp.blur();
+    // Give keyboard 220ms to retract before showing overlay
+    _holdStartX=e.touches[0].clientX;
+    setTimeout(_startVoiceRecord,220);
+  }else{
+    _holdStartX=e.touches[0].clientX;
+    _startVoiceRecord();
+  }
 }
 
 function _voiceTouchMove(e){
@@ -9100,28 +9109,28 @@ function _voiceCancelAnimated(){
   // T=0: lid opens
   cancelBtn.classList.add('trash-open');
 
-  // T=80ms: pill arcs up then dives into trash
+  // T=200ms: pill arcs up then dives into trash
   setTimeout(function(){
     pill.animate([
       {transform:'translate(-50%,-50%) scale(1)',    opacity:1},
-      {transform:'translate(calc(-50% + '+(dx*.25)+'px), calc(-50% - 28px)) scale(0.85)', opacity:1, offset:0.28},
+      {transform:'translate(calc(-50% + '+(dx*.25)+'px), calc(-50% - 40px)) scale(0.85)', opacity:1, offset:0.3},
       {transform:'translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px)) scale(0.08)', opacity:0}
-    ],{duration:380,easing:'cubic-bezier(.4,0,.55,1)',fill:'forwards'});
-  },80);
+    ],{duration:700,easing:'cubic-bezier(.4,0,.55,1)',fill:'forwards'});
+  },200);
 
-  // T=460ms: lid snaps shut with bounce
+  // T=900ms: lid snaps shut with bounce
   setTimeout(function(){
     cancelBtn.classList.remove('trash-open');
     cancelBtn.classList.add('trash-shut');
     haptic();
-  },460);
+  },900);
 
-  // T=680ms: remove pill + bounce class, slide rec bar out, cancel state
+  // T=1150ms: remove pill + bounce class, slide rec bar out, cancel state
   setTimeout(function(){
     cancelBtn.classList.remove('trash-shut');
     if(pill.parentNode)pill.parentNode.removeChild(pill);
     _voiceCancel();
-  },680);
+  },1150);
 }
 
 function _voiceCancel(){
@@ -9161,7 +9170,11 @@ function _hideVoiceOverlay(){
   var recBar=document.getElementById('voice-rec-bar');
   if(ov)ov.classList.remove('active');
   if(btn)btn.classList.remove('recording');
-  if(recBar)recBar.classList.remove('show');
+  if(recBar){
+    recBar.classList.remove('show');
+    if(recBar._vpCleanup){recBar._vpCleanup();recBar._vpCleanup=null;}
+    recBar.style.bottom='';
+  }
   var rt=document.getElementById('voice-rec-time');
   if(rt)rt.textContent='0:00';
 }
@@ -9237,6 +9250,27 @@ function _startVoiceRecord(){
   var recBar=document.getElementById('voice-rec-bar');
   if(ov)ov.classList.add('active');
   if(btn)btn.classList.add('recording');
+
+  // Keep rec bar above keyboard using visualViewport when available
+  function _positionRecBar(){
+    if(!recBar)return;
+    if(window.visualViewport){
+      var offset=window.innerHeight-window.visualViewport.height-window.visualViewport.offsetTop;
+      recBar.style.bottom=Math.max(0,offset)+'px';
+    }
+  }
+  _positionRecBar();
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',_positionRecBar);
+    window.visualViewport.addEventListener('scroll',_positionRecBar);
+    // Store cleanup ref
+    recBar._vpCleanup=function(){
+      window.visualViewport.removeEventListener('resize',_positionRecBar);
+      window.visualViewport.removeEventListener('scroll',_positionRecBar);
+      if(recBar)recBar.style.bottom='';
+    };
+  }
+
   requestAnimationFrame(function(){if(recBar)recBar.classList.add('show');});
 
   navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
