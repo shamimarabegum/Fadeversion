@@ -1037,19 +1037,41 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .ep-cat.on .ep-cat-line{display:block}
 .ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(8,1fr);padding:4px 2px max(12px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch;align-content:start}
 .ep-grid::-webkit-scrollbar{display:none}
-@keyframes ep-float{0%,100%{transform:translateY(0) scale(1)}35%{transform:translateY(-4px) scale(1.12)}65%{transform:translateY(-2px) scale(1.06)}}
-@keyframes ep-tap{0%{transform:scale(1)}30%{transform:scale(1.35) rotate(-10deg)}65%{transform:scale(0.85) rotate(5deg)}100%{transform:scale(1) rotate(0deg)}}
-.ep-grid button{background:none;border:none;cursor:pointer;font-size:26px;width:100%;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;padding:0;transition:background .1s;animation:ep-float 2.8s ease-in-out infinite;will-change:transform}
-.ep-grid button:nth-child(8n+1){animation-delay:0s}
-.ep-grid button:nth-child(8n+2){animation-delay:.18s}
-.ep-grid button:nth-child(8n+3){animation-delay:.36s}
-.ep-grid button:nth-child(8n+4){animation-delay:.54s}
-.ep-grid button:nth-child(8n+5){animation-delay:.72s}
-.ep-grid button:nth-child(8n+6){animation-delay:.9s}
-.ep-grid button:nth-child(8n+7){animation-delay:1.08s}
-.ep-grid button:nth-child(8n+8){animation-delay:1.26s}
+
+/* === PERSONALITY KEYFRAMES === */
+@keyframes ep-laugh{0%,100%{transform:rotate(0deg) scale(1)}20%{transform:rotate(-8deg) scale(1.1)}40%{transform:rotate(8deg) scale(1.15)}60%{transform:rotate(-6deg) scale(1.1)}80%{transform:rotate(4deg) scale(1.05)}}
+@keyframes ep-cry{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(3px) scale(0.93)}70%{transform:translateY(1px) scale(0.97)}}
+@keyframes ep-love{0%,100%{transform:scale(1)}30%{transform:scale(1.22)}60%{transform:scale(0.92)}80%{transform:scale(1.1)}}
+@keyframes ep-angry{0%,100%{transform:translateX(0)}15%{transform:translateX(-3px) rotate(-3deg)}30%{transform:translateX(3px) rotate(3deg)}45%{transform:translateX(-2px)}60%{transform:translateX(2px)}75%{transform:translateX(-1px)}}
+@keyframes ep-think{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-12deg) translateY(-2px)}}
+@keyframes ep-wink{0%,100%{transform:scale(1) rotate(0deg)}40%{transform:scale(1.08) rotate(6deg)}70%{transform:scale(0.96) rotate(-3deg)}}
+@keyframes ep-sick{0%,100%{transform:translateY(0) rotate(0deg)}35%{transform:translateY(2px) rotate(-5deg)}65%{transform:translateY(1px) rotate(2deg)}}
+@keyframes ep-cool{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.06) rotate(-4deg)}}
+@keyframes ep-idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes ep-tap{0%{transform:scale(1)}25%{transform:scale(1.4) rotate(-12deg)}60%{transform:scale(0.82) rotate(6deg)}100%{transform:scale(1) rotate(0deg)}}
+
+.ep-grid button{background:none;border:none;cursor:pointer;font-size:26px;width:100%;height:42px;display:flex;align-items:center;justify-content:center;border-radius:10px;-webkit-tap-highlight-color:transparent;padding:0;transition:background .1s;will-change:transform}
 .ep-grid button:active{background:var(--inp-bg)}
 .ep-grid button.ep-tapped{animation:ep-tap .32s cubic-bezier(.25,.46,.45,.94) both!important}
+
+/* Laugh — 😀😃😄😁😆😅🤣😂 */
+.ep-grid button[data-ep="laugh"]{animation:ep-laugh 1.6s ease-in-out infinite}
+/* Cry / sad */
+.ep-grid button[data-ep="cry"]{animation:ep-cry 2s ease-in-out infinite}
+/* Love / heart eyes */
+.ep-grid button[data-ep="love"]{animation:ep-love 1.2s ease-in-out infinite}
+/* Angry */
+.ep-grid button[data-ep="angry"]{animation:ep-angry 0.9s ease-in-out infinite}
+/* Think */
+.ep-grid button[data-ep="think"]{animation:ep-think 2.4s ease-in-out infinite}
+/* Wink / cheeky */
+.ep-grid button[data-ep="wink"]{animation:ep-wink 1.8s ease-in-out infinite}
+/* Sick / dizzy */
+.ep-grid button[data-ep="sick"]{animation:ep-sick 2.2s ease-in-out infinite}
+/* Cool / chill */
+.ep-grid button[data-ep="cool"]{animation:ep-cool 2.8s ease-in-out infinite}
+/* Default idle float */
+.ep-grid button[data-ep="idle"]{animation:ep-idle 2.2s ease-in-out infinite}
 .ep-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;padding:8px 4px 4px}
 </style>
 </head>
@@ -1240,11 +1262,13 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   <div class="chatfoot">
     <div class="chatrow">
       <div class="chat-pill">
-        <button class="chat-pill-emoji" id="emoji-toggle-btn" onpointerdown="_epKbdPD(event)" onclick="toggleEmojiPanel()" aria-label="Emoji">
-          <span class="ep-ico-emoji"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg></span>
-          <span class="ep-ico-kbd" style="display:none"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="10" x2="10.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="10" x2="14.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="10" x2="18.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="14" x2="6.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="14" x2="18.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+        <button class="chat-pill-emoji" id="emoji-open-btn" onclick="openEmojiPanel()" aria-label="Emoji">
+          <span><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg></span>
         </button>
-        <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)" onfocus="if(_epOpen){_epOpen=false;var p=document.getElementById('emoji-panel');if(p){p.classList.remove('on');p.style.transform='';p.style.transition='';setTimeout(function(){p.style.display='none';p.style.transform='';},300);}var f=document.querySelector('#cw .chatfoot');if(f)f.style.marginBottom='';var tb=document.getElementById('emoji-toggle-btn');var ei=tb?tb.querySelector('.ep-ico-emoji'):document.querySelector('.ep-ico-emoji');var ki=tb?tb.querySelector('.ep-ico-kbd'):document.querySelector('.ep-ico-kbd');if(ei)ei.style.display='';if(ki)ki.style.display='none';}"></textarea>
+        <button class="chat-pill-emoji" id="emoji-kbd-btn" style="display:none" onclick="_epSwitchToKeyboard()" aria-label="Keyboard">
+          <span><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="10" x2="10.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="10" x2="14.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="10" x2="18.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="14" x2="6.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="14" x2="18.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+        </button>
+        <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)" onfocus="if(_epOpen){_epSwitchToKeyboard();}"></textarea>
         <label for="chat-photo-inp" class="chat-pill-photo" aria-label="Photo">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </label>
@@ -9406,7 +9430,6 @@ function openEmojiPanel(){
   if(!panel)return;
   var ta=document.getElementById('chatinp');
 
-  // Capture keyboard height NOW while keyboard is still open
   var kbH=0;
   if(window.visualViewport)kbH=Math.round(window.innerHeight-window.visualViewport.height);
   if(kbH<150)kbH=_kbHeight;
@@ -9414,20 +9437,11 @@ function openEmojiPanel(){
 
   _epOpen=true;
   _buildEmojiPanel();
-
-  // Size panel to exactly match keyboard height
   panel.style.height=kbH+'px';
-
-  // Show INSTANTLY — no slide animation, panel appears at bottom instantly
-  // This way it covers the keyboard position before keyboard can disappear
   panel.style.transition='none';
   panel.style.transform='translateY(0)';
   panel.style.display='flex';
-
-  // Blur the input — keyboard goes away, panel already fills the space
   ta.blur();
-
-  // After 2 frames re-enable CSS transition (for the close animation)
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
       panel.style.transition='';
@@ -9436,49 +9450,58 @@ function openEmojiPanel(){
     });
   });
 
-  // Switch to keyboard icon
-  var emojiIco=document.getElementById('emoji-toggle-btn')&&document.getElementById('emoji-toggle-btn').querySelector('.ep-ico-emoji');
-  var kbdIco=document.getElementById('emoji-toggle-btn')&&document.getElementById('emoji-toggle-btn').querySelector('.ep-ico-kbd');
-  if(!emojiIco)emojiIco=document.querySelector('.ep-ico-emoji');
-  if(!kbdIco)kbdIco=document.querySelector('.ep-ico-kbd');
-  if(emojiIco)emojiIco.style.display='none';
-  if(kbdIco)kbdIco.style.display='';
+  // Show keyboard button, hide emoji button
+  var emojiBtn=document.getElementById('emoji-open-btn');
+  var kbdBtn=document.getElementById('emoji-kbd-btn');
+  if(emojiBtn)emojiBtn.style.display='none';
+  if(kbdBtn)kbdBtn.style.display='';
 
-  // Push chat footer up
   var foot=document.querySelector('#cw .chatfoot');
   if(foot)foot.style.marginBottom=kbH+'px';
-
-  // Scroll messages to bottom
   var msgs=document.getElementById('msgs');
   if(msgs)setTimeout(function(){msgs.scrollTop=msgs.scrollHeight;},60);
+}
+
+// THIS is the critical function — keyboard button has its OWN onclick
+// It is a completely separate button element, so its onclick fires as a
+// direct user gesture. ta.focus() inside a direct onclick opens the keyboard on Android.
+function _epSwitchToKeyboard(){
+  var panel=document.getElementById('emoji-panel');
+  _epOpen=false;
+
+  // Restore buttons
+  var emojiBtn=document.getElementById('emoji-open-btn');
+  var kbdBtn=document.getElementById('emoji-kbd-btn');
+  if(emojiBtn)emojiBtn.style.display='';
+  if(kbdBtn)kbdBtn.style.display='none';
+
+  // Reset footer
+  var foot=document.querySelector('#cw .chatfoot');
+  if(foot)foot.style.marginBottom='';
+
+  // Slide panel away
+  if(panel){
+    panel.classList.remove('on');
+    setTimeout(function(){panel.style.display='none';},280);
+  }
+
+  // Focus — direct gesture call, keyboard WILL open
+  var ta=document.getElementById('chatinp');
+  if(ta)ta.focus();
 }
 
 function closeEmojiPanel(){
   var panel=document.getElementById('emoji-panel');
   if(!panel||!_epOpen)return;
   _epOpen=false;
-  // Restore icons
-  var tb=document.getElementById('emoji-toggle-btn');
-  var emojiIco=tb?tb.querySelector('.ep-ico-emoji'):document.querySelector('.ep-ico-emoji');
-  var kbdIco=tb?tb.querySelector('.ep-ico-kbd'):document.querySelector('.ep-ico-kbd');
-  if(emojiIco)emojiIco.style.display='';
-  if(kbdIco)kbdIco.style.display='none';
-  // Reset footer
+  var emojiBtn=document.getElementById('emoji-open-btn');
+  var kbdBtn=document.getElementById('emoji-kbd-btn');
+  if(emojiBtn)emojiBtn.style.display='';
+  if(kbdBtn)kbdBtn.style.display='none';
   var foot=document.querySelector('#cw .chatfoot');
   if(foot)foot.style.marginBottom='';
-  // Slide panel away
   panel.classList.remove('on');
-  setTimeout(function(){panel.style.display='none';},300);
-}
-
-// Called on pointerdown of the toggle button — fires inside the raw touch gesture
-// so focus() is trusted by the browser to open the keyboard
-function _epKbdPD(e){
-  if(!_epOpen)return;
-  // Prevent the button's onclick from also firing closeEmojiPanel after we focus
-  // (we still need onclick to run for the toggle, so don't preventDefault fully)
-  var ta=document.getElementById('chatinp');
-  if(ta)ta.focus();
+  setTimeout(function(){panel.style.display='none';},280);
 }
 
 function _buildEmojiPanel(){
@@ -9506,6 +9529,20 @@ function _buildEpCats(){
   });
 }
 
+// Emoji personality map — defines which animation each emoji gets
+var _EP_PERSONALITY={
+  '😀':'laugh','😃':'laugh','😄':'laugh','😁':'laugh','😆':'laugh','😅':'laugh','🤣':'laugh','😂':'laugh',
+  '😢':'cry','😭':'cry','😥':'cry','😓':'cry','😩':'cry','😫':'cry','🥺':'cry','😿':'cry',
+  '😰':'cry','😨':'cry','😦':'cry','😧':'cry',
+  '🥰':'love','😍':'love','🤩':'love','😘':'love','😗':'love','😚':'love','😙':'love','💕':'love','❤️':'love','🧡':'love','💛':'love','💚':'love','💙':'love','💜':'love','🖤':'love','💔':'love','💗':'love','💖':'love','💘':'love','💝':'love',
+  '😡':'angry','😠':'angry','🤬':'angry','😤':'angry','👿':'angry','😈':'angry',
+  '🤔':'think','🧐':'think','🤨':'think','🤭':'think','🤫':'think',
+  '😜':'wink','😛':'wink','🤪':'wink','😝':'wink','😋':'wink','😏':'wink','😉':'wink',
+  '🤢':'sick','🤮':'sick','🤧':'sick','🥴':'sick','😵':'sick','🤯':'sick','🥵':'sick','🥶':'sick',
+  '😎':'cool','🤓':'cool','🥸':'cool','🤠':'cool','🥳':'cool',
+};
+function _epGetPersonality(e){return _EP_PERSONALITY[e]||'idle';}
+
 function _buildEpGrid(cat){
   var el=document.getElementById('ep-grid');
   if(!el)return;
@@ -9518,12 +9555,16 @@ function _buildEpGrid(cat){
     el.appendChild(empty);
     return;
   }
-  emojis.forEach(function(e){
+  emojis.forEach(function(e,i){
     var btn=document.createElement('button');
     btn.textContent=e;
+    var p=_epGetPersonality(e);
+    btn.setAttribute('data-ep',p);
+    // Stagger the animation so they don't all move in sync
+    btn.style.animationDelay=(i*0.07%1.4)+'s';
     btn.onclick=function(){
       btn.classList.remove('ep-tapped');
-      void btn.offsetWidth; // reflow to restart animation
+      void btn.offsetWidth;
       btn.classList.add('ep-tapped');
       _insertEmoji(e);
     };
