@@ -1011,20 +1011,33 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #voice-pill .vp-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.9);flex-shrink:0;}
 #voice-pill .vp-bars{display:flex;align-items:center;gap:2px;}
 #voice-pill .vp-bars span{display:block;width:2.5px;border-radius:2px;background:rgba(255,255,255,.85);}
-/* ── CHAT INPUT BAR ─────────────────────────────────────────── */
+/* ── CHAT INPUT BAR (shared base — circles) ──────────────────── */
 .chatfoot{background:var(--card);flex-shrink:0;padding:8px 12px max(12px,env(safe-area-inset-bottom))}
 .chatrow{display:flex;align-items:center;gap:8px}
 .chat-pill{flex:1;display:flex;align-items:center;background:var(--inp-bg);border-radius:24px;padding:0 4px 0 2px;gap:0;min-height:46px}
 .chat-pill-icon{background:none;border:none;cursor:pointer;color:var(--sub);width:38px;height:46px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .15s;-webkit-tap-highlight-color:transparent}
 .chat-pill-icon:active{color:var(--text)}
-.chatinp{flex:1;border:none;background:transparent;padding:12px 8px 12px 4px;font-size:15.5px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:90px;line-height:1.4;-webkit-user-select:text;user-select:text;align-self:center}
+.chatinp{flex:1;border:none;background:transparent;padding:12px 8px 12px 4px;font-size:15px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:90px;line-height:1.45;-webkit-user-select:text;user-select:text;align-self:center}
 .chatinp::placeholder{color:var(--inp-ph)}
 
+/* ── DM CHAT — minimal bare redesign ────────────────────────── */
+#cw .chatfoot{padding:10px 16px max(16px,env(safe-area-inset-bottom));border-top:1px solid var(--border)}
+#cw .chatrow{gap:10px;align-items:center}
+#cw .chatinp{background:var(--inp-bg);border-radius:20px;padding:10px 14px;align-self:auto}
+.chat-ico-btn{background:none;border:none;cursor:pointer;color:var(--sub);width:34px;height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .15s,transform .12s;-webkit-tap-highlight-color:transparent}
+.chat-ico-btn:active{color:var(--text);transform:scale(.88)}
+
+/* ── SEND / MIC BUTTON ───────────────────────────────────────── */
 .chat-send{width:44px;height:44px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,transform .15s;-webkit-tap-highlight-color:transparent;flex-direction:column;gap:1px;touch-action:none;user-select:none;-webkit-user-select:none}
 .chat-send .ic-send{display:none}
 .chat-send .ic-mic{display:flex}
 .chat-send.has-text .ic-send{display:flex}
 .chat-send.has-text .ic-mic{display:none}
+/* DM — bare mic, filled send */
+#cw .chat-send{background:none;color:var(--sub);width:36px;height:36px}
+#cw .chat-send.has-text{background:var(--text);color:var(--card)}
+#cw .chat-send.recording{background:#E8352A !important;color:#fff}
+#cw .chat-send:active{transform:scale(.88)}
 /* EMOJI PANEL */
 #emoji-panel{position:fixed;left:0;right:0;bottom:0;z-index:830;background:var(--card);border-top:1px solid var(--border);border-radius:16px 16px 0 0;transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94);will-change:transform;display:flex;flex-direction:column;height:320px}.ep-handle{width:36px;height:4px;background:var(--border);border-radius:4px;margin:10px auto 2px;flex-shrink:0}
 #emoji-panel.on{transform:translateY(0)}
@@ -1234,16 +1247,14 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   <div class="reply-bar" id="reply-bar"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span>Replying to <strong id="reply-name"></strong>: <span id="reply-preview"></span></span><button onclick="cancelReplyBar()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--sub);font-size:18px;padding:0 2px">×</button></div>
   <div class="chatfoot">
     <div class="chatrow">
-      <div class="chat-pill">
-        <label for="chat-photo-inp" class="chat-pill-icon" aria-label="Photo">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        </label>
-        <input id="chat-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendPhoto(event)"/>
-        <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)"></textarea>
-      </div>
+      <label for="chat-photo-inp" class="chat-ico-btn" aria-label="Photo">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </label>
+      <input id="chat-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendPhoto(event)"/>
+      <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)"></textarea>
       <button id="cw-send-btn" class="chat-send" aria-label="Send or record">
-        <span class="ic-send"><svg width="17" height="17" fill="none" stroke="var(--card)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span>
-        <span class="ic-mic"><svg width="16" height="16" fill="none" stroke="var(--card)" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span>
+        <span class="ic-send"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></span>
+        <span class="ic-mic"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span>
       </button>
     </div>
   </div>
