@@ -1037,11 +1037,10 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .ep-cat.on .ep-cat-line{display:block}
 .ep-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(7,1fr);padding:6px 4px max(16px,env(safe-area-inset-bottom));gap:0;-webkit-overflow-scrolling:touch}
 .ep-grid::-webkit-scrollbar{display:none}
-.ep-grid button{background:none;border:none;cursor:pointer;font-size:28px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:background .1s,transform .12s;-webkit-tap-highlight-color:transparent;padding:0}
-@keyframes ep-bob{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-3px) scale(1.08)}70%{transform:translateY(-1px) scale(1.04)}}
-.ep-grid button:hover,.ep-grid button:focus{animation:ep-bob .55s ease both}
-.ep-grid button:active{transform:scale(.78)!important;animation:none!important}
-.ep-grid button:active{background:var(--inp-bg)}
+.ep-grid button{background:none;border:none;cursor:pointer;font-size:28px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:transform .1s,background .1s;-webkit-tap-highlight-color:transparent;padding:0;line-height:1}
+.ep-grid button:active{background:var(--inp-bg);transform:scale(.72)}
+@keyframes ep-pop{0%{transform:scale(1)}40%{transform:scale(1.28) rotate(-8deg)}70%{transform:scale(0.88) rotate(4deg)}100%{transform:scale(1) rotate(0deg)}}
+.ep-grid button.ep-tapped{animation:ep-pop .35s cubic-bezier(.25,.46,.45,.94) both}
 .ep-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;padding:8px 4px 4px}
 </style>
 </head>
@@ -1232,7 +1231,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   <div class="chatfoot">
     <div class="chatrow">
       <div class="chat-pill">
-        <button class="chat-pill-emoji" id="emoji-toggle-btn" onpointerdown="if(_epOpen){var ta=document.getElementById('chatinp');if(ta)ta.focus();}" onclick="toggleEmojiPanel()" aria-label="Emoji">
+        <button class="chat-pill-emoji" id="emoji-toggle-btn" onpointerdown="if(_epOpen){var _ta=document.getElementById('chatinp');if(_ta)_ta.focus();}" onclick="toggleEmojiPanel()" aria-label="Emoji">
           <span class="ep-ico-emoji"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14s1.5 2 3.5 2 3.5-2 3.5-2"/><line x1="9" y1="9.5" x2="9.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/><line x1="15" y1="9.5" x2="15.01" y2="9.5" stroke-width="2.5" stroke-linecap="round"/></svg></span>
           <span class="ep-ico-kbd" style="display:none"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="10" x2="10.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="14" y1="10" x2="14.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="10" x2="18.01" y2="10" stroke-width="2.2" stroke-linecap="round"/><line x1="6" y1="14" x2="6.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="18" y1="14" x2="18.01" y2="14" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="14" x2="14" y2="14" stroke-width="2.2" stroke-linecap="round"/></svg></span>
         </button>
@@ -7360,7 +7359,7 @@ function closeFollowSheet(){
   if(window.visualViewport){window.visualViewport.addEventListener('resize',adjustAuth,{passive:true});window.visualViewport.addEventListener('scroll',adjustAuth,{passive:true});}
   document.addEventListener('focusin',function(e){var el=e.target;if(!el||!el.closest('#s-auth'))return;var tag=el.tagName;if(tag!=='INPUT'&&tag!=='TEXTAREA'&&tag!=='SELECT')return;setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'center'});},320);});
 })();
-(function(){if(!window.visualViewport)return;window.visualViewport.addEventListener('resize',function(){var kbH=Math.max(0,window.innerHeight-window.visualViewport.height);var cw=document.getElementById('cw'),foot=cw&&cw.querySelector('.chatfoot'),msgs=document.getElementById('msgs');if(cw&&cw.classList.contains('on')&&foot){foot.style.marginBottom=kbH>0?kbH+'px':'0';if(kbH>0&&msgs)msgs.scrollTop=msgs.scrollHeight;}},{passive:true});})();
+(function(){if(!window.visualViewport)return;window.visualViewport.addEventListener('resize',function(){if(typeof _epOpen!=='undefined'&&_epOpen)return;var kbH=Math.max(0,window.innerHeight-window.visualViewport.height);var cw=document.getElementById('cw'),foot=cw&&cw.querySelector('.chatfoot'),msgs=document.getElementById('msgs');if(cw&&cw.classList.contains('on')&&foot){foot.style.marginBottom=kbH>0?kbH+'px':'0';if(kbH>0&&msgs)msgs.scrollTop=msgs.scrollHeight;}},{passive:true});})();
 </script>
 <script>
 if('serviceWorker' in navigator){
@@ -9449,32 +9448,24 @@ function closeEmojiPanel(){
   var panel=document.getElementById('emoji-panel');
   if(!panel||!_epOpen)return;
   _epOpen=false;
-  // Restore smiley icon FIRST
+  // Restore icons immediately
   var emojiIco=document.getElementById('emoji-toggle-btn')&&document.getElementById('emoji-toggle-btn').querySelector('.ep-ico-emoji');
   var kbdIco=document.getElementById('emoji-toggle-btn')&&document.getElementById('emoji-toggle-btn').querySelector('.ep-ico-kbd');
   if(!emojiIco)emojiIco=document.querySelector('.ep-ico-emoji');
   if(!kbdIco)kbdIco=document.querySelector('.ep-ico-kbd');
   if(emojiIco)emojiIco.style.display='';
   if(kbdIco)kbdIco.style.display='none';
-  // Remove footer push immediately so layout snaps back
+  // Remove footer push immediately
   var foot=document.querySelector('#cw .chatfoot');
   if(foot)foot.style.marginBottom='';
-  // Slide panel down
+  // Slide panel away
   panel.classList.remove('on');
   panel.style.transform='';
   panel.style.transition='';
-  setTimeout(function(){
-    panel.style.display='none';
-    panel.style.transform='';
-  },300);
-  // Focus textarea — must happen in same tick as user gesture to open keyboard on mobile
+  setTimeout(function(){panel.style.display='none';panel.style.transform='';},300);
+  // Focus — called from pointerdown on button so keyboard should open
   var ta=document.getElementById('chatinp');
-  if(ta){
-    ta.style.opacity='1'; // ensure visible
-    ta.focus();
-    // fallback: some Android browsers need a tiny delay
-    setTimeout(function(){if(document.activeElement!==ta)ta.focus();},50);
-  }
+  if(ta){ta.focus();setTimeout(function(){if(document.activeElement!==ta)ta.focus();},80);}
 }
 
 function _buildEmojiPanel(){
@@ -9517,7 +9508,12 @@ function _buildEpGrid(cat){
   emojis.forEach(function(e){
     var btn=document.createElement('button');
     btn.textContent=e;
-    btn.onclick=function(){_insertEmoji(e);};
+    btn.onclick=function(){
+      btn.classList.remove('ep-tapped');
+      void btn.offsetWidth;
+      btn.classList.add('ep-tapped');
+      _insertEmoji(e);
+    };
     el.appendChild(btn);
   });
 }
