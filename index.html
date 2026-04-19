@@ -9331,18 +9331,18 @@ function _startVoiceRecord(){
 function _sendVoiceNote(blob){
   if(!chatUser||!profile){T('Not in a chat');return;}
   if(blob.size<1000){T('Recording too short');return;}
-  // Upload to Supabase storage
-  var path='voices/'+profile.id+'-'+Date.now()+'.'+( blob.type.includes('webm')?'webm':'mp4');
+  var ext=blob.type.includes('webm')?'webm':'mp4';
+  var path='voices/'+profile.id+'-'+Date.now()+'.'+ext;
+  var dur=Math.round((Date.now()-_recStartT)/1000);
   T('Sending…');
   _sb.storage.from('chat-media').upload(path,blob,{contentType:blob.type,upsert:false})
     .then(function(res){
-      if(res.error){T('Upload failed');console.error(res.error);return;}
+      if(res.error){T('Upload failed: '+res.error.message);console.error('voice upload:',res.error);return;}
       var pub=_sb.storage.from('chat-media').getPublicUrl(path);
       var voiceUrl=pub.data.publicUrl;
-      // Send as a message with a special content prefix
       var expires=new Date(Date.now()+86400000).toISOString();
-      var dur=Math.round((Date.now()-_recStartT)/1000);
       var tempId='tmp-'+Date.now();
+      // Pass voiceUrl so optimistic bubble can play immediately
       var m={id:tempId,sid:'demo',text:'[voice:'+dur+'s]',voiceUrl:voiceUrl,ts:Date.now()};
       appendBubble(m);
       SFX('send');haptic('send');
@@ -9351,11 +9351,11 @@ function _sendVoiceNote(blob){
       _sb.from('messages').insert({
         sender_id:profile.id,receiver_id:chatUser.id,
         content:'[voice:'+dur+'s]',img_url:voiceUrl,is_read:false,expires_at:expires
-      }).then(function(ins){
-        if(ins.error){console.error('Voice DM insert:',ins.error);return;}
-        var newId=(ins.data&&ins.data[0]&&ins.data[0].id)||tempId;
-        var tmpEl=document.querySelector('[data-mid="'+tempId+'"]');
-        if(tmpEl)tmpEl.dataset.mid=newId;
+      }).select('id').single().then(function(ins){
+        if(ins.error){console.error('Voice DM insert:',ins.error.code,ins.error.message);T('Send failed ('+ins.error.code+')');return;}
+        // Fix temp id on the DOM node so unsend works
+        var tmpEl=document.querySelector('[data-msgid="'+tempId+'"]');
+        if(tmpEl)tmpEl.dataset.msgid=ins.data.id;
       });
     });
 }
