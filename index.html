@@ -5102,7 +5102,7 @@ function sendPhoto(e){
 }
 function sendMsg(){
   var inp=document.getElementById('chatinp');var txt=inp.value.trim();if(!txt||!chatUser)return;
-  inp.value='';inp.style.height='';
+  inp.value='';inp.style.height='';_cwUpdateSendBtn();
   // Stop any pending typing broadcast
   clearTimeout(_typingBroadcastT);
   if(_chatChannel)_chatChannel.send({type:'broadcast',event:'typing_stop',payload:{uid:profile.id}}).catch(function(){});
