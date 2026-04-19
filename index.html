@@ -4929,12 +4929,10 @@ function appendBubble(m){
       var aud=new Audio(url);
       aud.preload='auto';
       aud.playbackRate=speeds[speedIdx];
-      // Use real audio duration once loaded — overrides stored totalDur
+      // Use real audio duration once loaded — only override if finite (WebM often gives Infinity)
       aud.addEventListener('loadedmetadata',function(){
-        if(aud.duration&&isFinite(aud.duration)){
-          totalDur=aud.duration;
-          dEl.textContent=fmtTime(totalDur);
-        }
+        var d=aud.duration;
+        if(d&&isFinite(d)&&d>0){totalDur=d;dEl.textContent=fmtTime(d);}
       });
       aud.onended=function(){
         playing=false;pb.innerHTML=IC_PLAY;
@@ -4942,21 +4940,31 @@ function appendBubble(m){
         if(rafId){cancelAnimationFrame(rafId);rafId=null;}
         bEls.forEach(function(s,i){s.style.height=barHeights[i]+'px';s.classList.remove('played');});
         phEl.style.left='0%';
-        dEl.textContent=fmtTime(totalDur);
+        // Show real duration on reset
+        var dur=(aud.duration&&isFinite(aud.duration)&&aud.duration>0)?aud.duration:totalDur;
+        dEl.textContent=fmtTime(dur);
       };
       var playing=false,rafId=null;
+
+      function getRealDur(){
+        // aud.duration is Infinity for many WebM recordings — fall back to stored totalDur
+        var d=aud.duration;
+        return (d&&isFinite(d)&&d>0)?d:totalDur;
+      }
 
       function setProgress(pct){
         pct=Math.max(0,Math.min(1,pct));
         phEl.style.left=(pct*100)+'%';
         var n=bEls.length;
         bEls.forEach(function(s,i){s.classList.toggle('played',i/n<pct);});
-        dEl.textContent=fmtTime(totalDur>0?pct*totalDur:0);
+        var dur=getRealDur();
+        dEl.textContent=fmtTime(dur>0?pct*dur:0);
       }
 
       function tick(){
         if(!aud||!playing){rafId=null;return;}
-        var pct=totalDur>0?Math.min(1,aud.currentTime/totalDur):0;
+        var dur=getRealDur();
+        var pct=dur>0?Math.min(1,aud.currentTime/dur):0;
         phEl.style.left=(pct*100)+'%';
         var n=bEls.length;
         bEls.forEach(function(s,i){s.classList.toggle('played',i/n<pct);});
