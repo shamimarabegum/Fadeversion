@@ -4299,7 +4299,7 @@ function loadConversations(cb){
             var isMine=lastMsg.sender_id===profile.id;
             return{
               user:u,
-              lastMsg:(lastMsg.content&&lastMsg.content.startsWith('[voice:')?'🎤 Voice message':lastMsg.content||(lastMsg.is_photo?'📷 Photo':'')),
+              lastMsg:(lastMsg.content&&lastMsg.content.startsWith('[voice:')?(function(){var m2=(lastMsg.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '🔊 '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(lastMsg.content||(lastMsg.is_photo?'📷 Photo':''))),
               lastSid:isMine?'demo':pid,
               ts:new Date(lastMsg.created_at).getTime(),
               lastMsgId:lastMsg.id
@@ -4752,7 +4752,7 @@ function subscribeToInbox(){
       if(_convosLoaded){
         var senderUser=USERS.find(function(x){return x.id===r.sender_id;})||{id:r.sender_id,display_name:'User',username:'user',avatar_url:null};
         var existing=convos.find(function(c){return c.user.id===r.sender_id;});
-        var lastMsg=(r.content&&r.content.startsWith('[voice:'))?'🎤 Voice message':(r.content||(r.is_photo?'📷 Photo':''));
+        var lastMsg=(r.content&&r.content.startsWith('[voice:'))?(function(){var m2=(r.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '🔊 '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(r.content||(r.is_photo?'📷 Photo':''));
         if(existing){existing.lastMsg=lastMsg;existing.lastSid=r.sender_id;existing.ts=new Date(r.created_at).getTime();convos.sort(function(a,b){return b.ts-a.ts;});}
         else{convos.unshift({user:senderUser,lastMsg:lastMsg,lastSid:r.sender_id,ts:new Date(r.created_at).getTime()});}
       }
