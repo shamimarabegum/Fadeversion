@@ -949,7 +949,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #offline-bar.on{transform:translateY(0)}
 #offline-bar svg{flex-shrink:0;opacity:.75}
 /* VOICE NOTE RECORDING */
-/* Instagram-style voice bubble — single row */
+/* Instagram-style voice bubble — single row, fixed size */
 .voice-bubble{display:flex;align-items:center;gap:8px;padding:11px 12px;min-width:0;max-width:230px}
 .voice-row{display:contents}
 .voice-play{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .1s}
@@ -958,10 +958,12 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .voice-wave span{display:block;background:rgba(255,255,255,.4);border-radius:2px;width:2.5px;flex-shrink:0;transition:background .08s ease,height .1s cubic-bezier(.25,.46,.45,.94)}
 .voice-wave span.played{background:rgba(255,255,255,.95)}
 .voice-playhead{position:absolute;top:2px;bottom:2px;width:2px;background:#fff;border-radius:2px;pointer-events:none;left:0%;transition:left .05s linear;box-shadow:0 0 5px rgba(255,255,255,.8)}
-.voice-dur{font-size:12px;color:rgba(255,255,255,.88);font-weight:600;flex-shrink:0;font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
-.voice-speed{background:rgba(0,0,0,.25);border:none;border-radius:20px;padding:3px 8px;font-size:11px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s,transform .1s;flex-shrink:0;display:none}
+/* fixed right column — time on top, speed below, same width always */
+.voice-right{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;width:34px;gap:2px}
+.voice-dur{font-size:12px;color:rgba(255,255,255,.88);font-weight:600;font-variant-numeric:tabular-nums;line-height:1;text-align:center}
+.voice-speed{background:rgba(0,0,0,.28);border:none;border-radius:20px;padding:2px 7px;font-size:11px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s,transform .1s;display:none;line-height:1.4}
 .voice-speed.visible{display:block}
-.voice-speed:active{background:rgba(0,0,0,.45);transform:scale(.9)}
+.voice-speed:active{background:rgba(0,0,0,.5);transform:scale(.9)}
 .voice-meta{display:none}
 .voice-scrubber{display:none}
 .voice-track{display:none}
@@ -4897,20 +4899,20 @@ function appendBubble(m){
     var playhead=document.createElement('div');playhead.className='voice-playhead';
     wave.appendChild(playhead);
 
-    // Time display
+    // Time + speed in fixed-width column — bubble never changes size
     function fmtTime(s){var m2=Math.floor(s/60),sec=Math.floor(s)%60;return m2+':'+(sec<10?'0':'')+sec;}
+    var rightCol=document.createElement('div');rightCol.className='voice-right';
     var durEl=document.createElement('div');durEl.className='voice-dur';
     durEl.textContent=fmtTime(dur);
-
-    // Speed button — hidden until playing
     var speedBtn=document.createElement('button');speedBtn.className='voice-speed';
     var speeds=[1,1.5,2];var speedIdx=0;
     speedBtn.textContent='1x';
+    rightCol.appendChild(durEl);
+    rightCol.appendChild(speedBtn);
 
     b.appendChild(playBtn);
     b.appendChild(wave);
-    b.appendChild(durEl);
-    b.appendChild(speedBtn);
+    b.appendChild(rightCol);
     attachHold(b,m,wrap,bs,isMine);
 
     (function(url,pb,waveEl,bEls,phEl,dEl,spBtn,totalDur){
@@ -9431,14 +9433,16 @@ function _startVoiceRecord(){
     _recStartT=Date.now();
     haptic('send');
     _startWaveAnim(stream);
-    // Live timer
-    _recTimer=setInterval(function(){
-      var elapsed=Math.floor((Date.now()-_recStartT)/1000);
+    // Live timer — immediate first update, then every 100ms (no delay)
+    function _tickRec(){
+      var elapsed=(Date.now()-_recStartT)/1000;
       if(elapsed>=300){_voiceSend();return;}
-      var m=Math.floor(elapsed/60),s=elapsed%60;
+      var m=Math.floor(elapsed/60),s=Math.floor(elapsed)%60;
       var rt=document.getElementById('voice-rec-time');
       if(rt)rt.textContent=m+':'+(s<10?'0':'')+s;
-    },1000);
+    }
+    _tickRec();
+    _recTimer=setInterval(_tickRec,100);
   }).catch(function(err){
     console.error('Mic error',err);
     _voiceActive=false;
