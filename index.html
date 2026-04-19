@@ -4958,7 +4958,12 @@ function appendBubble(m){
           aud.play().catch(function(){});
           playing=true;pb.innerHTML=IC_PAUSE;
           spBtn.classList.add('visible');
-          rafId=requestAnimationFrame(tick);haptic();
+          // Start RAF only when audio actually begins moving (not on play() call)
+          aud.addEventListener('playing',function onP(){
+            aud.removeEventListener('playing',onP);
+            if(playing)rafId=requestAnimationFrame(tick);
+          });
+          haptic();
         }
       };
 
@@ -9305,7 +9310,6 @@ function _hideVoiceOverlay(){
 function _startWaveAnim(stream){
   try{
     var actx=new(window.AudioContext||window.webkitAudioContext)();
-    actx.resume(); // required on mobile — context starts suspended
     var src=actx.createMediaStreamSource(stream);
     _analyser=actx.createAnalyser();
     _analyser.fftSize=256;
@@ -9320,31 +9324,34 @@ function _startWaveAnim(stream){
     var MAX_H=30;
     var MIN_H=3;
 
-    function tick(){
-      _waveAnim=setTimeout(function(){
-        if(!_analyser){return;}
-        _analyser.getByteFrequencyData(_waveData);
-        var sum=0;
-        var len=Math.floor(_waveData.length/2);
-        for(var i=0;i<len;i++)sum+=_waveData[i];
-        var avg=sum/len;
-        var norm=Math.min(1,avg/80); // lower threshold = more sensitive to quiet voices
-
-        var prev=history[NUM-1]||0;
-        norm=prev*0.25+norm*0.75;
-
-        history.shift();
-        history.push(norm);
-
-        bars.forEach(function(bar,i){
-          var h=Math.round(MIN_H+(history[i]*(MAX_H-MIN_H)));
-          bar.style.height=h+'px';
-        });
-
-        tick();
-      },TICK_MS);
+    function startTick(){
+      function tick(){
+        _waveAnim=setTimeout(function(){
+          if(!_analyser){return;}
+          _analyser.getByteFrequencyData(_waveData);
+          var sum=0,len=Math.floor(_waveData.length/2);
+          for(var i=0;i<len;i++)sum+=_waveData[i];
+          var norm=Math.min(1,(sum/len)/80);
+          var prev=history[NUM-1]||0;
+          norm=prev*0.25+norm*0.75;
+          history.shift();history.push(norm);
+          bars.forEach(function(bar,i){
+            bar.style.height=Math.round(MIN_H+(history[i]*(MAX_H-MIN_H)))+'px';
+          });
+          tick();
+        },TICK_MS);
+      }
+      tick();
     }
-    tick();
+
+    // resume() is a Promise — only start ticking once context is truly running
+    actx.resume().then(function(){
+      // Drain 3 frames so analyser has real data before we render
+      _analyser.getByteFrequencyData(_waveData);
+      _analyser.getByteFrequencyData(_waveData);
+      _analyser.getByteFrequencyData(_waveData);
+      startTick();
+    }).catch(function(){ startTick(); }); // fallback if resume rejects
   }catch(err){console.warn('Waveform err',err);}
 }
 
@@ -9404,11 +9411,11 @@ function _startVoiceRecord(){
       var blob=new Blob(_audioChunks,{type:_mediaRec.mimeType});
       _sendVoiceNote(blob);
     };
-    _mediaRec.start();
+    _mediaRec.start(100); // timeslice=100ms so ondataavailable fires rapidly
     _recStartT=Date.now();
     haptic('send');
     _startWaveAnim(stream);
-    // Live timer — immediate first update, then every 100ms (no delay)
+    // Timer — update every 100ms, no initial 1-second stutter
     function _tickRec(){
       var elapsed=(Date.now()-_recStartT)/1000;
       if(elapsed>=300){_voiceSend();return;}
