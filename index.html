@@ -4925,7 +4925,19 @@ function appendBubble(m){
     attachHold(b,m,wrap,bs,isMine);
 
     (function(url,pb,waveEl,bEls,phEl,dEl,spBtn,totalDur){
-      var aud=null,playing=false,rafId=null;
+      // Preload immediately when bubble renders — ready by the time user taps play
+      var aud=new Audio(url);
+      aud.preload='auto';
+      aud.playbackRate=speeds[speedIdx];
+      aud.onended=function(){
+        playing=false;pb.innerHTML=IC_PLAY;
+        spBtn.classList.remove('visible');
+        if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+        bEls.forEach(function(s,i){s.style.height=barHeights[i]+'px';s.classList.remove('played');});
+        phEl.style.left='0%';
+        dEl.textContent=fmtTime(totalDur);
+      };
+      var playing=false,rafId=null;
 
       function setProgress(pct){
         pct=Math.max(0,Math.min(1,pct));
@@ -4947,18 +4959,6 @@ function appendBubble(m){
 
       pb.onclick=function(e){
         e.stopPropagation();
-        if(!aud){
-          aud=new Audio(url);
-          aud.playbackRate=speeds[speedIdx];
-          aud.onended=function(){
-            playing=false;pb.innerHTML=IC_PLAY;
-            spBtn.classList.remove('visible');
-            if(rafId){cancelAnimationFrame(rafId);rafId=null;}
-            bEls.forEach(function(s,i){s.style.height=barHeights[i]+'px';s.classList.remove('played');});
-            phEl.style.left='0%';
-            dEl.textContent=fmtTime(totalDur);
-          };
-        }
         if(playing){
           aud.pause();playing=false;pb.innerHTML=IC_PLAY;
           spBtn.classList.remove('visible');
@@ -4967,11 +4967,16 @@ function appendBubble(m){
           aud.play().catch(function(){});
           playing=true;pb.innerHTML=IC_PAUSE;
           spBtn.classList.add('visible');
-          // Start RAF only when audio actually begins moving (not on play() call)
-          aud.addEventListener('playing',function onP(){
-            aud.removeEventListener('playing',onP);
-            if(playing)rafId=requestAnimationFrame(tick);
-          });
+          // Use 'playing' event so RAF starts exactly when audio moves
+          if(aud.readyState>=3){
+            // Already buffered — start immediately
+            rafId=requestAnimationFrame(tick);
+          }else{
+            aud.addEventListener('playing',function onP(){
+              aud.removeEventListener('playing',onP);
+              if(playing)rafId=requestAnimationFrame(tick);
+            });
+          }
           haptic();
         }
       };
