@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231A1A1A'/%3E%3Ctext x='16' y='24' text-anchor='middle' font-family='Georgia%2C serif' font-style='italic' font-size='22' font-weight='700' fill='white'%3EF%3C/text%3E%3C/svg%3E"/>
 <link rel="apple-touch-icon" href="https://xmgmpewuevzgriqgsoct.supabase.co/storage/v1/object/public/avatars/android-chrome-512x512.png"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="Fade"/>
 <meta name="theme-color" content="#1A1A1A"/>
 <link rel="manifest" href="/manifest.json"/>
@@ -455,7 +455,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .rplybar{display:none;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--inp-bg);font-size:13px;color:var(--sub);flex-shrink:0;border-top:1px solid var(--border)}
 .rplybar.on{display:flex}
 .cs-inp-row{display:flex;gap:10px;align-items:flex-end;padding:10px 14px max(16px,env(safe-area-inset-bottom));flex-shrink:0;background:var(--card);margin-top:auto}
-.csinp{flex:1;background:var(--inp-bg);border:none;border-radius:22px;padding:10px 16px;font-size:14px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:80px;line-height:1.4;-webkit-user-select:text;user-select:text}
+.csinp{flex:1;background:var(--inp-bg);border:1.5px solid var(--inp-border);border-radius:22px;padding:10px 16px;font-size:14px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:80px;line-height:1.4;-webkit-user-select:text;user-select:text}
 .csinp::placeholder{color:var(--inp-ph)}
 .cssend{width:36px;height:36px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
 .cssend:active{opacity:.6}
@@ -1985,7 +1985,6 @@ function getBadgeSVG(uid, badgeType, isVerified){
 function E(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function ago(d){var diff=Date.now()-(typeof d==='number'?d:new Date(d).getTime());if(diff<60000)return'now';if(diff<3600000)return Math.floor(diff/60000)+'m';if(diff<86400000)return Math.floor(diff/3600000)+'h';return'1d';}
 function agoS(d){var diff=Date.now()-new Date(d).getTime();if(diff<3600000)return Math.floor(diff/60000)+'m ago';return Math.floor(diff/3600000)+'h ago';}
-function stripStoryPrefix(c){if(!c)return'';if(c.startsWith('[storyreply:')){var nl=c.indexOf('\n');return nl>=0?c.slice(nl+1):'📷 Moment';}return c;}
 function fadeIn(ts){var rem=Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);return rem<=0?'soon':h>0?h+'h':m+'m';}
 function bgClose(e,id){if(e.target.id===id||e.target.classList.contains('compose-dim'))closeSheet(id);}
 function closeSheet(id){var el=document.getElementById(id);var sheet=el&&el.querySelector('.sheet');if(sheet)sheet.style.transform='translateY(100%)';setTimeout(function(){if(el)el.style.display='none';},320);}
@@ -2227,34 +2226,9 @@ var _sb = (function(){
   if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,600);});}
   else{var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,800);}
 
-  // ── Instant auth-screen suppression ─────────────────────────────────────
-  // If Supabase has a stored session in localStorage, hide the auth screen
-  // immediately (before the async getSession resolves) to eliminate the flash.
-  (function(){
-    try{
-      var hasToken=false;
-      for(var k in localStorage){
-        if(k.indexOf('supabase')>=0&&k.indexOf('auth-token')>=0){
-          var val=JSON.parse(localStorage.getItem(k));
-          if(val&&val.access_token){hasToken=true;break;}
-        }
-      }
-      if(hasToken){
-        var a=document.getElementById('s-auth');
-        if(a){a.style.opacity='0';a.style.pointerEvents='none';}
-      }
-    }catch(e){}
-  })();
-
   _sb.auth.getSession().then(function(res){
     var session = res.data && res.data.session;
-    if(session && session.user){
-      loadProfile(session.user.id);
-    } else {
-      // No session — make sure auth screen is visible
-      var a=document.getElementById('s-auth');
-      if(a){a.style.opacity='1';a.style.pointerEvents='';}
-    }
+    if(session && session.user) loadProfile(session.user.id);
   });
   _sb.auth.onAuthStateChange(function(event, session){
     if(event === 'PASSWORD_RECOVERY'){
@@ -2353,7 +2327,6 @@ var _sb = (function(){
       document.getElementById('si-pw').value='';
       requestAnimationFrame(function(){
         requestAnimationFrame(function(){
-          auth.style.pointerEvents = '';
           auth.style.transition = 'opacity .3s ease';
           auth.style.opacity = '1';
         });
@@ -2474,7 +2447,7 @@ function initApp(userProfile){
   var csMyAv = document.getElementById('cs-myav');
   if(csMyAv) csMyAv.innerHTML = avH(profPhotoUrl||profile.avatar_url||null, profile.display_name);
   var auth = document.getElementById('s-auth');
-  if(auth){ auth.style.pointerEvents='none'; auth.style.transition='opacity .3s ease'; auth.style.opacity='0'; setTimeout(function(){ auth.style.display='none'; },300); }
+  if(auth){ auth.style.transition='opacity .3s ease'; auth.style.opacity='0'; setTimeout(function(){ auth.style.display='none'; },300); }
   var nav = document.getElementById('nav');
   if(nav) nav.classList.add('on');
   Object.keys(TAB_IDX).forEach(function(t){
@@ -4168,32 +4141,19 @@ function svSend(){
     acts.innerHTML='<div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;color:rgba(255,255,255,.85);font-size:14px;font-weight:600"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Replied</div>';
     setTimeout(function(){if(acts)acts.innerHTML=prevHTML;},1800);
   }
-  // Build story preview object for the chat bubble
-  var storyPreview={
-    img:item.img||null,
-    bg:item.bg||'#2C2C2C',
-    tc:item.tc||'#fff',
-    text:item.text||'',
-    authorName:user.display_name||user.username||'User',
-    storyId:item.id
-  };
-  // Encode preview into content so it persists in DB and renders for both users
-  var encodedPreview='[storyreply:'+JSON.stringify(storyPreview)+']';
-  var fullContent=encodedPreview+'\n'+txt;
-
-  var expires=new Date(Date.now()+86400000).toISOString();
   // Update local convo list optimistically
+  var expires=new Date(Date.now()+86400000).toISOString();
   if(!convos.find(function(c){return c.user.id===user.id;}))convos.unshift({user:user,lastMsg:txt,lastSid:'demo',ts:Date.now()});
   var cv=convos.find(function(x){return x.user.id===user.id;});
   if(cv){cv.lastMsg=txt;cv.lastSid='demo';cv.ts=Date.now();}
   if(!dMsgs[user.id])dMsgs[user.id]=[];
-  dMsgs[user.id].push({id:'sv-'+Date.now(),sid:'demo',text:txt,preview:storyPreview,ts:Date.now()});
-  // Send real DM via Supabase with encoded preview in content
+  dMsgs[user.id].push({id:'sv-'+Date.now(),sid:'demo',text:txt,ts:Date.now()});
+  // Send real DM via Supabase
   if(profile){
     _sb.from('messages').insert({
       sender_id:profile.id,
       receiver_id:user.id,
-      content:fullContent,
+      content:txt,
       reply_to_id:null,
       is_read:false,
       expires_at:expires
@@ -4394,7 +4354,7 @@ function loadConversations(cb){
             var isMine=lastMsg.sender_id===profile.id;
             return{
               user:u,
-              lastMsg:(lastMsg.content&&lastMsg.content.startsWith('[voice:')?(function(){var m2=(lastMsg.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(lastMsg.content&&lastMsg.content.startsWith('[storyreply:')?'📷 Moment':(stripStoryPrefix(lastMsg.content)||(lastMsg.is_photo?'📷 Photo':'')))),
+              lastMsg:(lastMsg.content&&lastMsg.content.startsWith('[voice:')?(function(){var m2=(lastMsg.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(lastMsg.content||(lastMsg.is_photo?'📷 Photo':''))),
               lastSid:isMine?'demo':pid,
               ts:new Date(lastMsg.created_at).getTime(),
               lastMsgId:lastMsg.id
@@ -4715,20 +4675,10 @@ function openChat(u){
           replyToText=parent.content||'📷 Photo';
           replyToSender=parent.sender_id===profile.id?'You':(chatUser&&chatUser.display_name||'Them');
         }
-        var rawContent=r.content||'';
-        var storyPreviewParsed=null;
-        var displayText=rawContent;
-        if(rawContent.startsWith('[storyreply:')){
-          var nlIdx=rawContent.indexOf('\n');
-          var jsonPart=rawContent.slice(12,nlIdx>0?nlIdx:rawContent.length);
-          if(jsonPart.endsWith(']'))jsonPart=jsonPart.slice(0,-1);
-          try{storyPreviewParsed=JSON.parse(jsonPart);}catch(e){}
-          displayText=nlIdx>0?rawContent.slice(nlIdx+1):'';
-        }
         var m={
           id:r.id,
           sid:r.sender_id===profile.id?'demo':r.sender_id,
-          text:displayText,
+          text:r.content||'',
           img:r.img_url||null,
           gif:r.gif_url||null,
           isPhoto:r.is_photo||false,
@@ -4736,7 +4686,6 @@ function openChat(u){
           reaction:r.reaction||null,
           replyTo:replyToText,
           replyToSender:replyToSender,
-          preview:storyPreviewParsed,
           ts:new Date(r.created_at).getTime(),
           isRead:r.is_read
         };
@@ -4827,27 +4776,16 @@ function subscribeToChat(partnerId){
         unreadConvos.delete(r.sender_id);
         updateTalkDot();
       }
-      var rawContent2=r.content||r.text||'';
-      var storyPreview2=null;
-      var displayText2=rawContent2;
-      if(rawContent2.startsWith('[storyreply:')){
-        var nlIdx2=rawContent2.indexOf('\n');
-        var jsonPart2=rawContent2.slice(12,nlIdx2>0?nlIdx2:rawContent2.length);
-        if(jsonPart2.endsWith(']'))jsonPart2=jsonPart2.slice(0,-1);
-        try{storyPreview2=JSON.parse(jsonPart2);}catch(e){}
-        displayText2=nlIdx2>0?rawContent2.slice(nlIdx2+1):'';
-      }
       var m={
         id:r.id,
         sid:r.sender_id===profile.id?'demo':r.sender_id,
-        text:displayText2,
+        text:r.content||r.text||'',
         img:r.img_url||null,
         gif:r.gif_url||null,
         isPhoto:r.is_photo||false,
         reaction:r.reaction||null,
         replyTo:null,
         replyToSender:null,
-        preview:storyPreview2,
         ts:new Date(r.created_at).getTime(),
         isRead:r.is_read
       };
@@ -4958,7 +4896,7 @@ function subscribeToInbox(){
       if(_convosLoaded){
         var senderUser=USERS.find(function(x){return x.id===r.sender_id;})||{id:r.sender_id,display_name:'User',username:'user',avatar_url:null};
         var existing=convos.find(function(c){return c.user.id===r.sender_id;});
-        var lastMsg=(r.content&&r.content.startsWith('[voice:'))?(function(){var m2=(r.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(r.content&&r.content.startsWith('[storyreply:')?'📷 Moment':(stripStoryPrefix(r.content)||(r.is_photo?'📷 Photo':'')));
+        var lastMsg=(r.content&&r.content.startsWith('[voice:'))?(function(){var m2=(r.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(r.content||(r.is_photo?'📷 Photo':''));
         if(existing){existing.lastMsg=lastMsg;existing.lastSid=r.sender_id;existing.ts=new Date(r.created_at).getTime();convos.sort(function(a,b){return b.ts-a.ts;});}
         else{convos.unshift({user:senderUser,lastMsg:lastMsg,lastSid:r.sender_id,ts:new Date(r.created_at).getTime()});}
       }
@@ -5309,28 +5247,7 @@ function appendBubble(m){
   msgs.scrollTop=msgs.scrollHeight;
 }
 function makeBadge(m,isMine,bs){var badge=document.createElement('div');badge.className='rxn-badge '+(isMine?'me':'them');badge.textContent=m.reaction;badge.addEventListener('click',function(e){e.stopPropagation();openReactSheet(m,bs,isMine);});return badge;}
-function buildSRC(p){
-  var card=document.createElement('div');
-  card.style.cssText='max-width:190px;border-radius:12px;overflow:hidden;margin-bottom:4px;cursor:pointer';
-  if(p.img){
-    card.innerHTML='<div style="position:relative;width:190px;height:96px"><img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/></div><div style="padding:5px 10px;font-size:10.5px;color:var(--sub)">'+E(p.authorName)+'\'s moment</div>';
-  } else {
-    card.innerHTML='<div style="width:190px;height:76px;background:'+p.bg+';display:flex;align-items:center;justify-content:center;padding:10px"><p style="font-size:13px;color:'+p.tc+';text-align:center">'+E((p.text||'').slice(0,60))+'</p></div><div style="padding:4px 10px;font-size:10.5px;color:var(--sub)">'+E(p.authorName)+'\'s moment</div>';
-  }
-  // Tap to open story if still available
-  if(p.storyId){
-    card.onclick=function(){
-      var targetGI=-1;
-      for(var i=0;i<svGroups.length;i++){
-        var found=svGroups[i].items.findIndex(function(it){return it.id===p.storyId;});
-        if(found>=0){targetGI=i;svGI=i;svII=found;break;}
-      }
-      if(targetGI>=0){openSV(svGI);}
-      else{T('This moment has faded');}
-    };
-  }
-  return card;
-}
+function buildSRC(p){var card=document.createElement('div');card.style.cssText='max-width:190px;border-radius:12px;overflow:hidden;margin-bottom:4px';if(p.img)card.innerHTML='<div style="position:relative;width:190px;height:96px"><img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/></div><div style="padding:5px 10px;font-size:10.5px;color:var(--sub)">'+E(p.authorName)+'\'s moment</div>';else card.innerHTML='<div style="width:190px;height:76px;background:'+p.bg+';display:flex;align-items:center;justify-content:center;padding:10px"><p style="font-size:13px;color:'+p.tc+';text-align:center">'+E((p.text||'').slice(0,60))+'</p></div><div style="padding:4px 10px;font-size:10.5px;color:var(--sub)">'+E(p.authorName)+'\'s moment</div>';return card;}
 function attachHold(el,m,w,bs,isMine){
   var t=null,fired=false;
   el.style.userSelect='none';
@@ -5481,7 +5398,7 @@ function sendMsg(){
   var replyToSender=_replyMsg&&(_replyMsg.sid==='demo'?'You':(chatUser&&chatUser.display_name||'Them'))||null;
   cancelReplyBar();
   var expires=new Date(Date.now()+86400000).toISOString();
-  // Optimistic bubble + convo list update — both happen instantly before DB
+  // Optimistic bubble
   var tempId='tmp-'+Date.now();
   var m={id:tempId,sid:'demo',text:txt,ts:Date.now(),replyToId:replyToId,replyTo:replyToText,replyToSender:replyToSender};
   appendBubble(m);
@@ -5489,10 +5406,6 @@ function sendMsg(){
   haptic('send');
   var msgs=document.getElementById('msgs');
   if(msgs)msgs.scrollTop=msgs.scrollHeight;
-  // Update convo list immediately (optimistic)
-  var cv=convos.find(function(x){return x.user.id===chatUser.id;});
-  if(cv){cv.lastMsg=txt;cv.lastSid='demo';cv.ts=Date.now();convos.sort(function(a,b){return b.ts-a.ts;});}
-  else{convos.unshift({user:chatUser,lastMsg:txt,lastSid:'demo',ts:Date.now()});}
   // Save to Supabase
   _sb.from('messages').insert({
     sender_id:profile.id,
@@ -5517,6 +5430,10 @@ function sendMsg(){
         body:JSON.stringify({recipientId:chatUser.id,type:'message',actor:{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},extra:{msgText:txt.slice(0,60)}})
       }).catch(function(e){console.log('send-push msg error:',e);});
     });
+    // Update convo list
+    var cv=convos.find(function(x){return x.user.id===chatUser.id;});
+    if(cv){cv.lastMsg=txt;cv.lastSid='demo';cv.ts=Date.now();}
+    else{convos.unshift({user:chatUser,lastMsg:txt,lastSid:'demo',ts:Date.now()});}
   });
 }
 
@@ -5844,6 +5761,8 @@ function addComment(){
     var postOwnerId=p.uid;
     _sb.from('comments').insert({post_id:csPid,user_id:profile&&profile.id,text:txt}).select('id').single().then(function(ins){
       if(!ins.error&&ins.data){var local=p.comments.find(function(x){return x.id===tempId;});if(local)local.id=ins.data.id;}
+      // Persist the new count to the DB so all other clients see it via realtime UPDATE on posts
+      _sb.from('posts').update({comments_count:p.commentsCount}).eq('id',csPid).then(function(){});
     });
     // Pass recipientId directly — works even if post isn't in caller's feed
     pushN('comment',{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},csPid,{commentText:txt.slice(0,40)},postOwnerId);
