@@ -950,18 +950,18 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #offline-bar svg{flex-shrink:0;opacity:.75}
 /* VOICE NOTE RECORDING */
 /* Instagram-style voice bubble — single row */
-.voice-bubble{display:flex;align-items:center;gap:10px;padding:13px 16px;min-width:210px;max-width:270px}
+.voice-bubble{display:flex;align-items:center;gap:8px;padding:11px 12px;min-width:0;max-width:230px}
 .voice-row{display:contents}
-.voice-play{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .1s}
+.voice-play{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .1s}
 .voice-play:active{background:rgba(255,255,255,.35);transform:scale(.88)}
-.voice-wave{flex:1;height:44px;display:flex;align-items:center;justify-content:space-between;gap:0;position:relative;cursor:pointer}
-.voice-wave span{display:block;background:rgba(255,255,255,.4);border-radius:3px;width:3px;flex-shrink:0;transition:background .08s ease,height .1s cubic-bezier(.25,.46,.45,.94)}
-.voice-wave span.played{background:rgba(255,255,255,.97)}
-.voice-playhead{position:absolute;top:2px;bottom:2px;width:2px;background:#fff;border-radius:2px;pointer-events:none;left:0%;transition:left .05s linear;box-shadow:0 0 6px rgba(255,255,255,.8)}
-.voice-dur{font-size:13px;color:rgba(255,255,255,.9);font-weight:600;flex-shrink:0;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
-.voice-speed{background:rgba(0,0,0,.22);border:none;border-radius:20px;padding:4px 9px;font-size:12px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s,transform .1s;flex-shrink:0;display:none}
+.voice-wave{flex:1;height:36px;display:flex;align-items:center;gap:1.5px;position:relative;cursor:pointer;min-width:0;overflow:hidden}
+.voice-wave span{display:block;background:rgba(255,255,255,.4);border-radius:2px;width:2.5px;flex-shrink:0;transition:background .08s ease,height .1s cubic-bezier(.25,.46,.45,.94)}
+.voice-wave span.played{background:rgba(255,255,255,.95)}
+.voice-playhead{position:absolute;top:2px;bottom:2px;width:2px;background:#fff;border-radius:2px;pointer-events:none;left:0%;transition:left .05s linear;box-shadow:0 0 5px rgba(255,255,255,.8)}
+.voice-dur{font-size:12px;color:rgba(255,255,255,.88);font-weight:600;flex-shrink:0;font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
+.voice-speed{background:rgba(0,0,0,.25);border:none;border-radius:20px;padding:3px 8px;font-size:11px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s,transform .1s;flex-shrink:0;display:none}
 .voice-speed.visible{display:block}
-.voice-speed:active{background:rgba(0,0,0,.4);transform:scale(.9)}
+.voice-speed:active{background:rgba(0,0,0,.45);transform:scale(.9)}
 .voice-meta{display:none}
 .voice-scrubber{display:none}
 .voice-track{display:none}
@@ -4886,9 +4886,9 @@ function appendBubble(m){
     playBtn.className='voice-play';
     playBtn.innerHTML=IC_PLAY;
 
-    // Waveform — 28 bars, Instagram bell-curve distribution
+    // Waveform — 26 bars, organic voice-like heights
     var wave=document.createElement('div');wave.className='voice-wave';
-    var barHeights=[4,6,9,12,16,20,24,30,36,38,40,38,35,32,28,34,38,36,32,28,22,18,14,10,8,6,5,4];
+    var barHeights=[4,7,5,11,8,15,10,20,13,24,17,28,22,16,26,19,12,24,16,11,20,8,14,6,9,4];
     var barEls=[];
     barHeights.forEach(function(h){
       var s=document.createElement('span');s.style.height=h+'px';
