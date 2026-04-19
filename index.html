@@ -4929,6 +4929,13 @@ function appendBubble(m){
       var aud=new Audio(url);
       aud.preload='auto';
       aud.playbackRate=speeds[speedIdx];
+      // Use real audio duration once loaded — overrides stored totalDur
+      aud.addEventListener('loadedmetadata',function(){
+        if(aud.duration&&isFinite(aud.duration)){
+          totalDur=aud.duration;
+          dEl.textContent=fmtTime(totalDur);
+        }
+      });
       aud.onended=function(){
         playing=false;pb.innerHTML=IC_PLAY;
         spBtn.classList.remove('visible');
