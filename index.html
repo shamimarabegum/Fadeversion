@@ -959,9 +959,9 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .voice-wave span.played{background:rgba(255,255,255,.95)}
 .voice-playhead{position:absolute;top:2px;bottom:2px;width:2px;background:#fff;border-radius:2px;pointer-events:none;left:0%;transition:left .05s linear;box-shadow:0 0 5px rgba(255,255,255,.8)}
 /* fixed right column — time on top, speed below, same width always */
-.voice-right{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;width:34px;gap:2px}
-.voice-dur{font-size:12px;color:rgba(255,255,255,.88);font-weight:600;font-variant-numeric:tabular-nums;line-height:1;text-align:center}
-.voice-speed{background:rgba(0,0,0,.28);border:none;border-radius:20px;padding:2px 7px;font-size:11px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s,transform .1s;display:none;line-height:1.4}
+.voice-right{display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;width:38px;gap:2px}
+.voice-dur{font-size:12px;color:rgba(255,255,255,.88);font-weight:600;font-variant-numeric:tabular-nums;line-height:1;text-align:center;white-space:nowrap}
+.voice-speed{background:rgba(0,0,0,.28);border:none;border-radius:20px;padding:2px 6px;font-size:11px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s,transform .1s;display:none;line-height:1.4;white-space:nowrap}
 .voice-speed.visible{display:block}
 .voice-speed:active{background:rgba(0,0,0,.5);transform:scale(.9)}
 .voice-meta{display:none}
@@ -4916,7 +4916,7 @@ function appendBubble(m){
     attachHold(b,m,wrap,bs,isMine);
 
     (function(url,pb,waveEl,bEls,phEl,dEl,spBtn,totalDur){
-      var aud=null,playing=false,rafId=null,actx=null,analyser=null,srcNode=null;
+      var aud=null,playing=false,rafId=null;
 
       function setProgress(pct){
         pct=Math.max(0,Math.min(1,pct));
@@ -4931,21 +4931,7 @@ function appendBubble(m){
         var pct=totalDur>0?Math.min(1,aud.currentTime/totalDur):0;
         phEl.style.left=(pct*100)+'%';
         var n=bEls.length;
-        if(analyser){
-          var data=new Uint8Array(analyser.frequencyBinCount);
-          analyser.getByteFrequencyData(data);
-          bEls.forEach(function(s,i){
-            var played=i/n<pct;
-            s.classList.toggle('played',played);
-            var idx=Math.floor(i*data.length/n);
-            var base=barHeights[i];
-            // Played bars animate up/down with audio energy; unplayed stay static
-            var animated=played?Math.max(base*0.55,Math.round(base*0.5+(data[idx]/255)*base*1.1)):base;
-            s.style.height=Math.min(animated,44)+'px';
-          });
-        }else{
-          bEls.forEach(function(s,i){s.classList.toggle('played',i/n<pct);});
-        }
+        bEls.forEach(function(s,i){s.classList.toggle('played',i/n<pct);});
         dEl.textContent=fmtTime(aud.currentTime);
         rafId=requestAnimationFrame(tick);
       }
@@ -4953,7 +4939,7 @@ function appendBubble(m){
       pb.onclick=function(e){
         e.stopPropagation();
         if(!aud){
-          aud=new Audio(url);aud.crossOrigin='anonymous';
+          aud=new Audio(url);
           aud.playbackRate=speeds[speedIdx];
           aud.onended=function(){
             playing=false;pb.innerHTML=IC_PLAY;
@@ -4969,16 +4955,8 @@ function appendBubble(m){
           spBtn.classList.remove('visible');
           if(rafId){cancelAnimationFrame(rafId);rafId=null;}
         }else{
-          if(!actx&&aud){
-            try{
-              actx=new(window.AudioContext||window.webkitAudioContext)();
-              srcNode=actx.createMediaElementSource(aud);
-              analyser=actx.createAnalyser();
-              analyser.fftSize=64;analyser.smoothingTimeConstant=0.65;
-              srcNode.connect(analyser);analyser.connect(actx.destination);
-            }catch(err){analyser=null;}
-          }
-          aud.play();playing=true;pb.innerHTML=IC_PAUSE;
+          aud.play().catch(function(){});
+          playing=true;pb.innerHTML=IC_PAUSE;
           spBtn.classList.add('visible');
           rafId=requestAnimationFrame(tick);haptic();
         }
@@ -9327,40 +9305,37 @@ function _hideVoiceOverlay(){
 function _startWaveAnim(stream){
   try{
     var actx=new(window.AudioContext||window.webkitAudioContext)();
+    actx.resume(); // required on mobile — context starts suspended
     var src=actx.createMediaStreamSource(stream);
     _analyser=actx.createAnalyser();
     _analyser.fftSize=256;
-    _analyser.smoothingTimeConstant=0.75; // inter-frame smoothing by browser
+    _analyser.smoothingTimeConstant=0.7;
     src.connect(_analyser);
     _waveData=new Uint8Array(_analyser.frequencyBinCount);
 
     var bars=document.querySelectorAll('#voice-live-wave span');
-    var NUM=bars.length; // 15 bars
-    var history=new Array(NUM).fill(0); // normalised 0..1 history
-    var TICK_MS=90; // one new bar every 90 ms → ~15 bars = 1.35 s of history
-    var MAX_H=30;  // max bar height in px (both up and down from center)
-    var MIN_H=3;   // min bar height (silent)
+    var NUM=bars.length;
+    var history=new Array(NUM).fill(0);
+    var TICK_MS=80;
+    var MAX_H=30;
+    var MIN_H=3;
 
     function tick(){
       _waveAnim=setTimeout(function(){
         if(!_analyser){return;}
         _analyser.getByteFrequencyData(_waveData);
-        // Average low-mid frequencies (most voice energy lives there)
         var sum=0;
         var len=Math.floor(_waveData.length/2);
         for(var i=0;i<len;i++)sum+=_waveData[i];
         var avg=sum/len;
-        var norm=Math.min(1,avg/110); // 110 ≈ comfortable speech peak
+        var norm=Math.min(1,avg/80); // lower threshold = more sensitive to quiet voices
 
-        // Smooth with previous latest value for extra fluidity
         var prev=history[NUM-1]||0;
-        norm=prev*0.3+norm*0.7;
+        norm=prev*0.25+norm*0.75;
 
-        // Shift history left, push new sample on right
         history.shift();
         history.push(norm);
 
-        // Render — bars grow symmetrically from center (flex align-items:center)
         bars.forEach(function(bar,i){
           var h=Math.round(MIN_H+(history[i]*(MAX_H-MIN_H)));
           bar.style.height=h+'px';
