@@ -950,7 +950,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #offline-bar svg{flex-shrink:0;opacity:.75}
 /* VOICE NOTE RECORDING */
 /* Instagram-style voice bubble — single row, fixed size */
-.voice-bubble{display:flex;align-items:center;gap:8px;padding:11px 12px;min-width:0;max-width:230px}
+.voice-bubble{display:inline-flex;align-items:center;gap:8px;padding:11px 12px;min-width:0;max-width:230px}
 .voice-row{display:contents}
 .voice-play{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .1s}
 .voice-play:active{background:rgba(255,255,255,.35);transform:scale(.88)}
@@ -4940,9 +4940,9 @@ function appendBubble(m){
         if(rafId){cancelAnimationFrame(rafId);rafId=null;}
         bEls.forEach(function(s,i){s.style.height=barHeights[i]+'px';s.classList.remove('played');});
         phEl.style.left='0%';
-        // Show real duration on reset
         var dur=(aud.duration&&isFinite(aud.duration)&&aud.duration>0)?aud.duration:totalDur;
         dEl.textContent=fmtTime(dur);
+        _activeVoice=null;
       };
       var playing=false,rafId=null;
 
@@ -4978,13 +4978,15 @@ function appendBubble(m){
           aud.pause();playing=false;pb.innerHTML=IC_PLAY;
           spBtn.classList.remove('visible');
           if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+          _activeVoice=null;
         }else{
+          // Stop any other voice that's currently playing
+          if(_activeVoice&&_activeVoice!==stopThis)_activeVoice();
           aud.play().catch(function(){});
           playing=true;pb.innerHTML=IC_PAUSE;
           spBtn.classList.add('visible');
-          // Use 'playing' event so RAF starts exactly when audio moves
+          _activeVoice=stopThis;
           if(aud.readyState>=3){
-            // Already buffered — start immediately
             rafId=requestAnimationFrame(tick);
           }else{
             aud.addEventListener('playing',function onP(){
@@ -4995,6 +4997,14 @@ function appendBubble(m){
           haptic();
         }
       };
+
+      // stopThis is called by another bubble to stop this one
+      function stopThis(){
+        if(!playing)return;
+        aud.pause();playing=false;pb.innerHTML=IC_PLAY;
+        spBtn.classList.remove('visible');
+        if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+      }
 
       // Speed cycles 1x → 1.5x → 2x
       spBtn.onclick=function(e){
@@ -9151,6 +9161,7 @@ _startExpiryTick();
 // Voice recording — tap mic to start, tap Cancel/Send to finish.
 // touchend on button does NOT auto-send; user must tap Send explicitly.
 var _mediaRec=null, _audioChunks=[], _recStartT=0, _recTimer=null;
+var _activeVoice=null; // tracks currently playing voice bubble — only one at a time
 var _voiceCancelled=false, _voiceActive=false;
 var _holdStartX=0;
 var _waveAnim=null, _analyser=null, _waveData=null;
