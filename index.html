@@ -4339,74 +4339,149 @@ function renderTalkList(){
 }
 function _renderTalkFromCache(){
   var l=document.getElementById('talk-list');
-    if(!convos.length&&!circles.length){
-      l.innerHTML='<div class="empty anim-fade-up"><div class="empt">No chats yet</div><div class="emps">Tap + to start talking.</div></div>';
-      return;
+  if(!convos.length&&!circles.length){
+    l.innerHTML='<div class="empty anim-fade-up"><div class="empt">No chats yet</div><div class="emps">Tap + to start talking.</div></div>';
+    return;
+  }
+
+  // Remove empty state if present
+  var empty=l.querySelector('.empty');if(empty)empty.remove();
+
+  // ── Circles (simple full re-render only if count changed) ──
+  var existingCircleSep=l.querySelector('[data-circles-sep]');
+  var existingCircleRows=l.querySelectorAll('[data-circle-id]');
+  if(existingCircleRows.length!==circles.length){
+    existingCircleRows.forEach(function(r){r.remove();});
+    if(existingCircleSep)existingCircleSep.remove();
+    var frag=document.createDocumentFragment();
+    circles.forEach(function(c,i){var row=buildCircleRow(c,i);if(row)frag.appendChild(row);});
+    if(circles.length&&convos.length){
+      var sep=document.createElement('div');
+      sep.setAttribute('data-circles-sep','1');
+      sep.style.cssText='height:1px;background:var(--border);margin:4px 0';
+      frag.appendChild(sep);
     }
-    l.innerHTML='';
-    // ── Circles section ──
-    if(circles.length){
-      circles.forEach(function(c,i){
-        var row=buildCircleRow(c,i);
-        if(row)l.appendChild(row);
-      });
-      if(convos.length){
-        var sep=document.createElement('div');
-        sep.style.cssText='height:1px;background:var(--border);margin:4px 0';
-        l.appendChild(sep);
+    l.insertBefore(frag,l.firstChild);
+  }
+
+  // ── DM convos — patch in-place ──
+  // Build index of existing rows
+  var existingRows={};
+  l.querySelectorAll('[data-uid]').forEach(function(r){existingRows[r.getAttribute('data-uid')]=r;});
+
+  // Track which uids should exist
+  var seenUids={};
+
+  convos.forEach(function(c,i){
+    var u=c.user;
+    var uid=u.id;
+    seenUids[uid]=true;
+    var isUnread=unreadConvos.has(uid);
+    var lastIsTheirs=c.lastSid&&c.lastSid!=='demo';
+    var bold=isUnread||lastIsTheirs;
+    var _active=isActiveNow(uid)&&canSeeActivity(uid);
+    var _lastAct=canSeeActivity(uid)?activeLabel(uid):'';
+
+    // Subtitle text + style
+    var subText,subColor,subWeight;
+    if(isUnread){
+      subText=(c.lastMsg||'')+(c.ts?' · '+ago(c.ts):'');
+      subColor='var(--text)';subWeight='600';
+    } else if(_active){
+      subText='Active now';subColor='#22C55E';subWeight='400';
+    } else if(_lastAct){
+      subText=_lastAct;subColor='var(--sub)';subWeight='400';
+    } else {
+      subText=(c.lastMsg||'')+(c.ts?' · '+ago(c.ts):'');
+      subColor='var(--sub)';subWeight=bold?'500':'400';
+    }
+
+    if(existingRows[uid]){
+      // ── Patch existing row in-place (no blink) ──
+      var row=existingRows[uid];
+
+      // Subtitle
+      var sub=row.querySelector('[data-sub]');
+      if(sub){
+        if(sub.textContent!==subText)sub.textContent=subText;
+        sub.style.color=subColor;
+        sub.style.fontWeight=subWeight;
       }
-    }
-    // ── DM convos ──
-    convos.forEach(function(c,i){
-      var u=c.user;
-      var isUnread=unreadConvos.has(u.id);
-      var lastIsTheirs=c.lastSid&&c.lastSid!=='demo';
-      var bold=isUnread||lastIsTheirs;
+
+      // Name bold
+      var nameEl=row.querySelector('[data-name]');
+      if(nameEl)nameEl.style.fontWeight=bold?'700':'400';
+
+      // Unread dot
+      var dot=row.querySelector('[data-unread-dot]');
+      if(isUnread&&!dot){
+        var nd=document.createElement('div');
+        nd.setAttribute('data-unread-dot','1');
+        nd.style.cssText='width:11px;height:11px;border-radius:50%;background:#3897F0;flex-shrink:0;align-self:center;margin-left:4px';
+        row.appendChild(nd);
+      } else if(!isUnread&&dot){
+        dot.remove();
+      }
+
+      // Green dot
+      var gdot=row.querySelector('[data-green-dot]');
+      if(_active&&!gdot){
+        var ng=document.createElement('div');
+        ng.setAttribute('data-green-dot','1');
+        ng.style.cssText='position:absolute;bottom:1px;right:1px;width:14px;height:14px;border-radius:50%;background:#22C55E;border:2.5px solid var(--card);z-index:2';
+        row.querySelector('[data-av-wrap]').appendChild(ng);
+      } else if(!_active&&gdot){
+        gdot.remove();
+      }
+
+      // Reorder if needed
+      var refNode=l.children[circles.length+(circles.length&&convos.length?1:0)+i];
+      if(refNode&&refNode!==row)l.insertBefore(row,refNode);
+
+    } else {
+      // ── Build new row ──
       var row=document.createElement('div');
+      row.setAttribute('data-uid',uid);
       row.style.cssText='display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;background:var(--card);-webkit-tap-highlight-color:transparent';
       row.classList.add('anim-fade-up');
-      row.style.animationDelay=(Math.min(i,8)*30)+'ms';
+
       var avWrap=document.createElement('div');
+      avWrap.setAttribute('data-av-wrap','1');
       avWrap.style.cssText='position:relative;width:54px;height:54px;min-width:54px;flex-shrink:0';
       var avInner=document.createElement('div');
       avInner.style.cssText='width:54px;height:54px;border-radius:50%;overflow:hidden;background:'+nc(u.display_name||u.username)+';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700';
       avInner.innerHTML=avH(u.avatar_url,u.display_name||u.username);
       avWrap.appendChild(avInner);
-      if(isActiveNow(u.id)&&canSeeActivity(u.id)){
-        var greenDot=document.createElement('div');
-        greenDot.style.cssText='position:absolute;bottom:1px;right:1px;width:14px;height:14px;border-radius:50%;background:#22C55E;border:2.5px solid var(--card);z-index:2';
-        avWrap.appendChild(greenDot);
+      if(_active){
+        var gd=document.createElement('div');
+        gd.setAttribute('data-green-dot','1');
+        gd.style.cssText='position:absolute;bottom:1px;right:1px;width:14px;height:14px;border-radius:50%;background:#22C55E;border:2.5px solid var(--card);z-index:2';
+        avWrap.appendChild(gd);
       }
       row.appendChild(avWrap);
+
       var textWrap=document.createElement('div');
       textWrap.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;gap:3px';
       var nameEl=document.createElement('div');
+      nameEl.setAttribute('data-name','1');
       nameEl.style.cssText='font-size:15px;font-weight:'+(bold?'700':'400')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)';
       nameEl.innerHTML=E(u.display_name||u.username)+' '+badgeFor(u.id);
       var subtitleEl=document.createElement('div');
-      var _active=isActiveNow(u.id)&&canSeeActivity(u.id);
-      var _lastAct=canSeeActivity(u.id)?activeLabel(u.id):'';
-      if(isUnread){
-        subtitleEl.style.cssText='font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-        subtitleEl.textContent=(c.lastMsg||'')+(c.ts?' · '+ago(c.ts):'');
-      } else if(_active){
-        subtitleEl.style.cssText='font-size:13.5px;font-weight:400;color:#22C55E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-        subtitleEl.textContent='Active now';
-      } else if(_lastAct){
-        subtitleEl.style.cssText='font-size:13.5px;font-weight:400;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-        subtitleEl.textContent=_lastAct;
-      } else {
-        subtitleEl.style.cssText='font-size:13.5px;font-weight:'+(bold?'500':'400')+';color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-        subtitleEl.textContent=(c.lastMsg||'')+(c.ts?' · '+ago(c.ts):'');
-      }
+      subtitleEl.setAttribute('data-sub','1');
+      subtitleEl.style.cssText='font-size:13.5px;font-weight:'+subWeight+';color:'+subColor+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+      subtitleEl.textContent=subText;
       textWrap.appendChild(nameEl);textWrap.appendChild(subtitleEl);
       row.appendChild(textWrap);
+
       if(isUnread){
-        var unreadDot=document.createElement('div');
-        unreadDot.style.cssText='width:11px;height:11px;border-radius:50%;background:#3897F0;flex-shrink:0;align-self:center;margin-left:4px';
-        row.appendChild(unreadDot);
+        var ud=document.createElement('div');
+        ud.setAttribute('data-unread-dot','1');
+        ud.style.cssText='width:11px;height:11px;border-radius:50%;background:#3897F0;flex-shrink:0;align-self:center;margin-left:4px';
+        row.appendChild(ud);
       }
-      if(!isActiveNow(u.id)&&!_lastActiveCache[u.id])loadLastActive(u.id,null);
+
+      if(!_active&&!_lastAct)loadLastActive(uid,null);
+
       var _holdT=null,_holdFired=false;
       row.addEventListener('touchstart',function(){_holdFired=false;_holdT=setTimeout(function(){_holdFired=true;showConvoMenu(u,row);},500);},{passive:true});
       row.addEventListener('touchend',function(){clearTimeout(_holdT);},{passive:true});
@@ -4420,8 +4495,18 @@ function _renderTalkFromCache(){
         updateTalkDot();
         openChat(u);
       };
-      l.appendChild(row);
-    });
+
+      // Insert at correct position
+      var insertBefore=l.children[circles.length+(circles.length&&convos.length?1:0)+i];
+      if(insertBefore)l.insertBefore(row,insertBefore);
+      else l.appendChild(row);
+    }
+  });
+
+  // Remove rows for convos that no longer exist
+  Object.keys(existingRows).forEach(function(uid){
+    if(!seenUids[uid])existingRows[uid].remove();
+  });
 }
 // ── TALK NEW CHAT ─────────────────────────────────────────────────────────────
 function openNC(){document.getElementById('nc-modal').classList.add('on');document.getElementById('nc-inp').value='';document.getElementById('nc-res').style.display='none';setTimeout(function(){document.getElementById('nc-inp').focus();},300);}
