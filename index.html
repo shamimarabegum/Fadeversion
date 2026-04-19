@@ -1985,6 +1985,7 @@ function getBadgeSVG(uid, badgeType, isVerified){
 function E(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function ago(d){var diff=Date.now()-(typeof d==='number'?d:new Date(d).getTime());if(diff<60000)return'now';if(diff<3600000)return Math.floor(diff/60000)+'m';if(diff<86400000)return Math.floor(diff/3600000)+'h';return'1d';}
 function agoS(d){var diff=Date.now()-new Date(d).getTime();if(diff<3600000)return Math.floor(diff/60000)+'m ago';return Math.floor(diff/3600000)+'h ago';}
+function stripStoryPrefix(c){if(!c)return'';if(c.startsWith('[storyreply:')){var nl=c.indexOf('\n');return nl>=0?c.slice(nl+1):'📷 Moment';}return c;}
 function fadeIn(ts){var rem=Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);return rem<=0?'soon':h>0?h+'h':m+'m';}
 function bgClose(e,id){if(e.target.id===id||e.target.classList.contains('compose-dim'))closeSheet(id);}
 function closeSheet(id){var el=document.getElementById(id);var sheet=el&&el.querySelector('.sheet');if(sheet)sheet.style.transform='translateY(100%)';setTimeout(function(){if(el)el.style.display='none';},320);}
@@ -4393,7 +4394,7 @@ function loadConversations(cb){
             var isMine=lastMsg.sender_id===profile.id;
             return{
               user:u,
-              lastMsg:(lastMsg.content&&lastMsg.content.startsWith('[voice:')?(function(){var m2=(lastMsg.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(lastMsg.content||(lastMsg.is_photo?'📷 Photo':''))),
+              lastMsg:(lastMsg.content&&lastMsg.content.startsWith('[voice:')?(function(){var m2=(lastMsg.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(lastMsg.content&&lastMsg.content.startsWith('[storyreply:')?'📷 Moment':(stripStoryPrefix(lastMsg.content)||(lastMsg.is_photo?'📷 Photo':'')))),
               lastSid:isMine?'demo':pid,
               ts:new Date(lastMsg.created_at).getTime(),
               lastMsgId:lastMsg.id
@@ -4957,7 +4958,7 @@ function subscribeToInbox(){
       if(_convosLoaded){
         var senderUser=USERS.find(function(x){return x.id===r.sender_id;})||{id:r.sender_id,display_name:'User',username:'user',avatar_url:null};
         var existing=convos.find(function(c){return c.user.id===r.sender_id;});
-        var lastMsg=(r.content&&r.content.startsWith('[voice:'))?(function(){var m2=(r.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(r.content||(r.is_photo?'📷 Photo':''));
+        var lastMsg=(r.content&&r.content.startsWith('[voice:'))?(function(){var m2=(r.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(r.content&&r.content.startsWith('[storyreply:')?'📷 Moment':(stripStoryPrefix(r.content)||(r.is_photo?'📷 Photo':'')));
         if(existing){existing.lastMsg=lastMsg;existing.lastSid=r.sender_id;existing.ts=new Date(r.created_at).getTime();convos.sort(function(a,b){return b.ts-a.ts;});}
         else{convos.unshift({user:senderUser,lastMsg:lastMsg,lastSid:r.sender_id,ts:new Date(r.created_at).getTime()});}
       }
@@ -5480,7 +5481,7 @@ function sendMsg(){
   var replyToSender=_replyMsg&&(_replyMsg.sid==='demo'?'You':(chatUser&&chatUser.display_name||'Them'))||null;
   cancelReplyBar();
   var expires=new Date(Date.now()+86400000).toISOString();
-  // Optimistic bubble
+  // Optimistic bubble + convo list update — both happen instantly before DB
   var tempId='tmp-'+Date.now();
   var m={id:tempId,sid:'demo',text:txt,ts:Date.now(),replyToId:replyToId,replyTo:replyToText,replyToSender:replyToSender};
   appendBubble(m);
@@ -5488,6 +5489,10 @@ function sendMsg(){
   haptic('send');
   var msgs=document.getElementById('msgs');
   if(msgs)msgs.scrollTop=msgs.scrollHeight;
+  // Update convo list immediately (optimistic)
+  var cv=convos.find(function(x){return x.user.id===chatUser.id;});
+  if(cv){cv.lastMsg=txt;cv.lastSid='demo';cv.ts=Date.now();convos.sort(function(a,b){return b.ts-a.ts;});}
+  else{convos.unshift({user:chatUser,lastMsg:txt,lastSid:'demo',ts:Date.now()});}
   // Save to Supabase
   _sb.from('messages').insert({
     sender_id:profile.id,
@@ -5512,10 +5517,6 @@ function sendMsg(){
         body:JSON.stringify({recipientId:chatUser.id,type:'message',actor:{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},extra:{msgText:txt.slice(0,60)}})
       }).catch(function(e){console.log('send-push msg error:',e);});
     });
-    // Update convo list
-    var cv=convos.find(function(x){return x.user.id===chatUser.id;});
-    if(cv){cv.lastMsg=txt;cv.lastSid='demo';cv.ts=Date.now();}
-    else{convos.unshift({user:chatUser,lastMsg:txt,lastSid:'demo',ts:Date.now()});}
   });
 }
 
