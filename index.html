@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
 <title>Fade</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231A1A1A'/%3E%3Ctext x='16' y='24' text-anchor='middle' font-family='Georgia%2C serif' font-style='italic' font-size='22' font-weight='700' fill='white'%3EF%3C/text%3E%3C/svg%3E"/>
 <link rel="apple-touch-icon" href="https://xmgmpewuevzgriqgsoct.supabase.co/storage/v1/object/public/avatars/android-chrome-512x512.png"/>
@@ -18,13 +18,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#fff;--card:#fff;--border:#F0F0EE;--text:#1A1A1A;--sub:#9A9A95;--inp-bg:#F5F5F3;--inp-border:#EBEBEA;--inp-text:#1A1A1A;--inp-ph:#AEAEAA;--bubble-me:#7C3AED;--bubble-them:#F0F0F0;--bubble-them-text:#111;--nb:max(10px,env(safe-area-inset-bottom));--nav-h:62px}
+:root{--bg:#fff;--card:#fff;--border:#F0F0EE;--text:#1A1A1A;--sub:#9A9A95;--inp-bg:#F5F5F3;--inp-border:#EBEBEA;--inp-text:#1A1A1A;--inp-ph:#AEAEAA;--bubble-me:#7C3AED;--bubble-them:#F0F0F0;--bubble-them-text:#111;--nb:max(10px,env(safe-area-inset-bottom));--nt:env(safe-area-inset-top,0px);--nav-h:62px}
 html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
-#root{height:100dvh;position:relative;overflow:hidden}
+#root{height:100dvh;position:relative;overflow:hidden;padding-top:var(--nt)}
 @media(min-width:600px){
   html,body{background:#111;overflow:hidden}
   body{display:flex;align-items:center;justify-content:center}
-  #root{width:390px;max-width:390px;height:100dvh;box-shadow:0 0 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);overflow:hidden;flex-shrink:0}
+  #root{width:390px;max-width:390px;height:100dvh;box-shadow:0 0 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);overflow:hidden;flex-shrink:0;padding-top:0}
 }
 #sw{position:absolute;inset:0;bottom:calc(var(--nav-h) + var(--nb));overflow:hidden}
 .screen{display:flex;flex-direction:column;overflow:hidden;position:absolute;inset:0;transform:translateX(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94);background:var(--bg)}
@@ -1182,7 +1182,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 
 <!-- NAV -->
 <nav id="nav"><div class="navwrap">
-  <button class="nbtn on" id="nb-today" onclick="goTab('today')">
+  <button class="nbtn on" id="nb-today" onclick="goTab('today')" ondblclick="(function(){var s=document.getElementById('today-scroll');if(s)s.scrollTo({top:0,behavior:'smooth'});})()">
     <div class="nbtn-icon" id="nbi-today"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
     <span class="nbtn-label">Today</span>
   </button>
@@ -7866,7 +7866,7 @@ function postClip(){
   if(!_clipFile){T('Pick a video first');return;}
   if(!profile)return;
   closeClipCompose();
-  T('Clips coming soon ✦');
+  T('Clips coming soon');
 }
 </script>
 
