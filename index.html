@@ -5530,15 +5530,23 @@ function openCS(pid){
           return lc.id&&String(lc.id).startsWith('c')&&!topLevel.find(function(tc){return tc.id===lc.id;});
         });
         p.comments=topLevel.concat(localOnly);
-        // Restore liked state for current user from comment_likes table
+        // Load liked state AND real like counts from comment_likes (avoids stale likes_count column + RLS issue)
         var allEntries=[];
         topLevel.forEach(function(c){allEntries.push(c);(c.replies||[]).forEach(function(r){allEntries.push(r);});});
         var allIds=allEntries.map(function(e){return e.id;}).filter(Boolean);
         if(allIds.length&&profile&&profile.id){
-          _sb.from('comment_likes').select('comment_id').eq('user_id',profile.id).in('comment_id',allIds).then(function(lr){
+          _sb.from('comment_likes').select('comment_id,user_id').in('comment_id',allIds).then(function(lr){
             if(csPid!==pid)return;
-            var likedSet={};(lr.data||[]).forEach(function(row){likedSet[row.comment_id]=true;});
-            allEntries.forEach(function(e){e.liked=!!likedSet[e.id];if(e.liked&&e.likes<1)e.likes=1;});
+            var likedSet={};var countMap={};
+            (lr.data||[]).forEach(function(row){
+              countMap[row.comment_id]=(countMap[row.comment_id]||0)+1;
+              if(row.user_id===profile.id)likedSet[row.comment_id]=true;
+            });
+            allEntries.forEach(function(e){
+              e.liked=!!likedSet[e.id];
+              // Use live count from comment_likes; fall back to likes_count column if no rows yet
+              if(countMap[e.id]!==undefined)e.likes=countMap[e.id];
+            });
             renderCSList();
           });
         } else {
@@ -5596,15 +5604,22 @@ function renderCSList(){
         hb.innerHTML='<svg width="16" height="16" fill="'+(comment.liked?'#E8352A':'none')+'" stroke="'+(comment.liked?'#E8352A':'currentColor')+'" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
         hc.textContent=comment.likes>0?comment.likes:'';
         SFX(comment.liked?'like':'unlike');
-        // Persist to Supabase — update comment_likes AND increment/decrement likes_count on the comment row
+        // Persist to Supabase — insert/delete comment_like, then recount from comment_likes (avoids RLS issue on comments table)
         if(profile&&profile.id){
-          var _newLikes=comment.likes;
           if(comment.liked){
-            _sb.from('comment_likes').insert({comment_id:comment.id,user_id:profile.id}).then(function(){});
-            _sb.from('comments').update({likes_count:_newLikes}).eq('id',comment.id).then(function(){});
+            _sb.from('comment_likes').insert({comment_id:comment.id,user_id:profile.id}).then(function(){
+              _sb.from('comment_likes').select('comment_id',{count:'exact',head:true}).eq('comment_id',comment.id).then(function(cr){
+                var real=cr.count||comment.likes;
+                comment.likes=real;hc.textContent=real>0?real:'';
+              });
+            });
           } else {
-            _sb.from('comment_likes').delete().eq('comment_id',comment.id).eq('user_id',profile.id).then(function(){});
-            _sb.from('comments').update({likes_count:_newLikes}).eq('id',comment.id).then(function(){});
+            _sb.from('comment_likes').delete().eq('comment_id',comment.id).eq('user_id',profile.id).then(function(){
+              _sb.from('comment_likes').select('comment_id',{count:'exact',head:true}).eq('comment_id',comment.id).then(function(cr){
+                var real=Math.max(0,cr.count||0);
+                comment.likes=real;hc.textContent=real>0?real:'';
+              });
+            });
           }
         }
       };
@@ -5665,7 +5680,7 @@ function renderCSList(){
         rhBtn.innerHTML='<svg width="14" height="14" fill="'+(r.liked?'#E8352A':'none')+'" stroke="'+(r.liked?'#E8352A':'currentColor')+'" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
         var rhCount=document.createElement('div');rhCount.className='cheart-count';rhCount.textContent=r.likes>0?r.likes:'';
         (function(reply,hb,hc,post,commentIdx,replyIdx){hb.onclick=function(){reply.liked=!reply.liked;reply.likes=Math.max(0,(reply.likes||0)+(reply.liked?1:-1));hb.className='cheart'+(reply.liked?' liked':'');hb.innerHTML='<svg width="14" height="14" fill="'+(reply.liked?'#E8352A':'none')+'" stroke="'+(reply.liked?'#E8352A':'currentColor')+'" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';hc.textContent=reply.likes>0?reply.likes:'';SFX(reply.liked?'like':'unlike');
-          if(profile&&profile.id){var _rNewLikes=reply.likes;if(reply.liked){_sb.from('comment_likes').insert({comment_id:reply.id,user_id:profile.id}).then(function(){});_sb.from('comments').update({likes_count:_rNewLikes}).eq('id',reply.id).then(function(){});}else{_sb.from('comment_likes').delete().eq('comment_id',reply.id).eq('user_id',profile.id).then(function(){});_sb.from('comments').update({likes_count:_rNewLikes}).eq('id',reply.id).then(function(){});}}
+          if(profile&&profile.id){if(reply.liked){_sb.from('comment_likes').insert({comment_id:reply.id,user_id:profile.id}).then(function(){_sb.from('comment_likes').select('comment_id',{count:'exact',head:true}).eq('comment_id',reply.id).then(function(cr){var real=cr.count||reply.likes;reply.likes=real;hc.textContent=real>0?real:'';});});}else{_sb.from('comment_likes').delete().eq('comment_id',reply.id).eq('user_id',profile.id).then(function(){_sb.from('comment_likes').select('comment_id',{count:'exact',head:true}).eq('comment_id',reply.id).then(function(cr){var real=Math.max(0,cr.count||0);reply.likes=real;hc.textContent=real>0?real:'';});});}}
         };})(r,rhBtn,rhCount,p,ci,c.replies.indexOf(r));
         rhWrap.appendChild(rhBtn);rhWrap.appendChild(rhCount);
 
@@ -5746,6 +5761,8 @@ function addComment(){
     var postOwnerId=p.uid;
     _sb.from('comments').insert({post_id:csPid,user_id:profile&&profile.id,text:txt}).select('id').single().then(function(ins){
       if(!ins.error&&ins.data){var local=p.comments.find(function(x){return x.id===tempId;});if(local)local.id=ins.data.id;}
+      // Persist the new count to the DB so all other clients see it via realtime UPDATE on posts
+      _sb.from('posts').update({comments_count:p.commentsCount}).eq('id',csPid).then(function(){});
     });
     // Pass recipientId directly — works even if post isn't in caller's feed
     pushN('comment',{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},csPid,{commentText:txt.slice(0,40)},postOwnerId);
