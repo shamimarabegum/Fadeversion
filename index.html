@@ -1502,7 +1502,7 @@ function avH(url,name){if(url)return'<img src="'+url+'" style="width:100%;height
 function setAv(el,url,name){if(el)el.innerHTML=avH(url,name);}
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-var profile=null,curTab='today',S_DARK=false,SND_ON=true,_AC=null;
+var profile=null,curTab='today',S_DARK=false,SND_ON=true,_AC=null,_appBooted=false;
 var profPhotoUrl=null,newPid=null,_selectedGender='';
 var svGroups=[],svGI=0,svII=0,svTmr=null,svLiked={},svPaused=false,svBarStart=0,svBarDone=0,svViewsOpen=false,svViews={};
 var chatUser=null,cFile=null;
@@ -2237,6 +2237,7 @@ var _sb = (function(){
     }
     if(event === 'SIGNED_OUT'){
       // ── Wipe all in-memory state ──────────────────────────────────────
+      _appBooted = false;
       profile = null;
       profPhotoUrl = null;
       posts = [];
@@ -2403,6 +2404,8 @@ function trySignup(){
 }
 
 function initApp(userProfile){
+  if(_appBooted)return;
+  _appBooted=true;
   profile = userProfile;
   // Restore per-user dark mode preference
   try{
@@ -2830,7 +2833,7 @@ function pushN(type,actor,pid,extra,postOwnerId){
   // Only add to local notifs array if current user is the recipient
   if(profile&&recipientId===profile.id){
     notifs.unshift(n);
-    document.getElementById('notif-dot').classList.add('on');
+    var _nd=document.getElementById('notif-dot');if(_nd){_nd.classList.add('on');_nd.style.display='block';}
   }
 
   _sb.from('notifications').insert({
@@ -5420,7 +5423,7 @@ function closeCW(){
   clearTimeout(_typingBroadcastT);
   var cw=document.getElementById('cw');
   if(chatUser){unreadConvos.delete(chatUser.id);}
-  document.getElementById('talk-dot').classList.remove('on');
+  updateTalkDot();
   cw.style.transform='translateX(100%)';
   setTimeout(function(){cw.classList.remove('on');cw.style.display='none';cw.style.transform='';chatUser=null;renderTalkList();},350);
 }
@@ -6150,7 +6153,7 @@ function startConvoC(uid){
       backBtn.parentNode.replaceChild(newBack,backBtn);
       newBack.addEventListener('click',function(){
         if(chatUser){unreadConvos.delete(chatUser.id);}
-        document.getElementById('talk-dot').classList.remove('on');
+        updateTalkDot();
         cw.classList.remove('on');
         setTimeout(function(){
           cw.style.display='none';
@@ -9225,7 +9228,7 @@ function setupSwipeBack(){
             if(window._chatChannel){_sb.removeChannel(window._chatChannel);window._chatChannel=null;}
             hideTypingBubble();
             if(chatUser){unreadConvos.delete(chatUser.id);}
-            document.getElementById('talk-dot').classList.remove('on');
+            updateTalkDot();
             chatUser=null;
             renderTalkList();
           }
