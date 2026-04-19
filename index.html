@@ -949,14 +949,19 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #offline-bar.on{transform:translateY(0)}
 #offline-bar svg{flex-shrink:0;opacity:.75}
 /* VOICE NOTE RECORDING */
-.voice-bubble{display:flex;align-items:center;gap:11px;padding:12px 16px;min-width:200px}
-.voice-play{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.22);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .12s}
-.voice-play:active{background:rgba(255,255,255,.35);transform:scale(.92)}
-.voice-wave{flex:1;height:36px;display:flex;align-items:center;gap:2.5px;position:relative;cursor:pointer}
-.voice-wave span{display:block;background:rgba(255,255,255,.3);border-radius:3px;width:3px;flex-shrink:0;transition:background .08s}
+/* Instagram-style voice bubble */
+.voice-bubble{display:flex;flex-direction:column;gap:4px;padding:10px 14px;min-width:220px;max-width:280px}
+.voice-row{display:flex;align-items:center;gap:10px}
+.voice-play{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .12s}
+.voice-play:active{background:rgba(255,255,255,.38);transform:scale(.9)}
+.voice-wave{flex:1;height:38px;display:flex;align-items:center;gap:2px;position:relative;cursor:pointer;overflow:hidden}
+.voice-wave span{display:block;background:rgba(255,255,255,.38);border-radius:2px;width:3px;flex-shrink:0;transition:background .1s,height .12s cubic-bezier(.25,.46,.45,.94)}
 .voice-wave span.played{background:rgba(255,255,255,.95)}
-.voice-playhead{position:absolute;top:0;bottom:0;width:2px;background:#fff;border-radius:2px;pointer-events:none;left:0%;box-shadow:0 0 4px rgba(255,255,255,.6)}
-.voice-dur{font-size:13px;color:rgba(255,255,255,.9);font-weight:600;flex-shrink:0;min-width:32px;text-align:right}
+.voice-playhead{position:absolute;top:4px;bottom:4px;width:2.5px;background:#fff;border-radius:2px;pointer-events:none;left:0%;box-shadow:0 0 5px rgba(255,255,255,.7);transition:left .05s linear}
+.voice-meta{display:flex;align-items:center;justify-content:space-between;padding-left:50px}
+.voice-dur{font-size:12px;color:rgba(255,255,255,.85);font-weight:600;font-variant-numeric:tabular-nums}
+.voice-speed{background:rgba(255,255,255,.2);border:none;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s,transform .1s;letter-spacing:-.2px}
+.voice-speed:active{background:rgba(255,255,255,.38);transform:scale(.92)}
 .voice-scrubber{display:none}
 .voice-track{display:none}
 .voice-fill{display:none}
@@ -4872,42 +4877,56 @@ function appendBubble(m){
     b.classList.add('anim-bubble-in','voice-bubble');
     b.style.transformOrigin=isMine?'bottom right':'bottom left';
 
+    var IC_PLAY='<svg width="17" height="17" fill="currentColor" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
+    var IC_PAUSE='<svg width="17" height="17" fill="currentColor" viewBox="0 0 24 24"><rect x="5" y="4" width="4" height="16" rx="1.5"/><rect x="15" y="4" width="4" height="16" rx="1.5"/></svg>';
+
+    // Top row: play + waveform
+    var voiceRow=document.createElement('div');voiceRow.className='voice-row';
+
     var playBtn=document.createElement('button');
     playBtn.className='voice-play';
-    var IC_PLAY='<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
-    var IC_PAUSE='<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>';
     playBtn.innerHTML=IC_PLAY;
 
-    // Waveform — also the scrubber
+    // Waveform
     var wave=document.createElement('div');wave.className='voice-wave';
-    var barHeights=[4,7,13,9,18,11,6,16,8,14,5,10,15,7,11,9,13,7,5,12];
+    // Natural-looking waveform bar heights (30 bars, Instagram-style bell distribution)
+    var barHeights=[3,5,7,10,8,13,9,17,12,20,15,22,18,25,21,27,24,26,22,20,17,23,19,15,12,18,9,14,6,4];
     var barEls=[];
     barHeights.forEach(function(h){
       var s=document.createElement('span');s.style.height=h+'px';
       wave.appendChild(s);barEls.push(s);
     });
-    // Playhead line
     var playhead=document.createElement('div');playhead.className='voice-playhead';
     wave.appendChild(playhead);
 
-    var durEl=document.createElement('div');durEl.className='voice-dur';
-    function fmtTime(s){return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;}
-    durEl.textContent=fmtTime(dur);
+    voiceRow.appendChild(playBtn);
+    voiceRow.appendChild(wave);
+    b.appendChild(voiceRow);
 
-    b.appendChild(playBtn);b.appendChild(wave);b.appendChild(durEl);
+    // Bottom row: duration + speed
+    var metaRow=document.createElement('div');metaRow.className='voice-meta';
+    function fmtTime(s){return Math.floor(s/60)+':'+(s%60<10?'0':'')+Math.floor(s)%60;}
+    var durEl=document.createElement('div');durEl.className='voice-dur';
+    durEl.textContent=fmtTime(dur);
+    var speedBtn=document.createElement('button');speedBtn.className='voice-speed';
+    var speeds=[1,1.5,2];var speedIdx=0;
+    speedBtn.textContent='1x';
+    metaRow.appendChild(durEl);
+    metaRow.appendChild(speedBtn);
+    b.appendChild(metaRow);
+
     attachHold(b,m,wrap,bs,isMine);
 
-    (function(url,pb,waveEl,bEls,phEl,dEl,totalDur){
+    (function(url,pb,waveEl,bEls,phEl,dEl,spBtn,totalDur){
       var aud=null,playing=false,rafId=null,actx=null,analyser=null,srcNode=null;
 
       function setProgress(pct){
         pct=Math.max(0,Math.min(1,pct));
         phEl.style.left=(pct*100)+'%';
         var n=bEls.length;
-        bEls.forEach(function(s,i){
-          s.classList.toggle('played',i/n<pct);
-        });
-        dEl.textContent=fmtTime(totalDur>0?Math.round(pct*totalDur):0);
+        bEls.forEach(function(s,i){s.classList.toggle('played',i/n<pct);});
+        var elapsed=totalDur>0?pct*totalDur:0;
+        dEl.textContent=fmtTime(elapsed);
       }
 
       function tick(){
@@ -4915,7 +4934,6 @@ function appendBubble(m){
         var pct=totalDur>0?Math.min(1,aud.currentTime/totalDur):0;
         phEl.style.left=(pct*100)+'%';
         var n=bEls.length;
-        // Animate bar heights with analyser if available
         if(analyser){
           var data=new Uint8Array(analyser.frequencyBinCount);
           analyser.getByteFrequencyData(data);
@@ -4924,8 +4942,8 @@ function appendBubble(m){
             s.classList.toggle('played',played);
             if(played){
               var idx=Math.floor(i*data.length/n);
-              var h=Math.max(3,Math.round(3+(data[idx]/255)*26));
-              s.style.height=h+'px';
+              var animated=Math.max(barHeights[i]*0.6,Math.round(barHeights[i]*0.5+(data[idx]/255)*barHeights[i]*0.9));
+              s.style.height=animated+'px';
             }else{
               s.style.height=barHeights[i]+'px';
             }
@@ -4933,7 +4951,7 @@ function appendBubble(m){
         }else{
           bEls.forEach(function(s,i){s.classList.toggle('played',i/n<pct);});
         }
-        dEl.textContent=fmtTime(Math.round(aud.currentTime));
+        dEl.textContent=fmtTime(aud.currentTime);
         rafId=requestAnimationFrame(tick);
       }
 
@@ -4941,34 +4959,44 @@ function appendBubble(m){
         e.stopPropagation();
         if(!aud){
           aud=new Audio(url);aud.crossOrigin='anonymous';
+          aud.playbackRate=speeds[speedIdx];
           aud.onended=function(){
             playing=false;pb.innerHTML=IC_PLAY;
             if(rafId){cancelAnimationFrame(rafId);rafId=null;}
-            // reset bars to natural heights
             bEls.forEach(function(s,i){s.style.height=barHeights[i]+'px';s.classList.remove('played');});
-            setProgress(0);dEl.textContent=fmtTime(totalDur);
+            phEl.style.left='0%';
+            dEl.textContent=fmtTime(totalDur);
           };
         }
         if(playing){
           aud.pause();playing=false;pb.innerHTML=IC_PLAY;
           if(rafId){cancelAnimationFrame(rafId);rafId=null;}
         }else{
-          // Set up AudioContext on first play
           if(!actx&&aud){
             try{
               actx=new(window.AudioContext||window.webkitAudioContext)();
               srcNode=actx.createMediaElementSource(aud);
               analyser=actx.createAnalyser();
-              analyser.fftSize=64;analyser.smoothingTimeConstant=0.75;
+              analyser.fftSize=64;analyser.smoothingTimeConstant=0.7;
               srcNode.connect(analyser);analyser.connect(actx.destination);
-            }catch(e){analyser=null;}
+            }catch(err){analyser=null;}
           }
           aud.play();playing=true;pb.innerHTML=IC_PAUSE;
           rafId=requestAnimationFrame(tick);haptic();
         }
       };
 
-      // Tap/drag waveform to seek
+      // Speed button cycles 1x → 1.5x → 2x
+      spBtn.onclick=function(e){
+        e.stopPropagation();
+        speedIdx=(speedIdx+1)%speeds.length;
+        var s=speeds[speedIdx];
+        spBtn.textContent=(s===1?'1x':s+'x');
+        if(aud)aud.playbackRate=s;
+        haptic();
+      };
+
+      // Seek on tap/drag
       function seekFromEvent(e){
         var rect=waveEl.getBoundingClientRect();
         var cx=(e.touches?e.touches[0].clientX:e.clientX);
@@ -4979,7 +5007,7 @@ function appendBubble(m){
       waveEl.addEventListener('touchstart',function(e){e.stopPropagation();seekFromEvent(e);},{passive:true});
       waveEl.addEventListener('touchmove',function(e){e.stopPropagation();seekFromEvent(e);},{passive:true});
       waveEl.addEventListener('click',function(e){e.stopPropagation();seekFromEvent(e);});
-    })(src_,playBtn,wave,barEls,playhead,durEl,dur);
+    })(src_,playBtn,wave,barEls,playhead,durEl,speedBtn,dur);
   } else {
     b=document.createElement('div');
     b.className='bubble '+(isMine?'me':'them');
