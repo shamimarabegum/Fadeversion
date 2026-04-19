@@ -2264,12 +2264,18 @@ var _sb = (function(){
       verificationState = {status:null,submittedAt:null,reviewedAt:null,reapplyAt:null,rejectReason:null};
       try{ var _vk=profile?'vs_'+profile.id:null; if(_vk) localStorage.removeItem(_vk); }catch(e){}
 
+      // ── Reset loaded-state flags so first login re-initialises cleanly ──
+      _convosLoaded = false;
+      _clipsLoaded  = false;
+      _circlesLoaded = false;
+
       // ── Tear down realtime channels ───────────────────────────────────
       if(_realtimeChannel){_sb.removeChannel(_realtimeChannel);_realtimeChannel=null;}
       if(_chatChannel){_sb.removeChannel(_chatChannel);_chatChannel=null;}
       if(_inboxChannel){_sb.removeChannel(_inboxChannel);_inboxChannel=null;}
       if(_adminChannel){_sb.removeChannel(_adminChannel);_adminChannel=null;}
       if(_notifChannel){_sb.removeChannel(_notifChannel);_notifChannel=null;}
+      if(_circleChannel){_sb.removeChannel(_circleChannel);_circleChannel=null;}
 
       // ── Clear session storage ─────────────────────────────────────────
       try{sessionStorage.clear();}catch(e){}
@@ -2530,7 +2536,7 @@ function initApp(userProfile){
   function checkUnreadOnBoot(attempt){
     var dot=document.getElementById('talk-dot');
     if(!dot&&attempt<10){setTimeout(function(){checkUnreadOnBoot(attempt+1);},200);return;}
-    loadConversations(function(){updateTalkDot();});
+    loadConversations(function(){_convosLoaded=true;updateTalkDot();});
   }
   checkUnreadOnBoot(0);
   _triggerA2HS();
