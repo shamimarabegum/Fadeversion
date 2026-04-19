@@ -964,6 +964,15 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .voice-speed{background:rgba(0,0,0,.28);border:none;border-radius:20px;padding:2px 6px;font-size:11px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s,transform .1s;display:none;line-height:1.4;white-space:nowrap}
 .voice-speed.visible{display:block}
 .voice-speed:active{background:rgba(0,0,0,.5);transform:scale(.9)}
+/* Received (them) voice bubble — dark colors on light bg */
+.bubble.them .voice-play{background:rgba(0,0,0,.1);color:#333}
+.bubble.them .voice-play:active{background:rgba(0,0,0,.2)}
+.bubble.them .voice-wave span{background:rgba(0,0,0,.2)}
+.bubble.them .voice-wave span.played{background:rgba(0,0,0,.75)}
+.bubble.them .voice-playhead{background:#333;box-shadow:0 0 4px rgba(0,0,0,.3)}
+.bubble.them .voice-dur{color:rgba(0,0,0,.6)}
+.bubble.them .voice-speed{background:rgba(0,0,0,.12);color:#333}
+.bubble.them .voice-speed:active{background:rgba(0,0,0,.22)}
 .voice-meta{display:none}
 .voice-scrubber{display:none}
 .voice-track{display:none}
