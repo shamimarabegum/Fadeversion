@@ -1514,15 +1514,17 @@ var unreadConvos=new Set();
 var convos=[];
 var _convosLoaded=false;
 var _realtimeChannel=null;
+var _presenceChannel=null;
 var _pendingNewPosts=0;
 
 function setupRealtime(){
   if(_realtimeChannel)_sb.removeChannel(_realtimeChannel);
   // ── Presence channel — tracks who is online ──────────────────────────────
-  var presenceChannel=_sb.channel('fade-presence',{config:{presence:{key:profile.id}}});
-  presenceChannel
+  if(_presenceChannel){_sb.removeChannel(_presenceChannel);_presenceChannel=null;}
+  _presenceChannel=_sb.channel('fade-presence',{config:{presence:{key:profile.id}}});
+  _presenceChannel
     .on('presence',{event:'sync'},function(){
-      var state=presenceChannel.presenceState();
+      var state=_presenceChannel.presenceState();
       _onlineUsers.clear();
       Object.keys(state).forEach(function(uid){
         _onlineUsers.add(uid);
@@ -1560,7 +1562,7 @@ function setupRealtime(){
     .subscribe(function(status){
       if(status==='SUBSCRIBED'){
         // Track self as online
-        presenceChannel.track({user_id:profile.id,online_at:new Date().toISOString()});
+        _presenceChannel.track({user_id:profile.id,online_at:new Date().toISOString()});
       }
     });
 
@@ -2271,11 +2273,17 @@ var _sb = (function(){
 
       // ── Tear down realtime channels ───────────────────────────────────
       if(_realtimeChannel){_sb.removeChannel(_realtimeChannel);_realtimeChannel=null;}
+      if(_presenceChannel){_sb.removeChannel(_presenceChannel);_presenceChannel=null;}
       if(_chatChannel){_sb.removeChannel(_chatChannel);_chatChannel=null;}
       if(_inboxChannel){_sb.removeChannel(_inboxChannel);_inboxChannel=null;}
       if(_adminChannel){_sb.removeChannel(_adminChannel);_adminChannel=null;}
       if(_notifChannel){_sb.removeChannel(_notifChannel);_notifChannel=null;}
       if(_circleChannel){_sb.removeChannel(_circleChannel);_circleChannel=null;}
+
+      // ── Wipe presence/activity state ─────────────────────────────────
+      _onlineUsers = new Set();
+      userActivity = {};
+      _lastActiveCache = {};
 
       // ── Clear session storage ─────────────────────────────────────────
       try{sessionStorage.clear();}catch(e){}
@@ -2501,7 +2509,12 @@ function initApp(userProfile){
   setupPTR();
   setupOfflineBar();
   setupSwipeBack();
-  loadNotifs();
+  // Defer loadNotifs until the notif-dot element is guaranteed visible in DOM
+  (function checkNotifDotReady(attempt){
+    var dot=document.getElementById('notif-dot');
+    if(!dot&&attempt<10){setTimeout(function(){checkNotifDotReady(attempt+1);},200);return;}
+    loadNotifs();
+  })(0);
   subscribeToInbox();
   setupPush();
   // Load who this user follows from Supabase — also sets following count
