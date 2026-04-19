@@ -949,19 +949,20 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #offline-bar.on{transform:translateY(0)}
 #offline-bar svg{flex-shrink:0;opacity:.75}
 /* VOICE NOTE RECORDING */
-/* Instagram-style voice bubble */
-.voice-bubble{display:flex;flex-direction:column;gap:4px;padding:10px 14px;min-width:220px;max-width:280px}
-.voice-row{display:flex;align-items:center;gap:10px}
-.voice-play{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .12s}
-.voice-play:active{background:rgba(255,255,255,.38);transform:scale(.9)}
-.voice-wave{flex:1;height:38px;display:flex;align-items:center;gap:2px;position:relative;cursor:pointer;overflow:hidden}
-.voice-wave span{display:block;background:rgba(255,255,255,.38);border-radius:2px;width:3px;flex-shrink:0;transition:background .1s,height .12s cubic-bezier(.25,.46,.45,.94)}
-.voice-wave span.played{background:rgba(255,255,255,.95)}
-.voice-playhead{position:absolute;top:4px;bottom:4px;width:2.5px;background:#fff;border-radius:2px;pointer-events:none;left:0%;box-shadow:0 0 5px rgba(255,255,255,.7);transition:left .05s linear}
-.voice-meta{display:flex;align-items:center;justify-content:space-between;padding-left:50px}
-.voice-dur{font-size:12px;color:rgba(255,255,255,.85);font-weight:600;font-variant-numeric:tabular-nums}
-.voice-speed{background:rgba(255,255,255,.2);border:none;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s,transform .1s;letter-spacing:-.2px}
-.voice-speed:active{background:rgba(255,255,255,.38);transform:scale(.92)}
+/* Instagram-style voice bubble — single row */
+.voice-bubble{display:flex;align-items:center;gap:10px;padding:13px 16px;min-width:210px;max-width:270px}
+.voice-row{display:contents}
+.voice-play{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;transition:background .15s,transform .1s}
+.voice-play:active{background:rgba(255,255,255,.35);transform:scale(.88)}
+.voice-wave{flex:1;height:44px;display:flex;align-items:center;justify-content:space-between;gap:0;position:relative;cursor:pointer}
+.voice-wave span{display:block;background:rgba(255,255,255,.4);border-radius:3px;width:3px;flex-shrink:0;transition:background .08s ease,height .1s cubic-bezier(.25,.46,.45,.94)}
+.voice-wave span.played{background:rgba(255,255,255,.97)}
+.voice-playhead{position:absolute;top:2px;bottom:2px;width:2px;background:#fff;border-radius:2px;pointer-events:none;left:0%;transition:left .05s linear;box-shadow:0 0 6px rgba(255,255,255,.8)}
+.voice-dur{font-size:13px;color:rgba(255,255,255,.9);font-weight:600;flex-shrink:0;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
+.voice-speed{background:rgba(0,0,0,.22);border:none;border-radius:20px;padding:4px 9px;font-size:12px;font-weight:700;color:#fff;font-family:'Inter',sans-serif;cursor:pointer;transition:background .15s,transform .1s;flex-shrink:0;display:none}
+.voice-speed.visible{display:block}
+.voice-speed:active{background:rgba(0,0,0,.4);transform:scale(.9)}
+.voice-meta{display:none}
 .voice-scrubber{display:none}
 .voice-track{display:none}
 .voice-fill{display:none}
@@ -4877,20 +4878,17 @@ function appendBubble(m){
     b.classList.add('anim-bubble-in','voice-bubble');
     b.style.transformOrigin=isMine?'bottom right':'bottom left';
 
-    var IC_PLAY='<svg width="17" height="17" fill="currentColor" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
-    var IC_PAUSE='<svg width="17" height="17" fill="currentColor" viewBox="0 0 24 24"><rect x="5" y="4" width="4" height="16" rx="1.5"/><rect x="15" y="4" width="4" height="16" rx="1.5"/></svg>';
+    var IC_PLAY='<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+    var IC_PAUSE='<svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><rect x="5" y="3" width="4" height="18" rx="1.5"/><rect x="15" y="3" width="4" height="18" rx="1.5"/></svg>';
 
-    // Top row: play + waveform
-    var voiceRow=document.createElement('div');voiceRow.className='voice-row';
-
+    // Play button
     var playBtn=document.createElement('button');
     playBtn.className='voice-play';
     playBtn.innerHTML=IC_PLAY;
 
-    // Waveform
+    // Waveform — 28 bars, Instagram bell-curve distribution
     var wave=document.createElement('div');wave.className='voice-wave';
-    // Natural-looking waveform bar heights (30 bars, Instagram-style bell distribution)
-    var barHeights=[3,5,7,10,8,13,9,17,12,20,15,22,18,25,21,27,24,26,22,20,17,23,19,15,12,18,9,14,6,4];
+    var barHeights=[4,6,9,12,16,20,24,30,36,38,40,38,35,32,28,34,38,36,32,28,22,18,14,10,8,6,5,4];
     var barEls=[];
     barHeights.forEach(function(h){
       var s=document.createElement('span');s.style.height=h+'px';
@@ -4899,22 +4897,20 @@ function appendBubble(m){
     var playhead=document.createElement('div');playhead.className='voice-playhead';
     wave.appendChild(playhead);
 
-    voiceRow.appendChild(playBtn);
-    voiceRow.appendChild(wave);
-    b.appendChild(voiceRow);
-
-    // Bottom row: duration + speed
-    var metaRow=document.createElement('div');metaRow.className='voice-meta';
-    function fmtTime(s){return Math.floor(s/60)+':'+(s%60<10?'0':'')+Math.floor(s)%60;}
+    // Time display
+    function fmtTime(s){var m2=Math.floor(s/60),sec=Math.floor(s)%60;return m2+':'+(sec<10?'0':'')+sec;}
     var durEl=document.createElement('div');durEl.className='voice-dur';
     durEl.textContent=fmtTime(dur);
+
+    // Speed button — hidden until playing
     var speedBtn=document.createElement('button');speedBtn.className='voice-speed';
     var speeds=[1,1.5,2];var speedIdx=0;
     speedBtn.textContent='1x';
-    metaRow.appendChild(durEl);
-    metaRow.appendChild(speedBtn);
-    b.appendChild(metaRow);
 
+    b.appendChild(playBtn);
+    b.appendChild(wave);
+    b.appendChild(durEl);
+    b.appendChild(speedBtn);
     attachHold(b,m,wrap,bs,isMine);
 
     (function(url,pb,waveEl,bEls,phEl,dEl,spBtn,totalDur){
@@ -4925,8 +4921,7 @@ function appendBubble(m){
         phEl.style.left=(pct*100)+'%';
         var n=bEls.length;
         bEls.forEach(function(s,i){s.classList.toggle('played',i/n<pct);});
-        var elapsed=totalDur>0?pct*totalDur:0;
-        dEl.textContent=fmtTime(elapsed);
+        dEl.textContent=fmtTime(totalDur>0?pct*totalDur:0);
       }
 
       function tick(){
@@ -4940,13 +4935,11 @@ function appendBubble(m){
           bEls.forEach(function(s,i){
             var played=i/n<pct;
             s.classList.toggle('played',played);
-            if(played){
-              var idx=Math.floor(i*data.length/n);
-              var animated=Math.max(barHeights[i]*0.6,Math.round(barHeights[i]*0.5+(data[idx]/255)*barHeights[i]*0.9));
-              s.style.height=animated+'px';
-            }else{
-              s.style.height=barHeights[i]+'px';
-            }
+            var idx=Math.floor(i*data.length/n);
+            var base=barHeights[i];
+            // Played bars animate up/down with audio energy; unplayed stay static
+            var animated=played?Math.max(base*0.55,Math.round(base*0.5+(data[idx]/255)*base*1.1)):base;
+            s.style.height=Math.min(animated,44)+'px';
           });
         }else{
           bEls.forEach(function(s,i){s.classList.toggle('played',i/n<pct);});
@@ -4962,6 +4955,7 @@ function appendBubble(m){
           aud.playbackRate=speeds[speedIdx];
           aud.onended=function(){
             playing=false;pb.innerHTML=IC_PLAY;
+            spBtn.classList.remove('visible');
             if(rafId){cancelAnimationFrame(rafId);rafId=null;}
             bEls.forEach(function(s,i){s.style.height=barHeights[i]+'px';s.classList.remove('played');});
             phEl.style.left='0%';
@@ -4970,6 +4964,7 @@ function appendBubble(m){
         }
         if(playing){
           aud.pause();playing=false;pb.innerHTML=IC_PLAY;
+          spBtn.classList.remove('visible');
           if(rafId){cancelAnimationFrame(rafId);rafId=null;}
         }else{
           if(!actx&&aud){
@@ -4977,36 +4972,37 @@ function appendBubble(m){
               actx=new(window.AudioContext||window.webkitAudioContext)();
               srcNode=actx.createMediaElementSource(aud);
               analyser=actx.createAnalyser();
-              analyser.fftSize=64;analyser.smoothingTimeConstant=0.7;
+              analyser.fftSize=64;analyser.smoothingTimeConstant=0.65;
               srcNode.connect(analyser);analyser.connect(actx.destination);
             }catch(err){analyser=null;}
           }
           aud.play();playing=true;pb.innerHTML=IC_PAUSE;
+          spBtn.classList.add('visible');
           rafId=requestAnimationFrame(tick);haptic();
         }
       };
 
-      // Speed button cycles 1x → 1.5x → 2x
+      // Speed cycles 1x → 1.5x → 2x
       spBtn.onclick=function(e){
         e.stopPropagation();
         speedIdx=(speedIdx+1)%speeds.length;
         var s=speeds[speedIdx];
-        spBtn.textContent=(s===1?'1x':s+'x');
+        spBtn.textContent=s===1?'1x':s+'x';
         if(aud)aud.playbackRate=s;
         haptic();
       };
 
-      // Seek on tap/drag
-      function seekFromEvent(e){
+      // Seek
+      function seekFrom(e){
         var rect=waveEl.getBoundingClientRect();
-        var cx=(e.touches?e.touches[0].clientX:e.clientX);
+        var cx=e.touches?e.touches[0].clientX:e.clientX;
         var pct=Math.max(0,Math.min(1,(cx-rect.left)/rect.width));
         setProgress(pct);
         if(aud&&totalDur>0)aud.currentTime=pct*totalDur;
       }
-      waveEl.addEventListener('touchstart',function(e){e.stopPropagation();seekFromEvent(e);},{passive:true});
-      waveEl.addEventListener('touchmove',function(e){e.stopPropagation();seekFromEvent(e);},{passive:true});
-      waveEl.addEventListener('click',function(e){e.stopPropagation();seekFromEvent(e);});
+      waveEl.addEventListener('touchstart',function(e){e.stopPropagation();seekFrom(e);},{passive:true});
+      waveEl.addEventListener('touchmove',function(e){e.stopPropagation();seekFrom(e);},{passive:true});
+      waveEl.addEventListener('click',function(e){e.stopPropagation();seekFrom(e);});
     })(src_,playBtn,wave,barEls,playhead,durEl,speedBtn,dur);
   } else {
     b=document.createElement('div');
