@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231A1A1A'/%3E%3Ctext x='16' y='24' text-anchor='middle' font-family='Georgia%2C serif' font-style='italic' font-size='22' font-weight='700' fill='white'%3EF%3C/text%3E%3C/svg%3E"/>
 <link rel="apple-touch-icon" href="https://xmgmpewuevzgriqgsoct.supabase.co/storage/v1/object/public/avatars/android-chrome-512x512.png"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Fade"/>
 <meta name="theme-color" content="#1A1A1A"/>
 <link rel="manifest" href="/manifest.json"/>
@@ -455,7 +455,10 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .rplybar{display:none;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--inp-bg);font-size:13px;color:var(--sub);flex-shrink:0;border-top:1px solid var(--border)}
 .rplybar.on{display:flex}
 .cs-inp-row{display:flex;gap:10px;align-items:flex-end;padding:10px 14px max(16px,env(safe-area-inset-bottom));flex-shrink:0;background:var(--card);margin-top:auto}
-.csinp{flex:1;background:var(--inp-bg);border:1.5px solid var(--inp-border);border-radius:22px;padding:10px 16px;font-size:14px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:80px;line-height:1.4;-webkit-user-select:text;user-select:text}
+
+/* Comment hold-to-delete modal */
+#cmt-del-modal{z-index:910}
+.csinp{flex:1;background:var(--inp-bg);border:none;border-radius:22px;padding:10px 16px;font-size:14px;font-family:'Inter',sans-serif;color:var(--inp-text);outline:none;resize:none;max-height:80px;line-height:1.4;-webkit-user-select:text;user-select:text}
 .csinp::placeholder{color:var(--inp-ph)}
 .cssend{width:36px;height:36px;border-radius:50%;background:var(--text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
 .cssend:active{opacity:.6}
@@ -1085,6 +1088,116 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .ep-grid button.ep-tapped{animation:ep-tap .32s cubic-bezier(.25,.46,.45,.94) both}
 .ep-section-label{grid-column:1/-1;font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.6px;padding:8px 4px 4px}
 
+/* ═══════════════════════════════════════════════════════════════
+   NATIVE FEEL PATCH  —  Phase 1 · 3 · 4 · 6
+   All changes are additive. Zero existing functions touched.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Phase 1 + 6: GPU layer always on, visibility swap kills flicker ── */
+/* Panels stay display:flex always — GPU layer is pre-composited.
+   visibility:hidden + pointer-events:none replaces display:none.
+   This eliminates the 1-frame flash that happens when the browser
+   paints display:flex before the opening transform takes effect. */
+
+#cw,
+#notif-panel,
+#prof-screen,
+#circle-cw,
+#sched-form-panel,
+#circle-info,
+#so {
+  display: flex !important;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform;
+  /* default: off-screen right */
+}
+
+#cw.on,
+#notif-panel.on,
+#prof-screen.on,
+#circle-cw.on,
+#sched-form-panel.on,
+#circle-info.on,
+#so.on {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* ── Phase 3: Spring easing on all full-screen panel transitions ── */
+/* iOS uses spring physics on navigation. We approximate with two
+   different cubic-bezier curves: a sharp deceleration on enter
+   (feels like snapping into place) and a quick ease-in on exit.
+   The 340ms duration matches iOS navigation timing. */
+
+#cw,
+#notif-panel,
+#prof-screen,
+#circle-cw,
+#sched-form-panel,
+#circle-info {
+  transition: transform 340ms cubic-bezier(.32,0,.67,0) !important;
+}
+
+#cw.on,
+#notif-panel.on,
+#prof-screen.on,
+#circle-cw.on,
+#sched-form-panel.on,
+#circle-info.on {
+  transition: transform 340ms cubic-bezier(.33,1,.68,1) !important;
+}
+
+/* Settings panel uses same spring but slightly faster feel */
+#so {
+  transition: transform 320ms cubic-bezier(.32,0,.67,0) !important;
+}
+#so.on {
+  transition: transform 320ms cubic-bezier(.33,1,.68,1) !important;
+}
+
+/* Bottom sheets also get the spring treatment */
+#cs-sheet,
+#fl-sheet,
+#react-sheet,
+#views-sheet,
+#aud-sheet,
+#circle-create-sheet,
+#seen-by-sheet {
+  transition: transform 340ms cubic-bezier(.33,1,.68,1) !important;
+}
+
+/* ── Phase 4: Instant press feedback classes ── */
+/* These are toggled by touchstart/touchend JS below.
+   CSS :active has ~80ms delay on mobile — this is 0ms. */
+._pressed {
+  opacity: 0.55 !important;
+  transform: scale(0.93) !important;
+  transition: opacity 60ms ease, transform 60ms cubic-bezier(.4,0,.2,1) !important;
+}
+
+/* Icon buttons press slightly differently */
+.ibtn._pressed,
+.nbtn._pressed {
+  opacity: 0.35 !important;
+  transform: scale(0.86) !important;
+}
+
+/* Nav buttons bounce back with spring */
+._press-release {
+  transition: opacity 200ms ease, transform 220ms cubic-bezier(.34,1.56,.64,1) !important;
+}
+
+/* ── Misc: Eliminate tap highlight globally ── */
+* {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* ── Prevent text rendering jank during scroll ── */
+body {
+  text-rendering: optimizeSpeed;
+}
+
 </style>
 </head>
 <body>
@@ -1164,18 +1277,18 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     <div class="scroller" id="sresults" style="padding-top:6px"></div>
   </div>
   <div id="s-clips" class="screen">
-    <div class="topbar"><div class="tb-l" style="width:38px"></div><span class="tb-logo">Clips</span><div class="tb-r"><button class="ibtn" onclick="openClipCompose()"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div></div>
+    <div class="topbar"><span style="font-family:'Playfair Display',serif;font-size:24px;font-style:italic;margin-left:2px">Clips</span><div class="tb-r" style="margin-left:auto"><button class="ibtn" onclick="openClipCompose()"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div></div>
     <div class="scroller" id="clips-feed" style="padding-top:4px"></div>
   </div>
   <div id="s-talk" class="screen">
-    <div class="page-hdr"><span class="page-title">Talk</span><button style="background:none;border:none;cursor:pointer;padding:7px;color:var(--text);display:flex" onclick="openTalkMenu()"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div>
+    <div class="topbar"><span style="font-family:'Playfair Display',serif;font-size:24px;font-style:italic;margin-left:2px">Talk</span><div class="tb-r" style="margin-left:auto"><button class="ibtn" onclick="openTalkMenu()"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button></div></div>
     <div style="position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column">
       <div id="talk-ptr" style="display:none;position:absolute;top:0;left:0;right:0;justify-content:center;padding:13px 0;z-index:10;pointer-events:none;opacity:0;transition:opacity .22s"><div class="ptr-ring"></div></div>
       <div class="scroller" id="talk-list"></div>
     </div>
   </div>
   <div id="s-me" class="screen">
-    <div style="display:flex;align-items:center;padding:0 14px;height:52px;flex-shrink:0"><span style="font-family:'Playfair Display',serif;font-size:22px;font-style:italic;margin-left:4px">Me</span><div style="margin-left:auto"><button class="ibtn" onclick="openSettings()"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div></div>
+    <div class="topbar"><span style="font-family:'Playfair Display',serif;font-size:24px;font-style:italic;margin-left:2px">Me</span><div class="tb-r" style="margin-left:auto"><button class="ibtn" onclick="openSettings()"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button></div></div>
     <div class="scroller" id="me-body"></div>
   </div>
 </div>
@@ -1322,7 +1435,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 <div id="msg-ctx">
   <div class="ctx-emojis"><span class="ctx-emoji" onclick="ctxReact('❤️')">❤️</span><span class="ctx-emoji" onclick="ctxReact('😂')">😂</span><span class="ctx-emoji" onclick="ctxReact('😮')">😮</span><span class="ctx-emoji" onclick="ctxReact('😢')">😢</span><span class="ctx-emoji" onclick="ctxReact('😡')">😡</span><span class="ctx-emoji" onclick="ctxReact('👍')">👍</span></div>
   <div class="ctx-item" onclick="ctxReply()"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Reply</div>
-  <div class="ctx-item" id="ctx-save-btn" style="display:none" onclick="ctxSavePhoto()"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save Photo</div>
+
   <div class="ctx-item" id="ctx-copy-btn" onclick="ctxCopy()"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</div>
   <div class="ctx-item red" id="ctx-unsend-btn" onclick="ctxUnsend()"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9 15l6-6M15 15L9 9"/></svg>Unsend</div>
 </div>
@@ -1421,7 +1534,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     <div class="handle"></div>
     <div class="shhd"><span class="shtitle">Edit Profile</span><button class="shx" onclick="closeEP()">✕</button></div>
     <div class="field"><label class="lbl">Name</label><input id="ep-name" class="inp" type="text" autocomplete="name"/></div>
-    <div class="field"><label class="lbl">Username</label><input id="ep-user" class="inp" type="text" autocomplete="username"/></div>
+    <div class="field"><label class="lbl">Username</label><input id="ep-user" class="inp" type="text" autocomplete="username" oninput="checkEPUsername(this.value)"/><div id="ep-user-status" style="display:none;font-size:12px;font-weight:500;margin-top:5px;padding-left:2px"></div></div>
     <div class="field"><label class="lbl">Bio</label><textarea id="ep-bio" class="inp" rows="3"></textarea></div>
     <button class="btn btn-dark" onclick="saveProfile()">Save changes</button>
   </div>
@@ -1448,6 +1561,20 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
     <div style="display:flex">
       <button onclick="closeDelSheet()" style="flex:1;padding:15px;background:none;border:none;border-right:1px solid var(--border);font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
       <button id="del-btn" style="flex:1;padding:15px;background:none;border:none;font-size:15px;font-weight:600;color:#E8352A;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="cmt-del-modal" class="mbg" style="z-index:910">
+  <div class="modal" style="gap:0;padding:0;overflow:hidden;max-width:300px">
+    <div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center">
+      <div style="font-weight:700;font-size:16px;text-align:center">Delete comment?</div>
+      <div style="font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55">Once deleted it cannot be recovered.</div>
+    </div>
+    <div style="height:1px;background:var(--border)"></div>
+    <div style="display:flex">
+      <button onclick="closeCmtDelBar()" style="flex:1;padding:15px;background:none;border:none;border-right:1px solid var(--border);font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+      <button onclick="execCmtDelete()" style="flex:1;padding:15px;background:none;border:none;font-size:15px;font-weight:600;color:#E8352A;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
     </div>
   </div>
 </div>
@@ -1685,10 +1812,56 @@ function setupRealtime(){
       });
       if(found)renderCSList();
     })
+    // ── STORIES — instant strip update when anyone posts a moment ──────
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'stories'},function(payload){
+      var r=payload.new;
+      if(!r||!r.user_id)return;
+      var uid=r.user_id;
+      var newItem={id:r.id,text:r.text||'',img:r.img_url||null,ts:r.created_at,bg:r.bg||'#2C2C2C',tc:r.tc||'#fff',fi:r.fi||1,audience:r.audience||'followers'};
+      // Own story — add to own group instantly
+      if(profile&&uid===profile.id){
+        var ownIdx=getOwnGroupIndex();
+        if(ownIdx>=0){
+          var ownG=svGroups[ownIdx];
+          if(!ownG.items.find(function(s){return s.id===r.id;})){ownG.items.push(newItem);}
+        } else {
+          svGroups.unshift({user:{id:'demo',username:profile.username||'you',display_name:profile.display_name||'You',avatar_url:profPhotoUrl||profile.avatar_url||null},items:[newItem],seen:true});
+        }
+        renderStrip();
+        return;
+      }
+      // Someone else's story — check audience & following before showing
+      var aud=r.audience||'followers';
+      var canSee=false;
+      if(aud==='everyone')canSee=true;
+      else if(aud==='followers')canSee=following.has(uid);
+      else if(aud==='close_friends')canSee=CF.has(uid);
+      if(!canSee)return;
+      // Find or create group for this user
+      var gi=svGroups.findIndex(function(g){return g.user.id===uid;});
+      if(gi>=0){
+        var g=svGroups[gi];
+        if(!g.items.find(function(s){return s.id===r.id;})){g.items.push(newItem);g.seen=false;}
+      } else {
+        var uObj=USERS.find(function(x){return x.id===uid;})||null;
+        if(uObj){
+          svGroups.push({user:{id:uObj.id,username:uObj.username||'',display_name:uObj.display_name||uObj.username||'User',avatar_url:uObj.avatar_url||null},items:[newItem],seen:false});
+        } else {
+          _sb.from('profiles').select('id,username,display_name,avatar_url').eq('id',uid).single().then(function(pr){
+            var u=pr.data||{id:uid,username:'user',display_name:'User',avatar_url:null};
+            if(!USERS.find(function(x){return x.id===uid;}))USERS.push(u);
+            svGroups.push({user:{id:u.id,username:u.username||'',display_name:u.display_name||u.username||'User',avatar_url:u.avatar_url||null},items:[newItem],seen:false});
+            renderStrip();
+          });
+          return;
+        }
+      }
+      renderStrip();
+    })
 
     .subscribe();
 }
-var S={pushNotifs:true,talkNotifs:true,private:false,hideLikes:false,cmtPerm:'everyone',storyAudience:'followers',activityVisible:'everyone'};
+var S={pushNotifs:true,talkNotifs:true,private:false,hideLikes:false,cmtPerm:'everyone',storyAudience:'followers',activityVisible:'followers'};
 var scBg='#2C2C2C',scFontOpen=false,scFI=1,scAudience='followers';
 var scheduled=[],_schedListEl=null,_schedEditIdx=-1,_schedImgUrl=null;
 var soStack=[];
@@ -1985,6 +2158,20 @@ function getBadgeSVG(uid, badgeType, isVerified){
 function E(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function ago(d){var diff=Date.now()-(typeof d==='number'?d:new Date(d).getTime());if(diff<60000)return'now';if(diff<3600000)return Math.floor(diff/60000)+'m';if(diff<86400000)return Math.floor(diff/3600000)+'h';return'1d';}
 function agoS(d){var diff=Date.now()-new Date(d).getTime();if(diff<3600000)return Math.floor(diff/60000)+'m ago';return Math.floor(diff/3600000)+'h ago';}
+function stripStoryPrefix(c){
+  if(!c)return'';
+  if(c.startsWith('[storyreply:')){
+    var nl=c.indexOf('\n');
+    var replyText=nl>=0?c.slice(nl+1).trim():'';
+    return replyText?'Moment: '+replyText:'💬 Replied to a Moment';
+  }
+  if(c.startsWith('[voice:')){
+    var m=c.match(/\[voice:(\d+)s\]/);
+    var s=m?parseInt(m[1]):0;
+    return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');
+  }
+  return c;
+}
 function fadeIn(ts){var rem=Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);return rem<=0?'soon':h>0?h+'h':m+'m';}
 function bgClose(e,id){if(e.target.id===id||e.target.classList.contains('compose-dim'))closeSheet(id);}
 function closeSheet(id){var el=document.getElementById(id);var sheet=el&&el.querySelector('.sheet');if(sheet)sheet.style.transform='translateY(100%)';setTimeout(function(){if(el)el.style.display='none';},320);}
@@ -1997,18 +2184,22 @@ function fmtDT(ts){return new Date(ts).toLocaleString([],{month:'short',day:'num
 function svKey(){return svGI+'-'+svII;}
 
 // ── USERNAME CHECK ────────────────────────────────────────────────────────────
-var TAKEN_USERNAMES=USERS.map(function(u){return u.username.toLowerCase();});
 var _uTimer=null;
+var _uValid=false; // tracks if current signup username passed the check
 function checkUsername(val){
   var el=document.getElementById('su-user-status');if(!el)return;
   var v=val.trim().toLowerCase().replace(/\s+/g,'');
+  _uValid=false;
   if(!v){el.style.display='none';return;}
-  el.style.display='block';el.textContent='';
+  el.style.display='block';el.textContent='Checking…';el.style.color='var(--sub)';
   clearTimeout(_uTimer);
   _uTimer=setTimeout(function(){
-    var taken=TAKEN_USERNAMES.includes(v);
-    el.textContent=taken?'Not available':'Available';
-    el.style.color=taken?'#E8352A':'#16A34A';
+    _sb.from('profiles').select('id',{count:'exact',head:true}).eq('username',v).then(function(res){
+      var taken=(res.count||0)>0;
+      _uValid=!taken;
+      el.textContent=taken?'Not available':'Available';
+      el.style.color=taken?'#E8352A':'#16A34A';
+    });
   },420);
 }
 
@@ -2155,6 +2346,8 @@ function goTab(n){
   if(n==='me')renderMe();
   if(n==='talk')renderTalkList();
   if(n==='clips')loadClips();
+  // Refresh story strip when user returns to Today tab — no sign-out needed
+  if(n==='today'&&profile)loadStories();
 }
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -2226,9 +2419,34 @@ var _sb = (function(){
   if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,600);});}
   else{var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,800);}
 
+  // ── Instant auth-screen suppression ─────────────────────────────────────
+  // If Supabase has a stored session in localStorage, hide the auth screen
+  // immediately (before the async getSession resolves) to eliminate the flash.
+  (function(){
+    try{
+      var hasToken=false;
+      for(var k in localStorage){
+        if(k.indexOf('supabase')>=0&&k.indexOf('auth-token')>=0){
+          var val=JSON.parse(localStorage.getItem(k));
+          if(val&&val.access_token){hasToken=true;break;}
+        }
+      }
+      if(hasToken){
+        var a=document.getElementById('s-auth');
+        if(a){a.style.opacity='0';a.style.pointerEvents='none';}
+      }
+    }catch(e){}
+  })();
+
   _sb.auth.getSession().then(function(res){
     var session = res.data && res.data.session;
-    if(session && session.user) loadProfile(session.user.id);
+    if(session && session.user){
+      loadProfile(session.user.id);
+    } else {
+      // No session — make sure auth screen is visible
+      var a=document.getElementById('s-auth');
+      if(a){a.style.opacity='1';a.style.pointerEvents='';}
+    }
   });
   _sb.auth.onAuthStateChange(function(event, session){
     if(event === 'PASSWORD_RECOVERY'){
@@ -2327,6 +2545,7 @@ var _sb = (function(){
       document.getElementById('si-pw').value='';
       requestAnimationFrame(function(){
         requestAnimationFrame(function(){
+          auth.style.pointerEvents = '';
           auth.style.transition = 'opacity .3s ease';
           auth.style.opacity = '1';
         });
@@ -2447,7 +2666,7 @@ function initApp(userProfile){
   var csMyAv = document.getElementById('cs-myav');
   if(csMyAv) csMyAv.innerHTML = avH(profPhotoUrl||profile.avatar_url||null, profile.display_name);
   var auth = document.getElementById('s-auth');
-  if(auth){ auth.style.transition='opacity .3s ease'; auth.style.opacity='0'; setTimeout(function(){ auth.style.display='none'; },300); }
+  if(auth){ auth.style.pointerEvents='none'; auth.style.transition='opacity .3s ease'; auth.style.opacity='0'; setTimeout(function(){ auth.style.display='none'; },300); }
   var nav = document.getElementById('nav');
   if(nav) nav.classList.add('on');
   Object.keys(TAB_IDX).forEach(function(t){
@@ -2493,6 +2712,8 @@ function initApp(userProfile){
       try{
         var t=sessionStorage.getItem('fade_tab')||'today';
         if(t!==curTab)return;
+        // Re-check stories when app comes back to foreground
+        if(curTab==='today'&&profile)loadStories();
         // Re-apply active classes in case browser wiped them
         Object.keys(TAB_IDX).forEach(function(tab){
           var sc=document.getElementById('s-'+tab);if(!sc)return;
@@ -3304,10 +3525,14 @@ function getPostGroup(p){
 }
 var _suggestedOrder=null;
 var _suggestedTs=0;
-function getSuggestedOrder(posts){
-  // shuffle every 2 hours
+// Session-level seen tracking for suggested posts.
+// Once all are seen, cycle resets so feed never goes empty.
+var _seenSuggested=new Set();
+
+function getSuggestedOrder(allPosts){
+  // Rebuild shuffled order every 2 hours or when order is missing
   if(!_suggestedOrder||Date.now()-_suggestedTs>7200000){
-    var ids=posts.filter(function(p){return getPostGroup(p)===4;}).map(function(p){return p.id;});
+    var ids=allPosts.filter(function(p){return getPostGroup(p)===4;}).map(function(p){return p.id;});
     for(var i=ids.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=ids[i];ids[i]=ids[j];ids[j]=t;}
     _suggestedOrder=ids;
     _suggestedTs=Date.now();
@@ -3322,10 +3547,30 @@ function rankFeed(raw){
   live.forEach(function(p){var g=getPostGroup(p);if(g>=0)groups[g].push(p);});
   // within each group sort newest first
   [0,1,2,3].forEach(function(g){groups[g].sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});});
-  // suggested: use stable shuffle order
+
+  // ── Suggested: soft rotation ──────────────────────────────────────
+  // Show unseen posts first. When all have been seen, reset cycle
+  // so the feed never empties on a small platform.
   var sugOrder=getSuggestedOrder(live);
-  groups[4].sort(function(a,b){return sugOrder.indexOf(a.id)-sugOrder.indexOf(b.id);});
+  var sugPosts=groups[4];
+  if(sugPosts.length){
+    var unseen=sugPosts.filter(function(p){return!_seenSuggested.has(p.id);});
+    if(!unseen.length){
+      // Full cycle done — reset and start again
+      _seenSuggested=new Set();
+      unseen=sugPosts.slice();
+    }
+    // Sort unseen by shuffle order, then seen (as fallback tail)
+    unseen.sort(function(a,b){return sugOrder.indexOf(a.id)-sugOrder.indexOf(b.id);});
+    groups[4]=unseen;
+  }
+
   return[].concat(groups[0],groups[1],groups[2],groups[3],groups[4]);
+}
+
+// Mark a suggested post as seen (called when it enters the viewport)
+function markSuggestedSeen(postId){
+  _seenSuggested.add(postId);
 }
 
 var GROUP_LABELS={1:'Close Friends',2:'People you follow',4:'Suggested'};
@@ -3363,15 +3608,19 @@ function renderFeed(){
   _feedOffset=0;
   _feedExhausted=false;
   _feedLoading=false;
-  posts=[];
   // Tear down previous sentinel observer
   if(_feedSentinelObs){_feedSentinelObs.disconnect();_feedSentinelObs=null;}
-  // Show skeleton placeholders
-  var skHTML='';
-  for(var si=0;si<4;si++){
-    skHTML+='<div class="skeleton-post" style="opacity:'+(1-si*0.18)+'"><div class="skeleton-post-hd"><div class="skeleton skeleton-avatar" style="width:42px;height:42px;flex-shrink:0"></div><div style="flex:1;display:flex;flex-direction:column;gap:7px"><div class="skeleton skeleton-text" style="width:36%"></div><div class="skeleton skeleton-text" style="width:20%"></div></div></div>'+(si%2===0?'<div class="skeleton skeleton-img" style="width:100%;aspect-ratio:4/5"></div>':'<div class="skeleton skeleton-text" style="width:78%"></div><div class="skeleton skeleton-text" style="width:58%"></div>')+'<div style="display:flex;gap:16px;padding-top:2px"><div class="skeleton skeleton-round" style="width:52px;height:20px"></div><div class="skeleton skeleton-round" style="width:52px;height:20px"></div></div></div>';
+  // Only show skeleton on cold load (no existing posts in DOM).
+  // On refresh/pull-to-refresh keep existing content visible — no blink.
+  var hasPosts=posts.length>0;
+  if(!hasPosts){
+    var skHTML='';
+    for(var si=0;si<4;si++){
+      skHTML+='<div class="skeleton-post" style="opacity:'+(1-si*0.18)+'"><div class="skeleton-post-hd"><div class="skeleton skeleton-avatar" style="width:42px;height:42px;flex-shrink:0"></div><div style="flex:1;display:flex;flex-direction:column;gap:7px"><div class="skeleton skeleton-text" style="width:36%"></div><div class="skeleton skeleton-text" style="width:20%"></div></div></div>'+(si%2===0?'<div class="skeleton skeleton-img" style="width:100%;aspect-ratio:4/5"></div>':'<div class="skeleton skeleton-text" style="width:78%"></div><div class="skeleton skeleton-text" style="width:58%"></div>')+'<div style="display:flex;gap:16px;padding-top:2px"><div class="skeleton skeleton-round" style="width:52px;height:20px"></div><div class="skeleton skeleton-round" style="width:52px;height:20px"></div></div></div>';
+    }
+    f.innerHTML=skHTML;
   }
-  f.innerHTML=skHTML;
+  posts=[];
   _loadFeedPage(true);
 }
 
@@ -3463,6 +3712,15 @@ function renderFeedRows(rows,likedIds,isFirst){
         var h=document.getElementById('hi-'+p.id);if(h)h.setAttribute('fill','currentColor');
         var lb=document.getElementById('lb-'+p.id);if(lb)lb.classList.add('liked');
       }
+      // Mark suggested posts as seen when they scroll into view
+      if(g===4){
+        (function(pid,postEl){
+          var obs=new IntersectionObserver(function(entries){
+            if(entries[0].isIntersecting){markSuggestedSeen(pid);obs.disconnect();}
+          },{threshold:0.5});
+          obs.observe(postEl);
+        })(p.id,el);
+      }
     });
   } else {
     // Append mode — remove old sentinel first
@@ -3542,6 +3800,7 @@ function buildPost(p, showDelete){
   },{passive:false});
   return el;
 }
+var _likeTimers={};  // postId → setTimeout handle — fires like notification only if still liked after delay
 function likePost(id,btn){
   var p=posts.find(function(x){return x.id===id;});if(!p||!profile)return;
   // Flip liked state instantly — never reset by re-render
@@ -3576,9 +3835,19 @@ function likePost(id,btn){
   var postOwnerId=p.uid;
   if(p.liked){
     _sb.from('likes').insert({user_id:profile.id,post_id:id}).then(function(){});
-    // Pass recipientId directly so notification works even if posts array is stale
-    pushN('like',{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},id,{postText:(p.text||'').slice(0,40)},postOwnerId);
+    // Debounce notification — only push if user keeps the like for 1.5s
+    clearTimeout(_likeTimers[id]);
+    _likeTimers[id]=setTimeout(function(){
+      var still=posts.find(function(x){return x.id===id;});
+      if(still&&still.liked){
+        pushN('like',{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},id,{postText:(p.text||'').slice(0,40)},postOwnerId);
+      }
+      delete _likeTimers[id];
+    },1500);
   } else {
+    // Cancel any pending like notification
+    clearTimeout(_likeTimers[id]);
+    delete _likeTimers[id];
     _sb.from('likes').delete().eq('user_id',profile.id).eq('post_id',id).then(function(){});
   }
 }
@@ -4141,19 +4410,33 @@ function svSend(){
     acts.innerHTML='<div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;color:rgba(255,255,255,.85);font-size:14px;font-weight:600"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Replied</div>';
     setTimeout(function(){if(acts)acts.innerHTML=prevHTML;},1800);
   }
-  // Update local convo list optimistically
+  // Build story preview object for the chat bubble
+  var storyPreview={
+    img:item.img||null,
+    bg:item.bg||'#2C2C2C',
+    tc:item.tc||'#fff',
+    text:item.text||'',
+    authorName:user.display_name||user.username||'User',
+    authorId:user.id||null,
+    storyId:item.id
+  };
+  // Encode preview into content so it persists in DB and renders for both users
+  var encodedPreview='[storyreply:'+JSON.stringify(storyPreview)+']';
+  var fullContent=encodedPreview+'\n'+txt;
+
   var expires=new Date(Date.now()+86400000).toISOString();
+  // Update local convo list optimistically
   if(!convos.find(function(c){return c.user.id===user.id;}))convos.unshift({user:user,lastMsg:txt,lastSid:'demo',ts:Date.now()});
   var cv=convos.find(function(x){return x.user.id===user.id;});
   if(cv){cv.lastMsg=txt;cv.lastSid='demo';cv.ts=Date.now();}
   if(!dMsgs[user.id])dMsgs[user.id]=[];
-  dMsgs[user.id].push({id:'sv-'+Date.now(),sid:'demo',text:txt,ts:Date.now()});
-  // Send real DM via Supabase
+  dMsgs[user.id].push({id:'sv-'+Date.now(),sid:'demo',text:txt,preview:storyPreview,ts:Date.now()});
+  // Send real DM via Supabase with encoded preview in content
   if(profile){
     _sb.from('messages').insert({
       sender_id:profile.id,
       receiver_id:user.id,
-      content:txt,
+      content:fullContent,
       reply_to_id:null,
       is_read:false,
       expires_at:expires
@@ -4354,7 +4637,7 @@ function loadConversations(cb){
             var isMine=lastMsg.sender_id===profile.id;
             return{
               user:u,
-              lastMsg:(lastMsg.content&&lastMsg.content.startsWith('[voice:')?(function(){var m2=(lastMsg.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(lastMsg.content||(lastMsg.is_photo?'📷 Photo':''))),
+              lastMsg:(stripStoryPrefix(lastMsg.content)||(lastMsg.is_photo?'📷 Photo':'')),
               lastSid:isMine?'demo':pid,
               ts:new Date(lastMsg.created_at).getTime(),
               lastMsgId:lastMsg.id
@@ -4439,15 +4722,16 @@ function _renderTalkFromCache(){
 
     // Subtitle text + style
     var subText,subColor,subWeight;
+    var cleanMsg=stripStoryPrefix(c.lastMsg||'');
     if(isUnread){
-      subText=(c.lastMsg||'')+(c.ts?' · '+ago(c.ts):'');
+      subText=cleanMsg+(c.ts?' · '+ago(c.ts):'');
       subColor='var(--text)';subWeight='600';
     } else if(_active){
       subText='Active now';subColor='#22C55E';subWeight='400';
     } else if(_lastAct){
       subText=_lastAct;subColor='var(--sub)';subWeight='400';
     } else {
-      subText=(c.lastMsg||'')+(c.ts?' · '+ago(c.ts):'');
+      subText=cleanMsg+(c.ts?' · '+ago(c.ts):'');
       subColor='var(--sub)';subWeight=bold?'500':'400';
     }
 
@@ -4627,7 +4911,7 @@ function setChatHeader(u){
     statusEl.style.color=active?'#22C55E':'var(--sub)';
   }
   if(dotEl)dotEl.style.display=(showActivity&&active)?'block':'none';
-  document.getElementById('cwinfo').onclick=function(){openProf(u);};
+  document.getElementById('cwinfo').onclick=function(){_profFromChat=true;openProf(u);};
 }
 function openChat(u){
   // Always resolve full profile from USERS if available
@@ -4636,7 +4920,7 @@ function openChat(u){
   setChatHeader(full);
   document.getElementById('cwname').innerHTML=E(u.display_name||u.username)+' '+badgeFor(u.id);
   var cwavEl=document.getElementById('cwav');cwavEl.style.background=nc(u.display_name);setAv(cwavEl,u.avatar_url,u.display_name);
-  document.getElementById('cwinfo').onclick=function(){openProf(u);};
+  document.getElementById('cwinfo').onclick=function(){_profFromChat=true;openProf(u);};
   var active=isActiveNow(u.id);
   var _setStatus=function(){var lbl=active?'Active now':activeLabel(u.id);document.getElementById('cw-status').textContent=lbl;document.getElementById('cw-status').style.color=active?'#22C55E':'var(--sub)';var cwDot=document.getElementById('cw-dot');if(cwDot){cwDot.style.display=active?'block':'none';}};
   if(!active&&!_lastActiveCache[u.id]){loadLastActive(u.id,_setStatus);}else{_setStatus();}
@@ -4675,10 +4959,20 @@ function openChat(u){
           replyToText=parent.content||'📷 Photo';
           replyToSender=parent.sender_id===profile.id?'You':(chatUser&&chatUser.display_name||'Them');
         }
+        var rawContent=r.content||'';
+        var storyPreviewParsed=null;
+        var displayText=rawContent;
+        if(rawContent.startsWith('[storyreply:')){
+          var nlIdx=rawContent.indexOf('\n');
+          var jsonPart=rawContent.slice(12,nlIdx>0?nlIdx:rawContent.length);
+          if(jsonPart.endsWith(']'))jsonPart=jsonPart.slice(0,-1);
+          try{storyPreviewParsed=JSON.parse(jsonPart);}catch(e){}
+          displayText=nlIdx>0?rawContent.slice(nlIdx+1):'';
+        }
         var m={
           id:r.id,
           sid:r.sender_id===profile.id?'demo':r.sender_id,
-          text:r.content||'',
+          text:displayText,
           img:r.img_url||null,
           gif:r.gif_url||null,
           isPhoto:r.is_photo||false,
@@ -4686,6 +4980,7 @@ function openChat(u){
           reaction:r.reaction||null,
           replyTo:replyToText,
           replyToSender:replyToSender,
+          preview:storyPreviewParsed,
           ts:new Date(r.created_at).getTime(),
           isRead:r.is_read
         };
@@ -4776,16 +5071,27 @@ function subscribeToChat(partnerId){
         unreadConvos.delete(r.sender_id);
         updateTalkDot();
       }
+      var rawContent2=r.content||r.text||'';
+      var storyPreview2=null;
+      var displayText2=rawContent2;
+      if(rawContent2.startsWith('[storyreply:')){
+        var nlIdx2=rawContent2.indexOf('\n');
+        var jsonPart2=rawContent2.slice(12,nlIdx2>0?nlIdx2:rawContent2.length);
+        if(jsonPart2.endsWith(']'))jsonPart2=jsonPart2.slice(0,-1);
+        try{storyPreview2=JSON.parse(jsonPart2);}catch(e){}
+        displayText2=nlIdx2>0?rawContent2.slice(nlIdx2+1):'';
+      }
       var m={
         id:r.id,
         sid:r.sender_id===profile.id?'demo':r.sender_id,
-        text:r.content||r.text||'',
+        text:displayText2,
         img:r.img_url||null,
         gif:r.gif_url||null,
         isPhoto:r.is_photo||false,
         reaction:r.reaction||null,
         replyTo:null,
         replyToSender:null,
+        preview:storyPreview2,
         ts:new Date(r.created_at).getTime(),
         isRead:r.is_read
       };
@@ -4896,7 +5202,7 @@ function subscribeToInbox(){
       if(_convosLoaded){
         var senderUser=USERS.find(function(x){return x.id===r.sender_id;})||{id:r.sender_id,display_name:'User',username:'user',avatar_url:null};
         var existing=convos.find(function(c){return c.user.id===r.sender_id;});
-        var lastMsg=(r.content&&r.content.startsWith('[voice:'))?(function(){var m2=(r.content||'').match(/\[voice:(\d+)s\]/);var s=m2?parseInt(m2[1]):0;return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');}()):(r.content||(r.is_photo?'📷 Photo':''));
+        var lastMsg=stripStoryPrefix(r.content)||(r.is_photo?'📷 Photo':'');
         if(existing){existing.lastMsg=lastMsg;existing.lastSid=r.sender_id;existing.ts=new Date(r.created_at).getTime();convos.sort(function(a,b){return b.ts-a.ts;});}
         else{convos.unshift({user:senderUser,lastMsg:lastMsg,lastSid:r.sender_id,ts:new Date(r.created_at).getTime()});}
       }
@@ -4985,7 +5291,6 @@ function appendBubble(m){
   var isMine=m.sid==='demo';
   var wrap=document.createElement('div');wrap.className='bwrap '+(isMine?'me':'them');wrap.dataset.ts=m.ts;wrap.dataset.msgid=m.id||'';
   var bs=document.createElement('div');bs.className=isMine?'me-bs':'them-bs';
-  if(m.preview)bs.appendChild(buildSRC(m.preview));
   if(m.replyTo){
     var rl=document.createElement('div');
     rl.style.cssText='font-size:11.5px;color:var(--sub);margin-bottom:4px;text-align:'+(isMine?'right':'left')+';padding:'+(isMine?'0 6px 0 0':'0 0 0 6px');
@@ -5174,12 +5479,29 @@ function appendBubble(m){
     })(src_,playBtn,wave,barEls,playhead,durEl,speedBtn,dur);
   } else {
     b=document.createElement('div');
-    b.className='bubble '+(isMine?'me':'them');
     b.classList.add('anim-bubble-in');
-    // mirror origin for them vs me
     b.style.transformOrigin=isMine?'bottom right':'bottom left';
-    if(m.text&&!m.text.startsWith('[voice:'))b.appendChild(document.createTextNode(m.text));
-    attachHold(b,m,wrap,bs,isMine);
+
+    if(m.preview){
+      // Story reply — Instagram style: compact card above, reply bubble below, aligned to side
+      b.style.cssText='display:inline-flex;flex-direction:column;gap:6px;background:none;align-items:'+(isMine?'flex-end':'flex-start');
+      // Story preview card (compact, auto-width)
+      var srcCard=buildSRC(m.preview,isMine);
+      b.appendChild(srcCard);
+      // Reply text in a normal bubble
+      if(m.text){
+        var replyTxt=document.createElement('div');
+        replyTxt.className='bubble '+(isMine?'me':'them');
+        replyTxt.style.transformOrigin=isMine?'bottom right':'bottom left';
+        replyTxt.textContent=m.text;
+        b.appendChild(replyTxt);
+      }
+      attachHold(b,m,wrap,bs,isMine);
+    } else {
+      b.className='bubble '+(isMine?'me':'them');
+      if(m.text&&!m.text.startsWith('[voice:'))b.appendChild(document.createTextNode(m.text));
+      attachHold(b,m,wrap,bs,isMine);
+    }
   }
   bs.appendChild(b);
   if(m.reaction)bs.appendChild(makeBadge(m,isMine,bs));
@@ -5247,7 +5569,83 @@ function appendBubble(m){
   msgs.scrollTop=msgs.scrollHeight;
 }
 function makeBadge(m,isMine,bs){var badge=document.createElement('div');badge.className='rxn-badge '+(isMine?'me':'them');badge.textContent=m.reaction;badge.addEventListener('click',function(e){e.stopPropagation();openReactSheet(m,bs,isMine);});return badge;}
-function buildSRC(p){var card=document.createElement('div');card.style.cssText='max-width:190px;border-radius:12px;overflow:hidden;margin-bottom:4px';if(p.img)card.innerHTML='<div style="position:relative;width:190px;height:96px"><img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/></div><div style="padding:5px 10px;font-size:10.5px;color:var(--sub)">'+E(p.authorName)+'\'s moment</div>';else card.innerHTML='<div style="width:190px;height:76px;background:'+p.bg+';display:flex;align-items:center;justify-content:center;padding:10px"><p style="font-size:13px;color:'+p.tc+';text-align:center">'+E((p.text||'').slice(0,60))+'</p></div><div style="padding:4px 10px;font-size:10.5px;color:var(--sub)">'+E(p.authorName)+'\'s moment</div>';return card;}
+function buildSRC(p,isMine){
+  // Resolve author
+  var authorUser=null;
+  if(p.authorId) authorUser=USERS.find(function(u){return u.id===p.authorId;});
+  if(!authorUser) authorUser=USERS.find(function(u){return u.display_name===p.authorName||u.username===p.authorName;});
+
+  // Card — compact, fixed width like Instagram (~190px), aligned to sender side
+  var card=document.createElement('div');
+  card.style.cssText='width:190px;border-radius:16px;overflow:hidden;cursor:pointer;position:relative;background:var(--inp-bg);border:1.5px solid var(--border)';
+
+  // Author header row inside card
+  var hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;gap:7px;padding:9px 11px 8px';
+  var avDiv=document.createElement('div');
+  avDiv.style.cssText='width:22px;height:22px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700';
+  avDiv.innerHTML=avH(authorUser&&authorUser.avatar_url||null,p.authorName||'?');
+  var lbl=document.createElement('span');
+  lbl.style.cssText='font-size:12px;color:var(--sub);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1';
+  lbl.textContent=(p.authorName||'Someone')+'\'s Moment';
+  hdr.appendChild(avDiv);
+  hdr.appendChild(lbl);
+  if(authorUser){
+    hdr.onclick=function(e){e.stopPropagation();_chatBackCtx='prof';_profFromChat=true;openProf(authorUser);};
+  }
+  card.appendChild(hdr);
+
+  // Thin divider
+  var hdrDiv=document.createElement('div');
+  hdrDiv.style.cssText='height:1px;background:var(--border)';
+  card.appendChild(hdrDiv);
+
+  if(p.img){
+    var imgEl=document.createElement('img');
+    imgEl.src=p.img;
+    imgEl.style.cssText='width:100%;height:100px;display:block;object-fit:cover';
+    imgEl.onerror=function(){this.style.display='none';};
+    card.appendChild(imgEl);
+  } else if(p.text){
+    var txtBox=document.createElement('div');
+    txtBox.style.cssText='width:100%;min-height:72px;display:flex;align-items:center;justify-content:center;padding:12px;background:'+(p.bg||'#2C2C2C');
+    var txt2=document.createElement('p');
+    txt2.style.cssText='font-size:13px;color:'+(p.tc||'#fff')+';text-align:center;line-height:1.45;margin:0;word-break:break-word';
+    txt2.textContent=(p.text||'').slice(0,80);
+    txtBox.appendChild(txt2);
+    card.appendChild(txtBox);
+  } else {
+    var fadedBox=document.createElement('div');
+    fadedBox.style.cssText='width:100%;height:60px;display:flex;align-items:center;justify-content:center';
+    fadedBox.innerHTML='<span style="font-size:12px;color:var(--sub)">Moment faded</span>';
+    card.appendChild(fadedBox);
+  }
+
+  // Tap → open story viewer
+  card.onclick=function(){
+    if(!p.storyId){T('This moment has faded');return;}
+    var foundGI=-1,foundII=-1;
+    for(var i=0;i<svGroups.length;i++){
+      var fi=svGroups[i].items.findIndex(function(it){return it.id===p.storyId;});
+      if(fi>=0){foundGI=i;foundII=fi;break;}
+    }
+    if(foundGI>=0){svGI=foundGI;svII=foundII;openSV(svGI);}
+    else{
+      T('Loading moment…');loadStories();
+      setTimeout(function(){
+        var gi2=-1,ii2=-1;
+        for(var i=0;i<svGroups.length;i++){
+          var fi2=svGroups[i].items.findIndex(function(it){return it.id===p.storyId;});
+          if(fi2>=0){gi2=i;ii2=fi2;break;}
+        }
+        if(gi2>=0){svGI=gi2;svII=ii2;openSV(svGI);}
+        else{T('This moment has faded');}
+      },1400);
+    }
+  };
+
+  return card;
+}
 function attachHold(el,m,w,bs,isMine){
   var t=null,fired=false;
   el.style.userSelect='none';
@@ -5271,12 +5669,11 @@ function attachHold(el,m,w,bs,isMine){
   el.addEventListener('touchcancel',cancel);
   el.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();showCtx(el,m,w,bs,isMine);});
 }
-function showCtx(bEl,m,w,bs,isMine){_ctxMsg=m;_ctxBsEl=bs;_ctxIsMine=isMine;document.getElementById('ctx-unsend-btn').style.display=isMine?'flex':'none';document.getElementById('ctx-save-btn').style.display=m.isPhoto&&m.img?'flex':'none';document.getElementById('ctx-copy-btn').style.display=m.isPhoto&&m.img?'none':'flex';var ctx=document.getElementById('msg-ctx');ctx.style.cssText='display:block;visibility:hidden;position:fixed;top:-9999px;left:0;min-width:220px';document.getElementById('ctx-overlay').style.display='block';setTimeout(function(){var rect=bEl.getBoundingClientRect();var ctxW=ctx.offsetWidth||230,ctxH=ctx.offsetHeight||160,gap=6,margin=8,vw=window.innerWidth,vh=window.innerHeight;var top=rect.bottom+gap;if(top+ctxH>vh-margin)top=rect.top-ctxH-gap;if(top<margin)top=margin;var left=isMine?rect.right-ctxW:rect.left;if(left+ctxW>vw-margin)left=vw-ctxW-margin;if(left<margin)left=margin;ctx.style.top=top+'px';ctx.style.left=left+'px';ctx.style.visibility='visible';ctx.style.animation='ctxPop .18s ease forwards';},10);}
+function showCtx(bEl,m,w,bs,isMine){_ctxMsg=m;_ctxBsEl=bs;_ctxIsMine=isMine;document.getElementById('ctx-unsend-btn').style.display=isMine?'flex':'none';document.getElementById('ctx-copy-btn').style.display=m.isPhoto&&m.img?'none':'flex';var ctx=document.getElementById('msg-ctx');ctx.style.cssText='display:block;visibility:hidden;position:fixed;top:-9999px;left:0;min-width:220px';document.getElementById('ctx-overlay').style.display='block';setTimeout(function(){var rect=bEl.getBoundingClientRect();var ctxW=ctx.offsetWidth||230,ctxH=ctx.offsetHeight||160,gap=6,margin=8,vw=window.innerWidth,vh=window.innerHeight;var top=rect.bottom+gap;if(top+ctxH>vh-margin)top=rect.top-ctxH-gap;if(top<margin)top=margin;var left=isMine?rect.right-ctxW:rect.left;if(left+ctxW>vw-margin)left=vw-ctxW-margin;if(left<margin)left=margin;ctx.style.top=top+'px';ctx.style.left=left+'px';ctx.style.visibility='visible';ctx.style.animation='ctxPop .18s ease forwards';},10);}
 function closeCtx(){document.getElementById('msg-ctx').style.display='none';document.getElementById('ctx-overlay').style.display='none';_ctxMsg=null;_ctxBsEl=null;}
 function ctxReact(emoji){if(!_ctxMsg||!_ctxBsEl)return closeCtx();var m=_ctxMsg,bs=_ctxBsEl,isMine=_ctxIsMine;var removing=m.reaction===emoji;m.reaction=removing?null:emoji;if(!removing)SFX('react');var old=bs.querySelector('.rxn-badge');if(old)old.remove();if(m.reaction)bs.appendChild(makeBadge(m,isMine,bs));closeCtx();if(!removing)T(emoji+' added');_sb.from('messages').update({reaction:m.reaction}).eq('id',m.id).then(function(){});}
 function ctxReply(){if(!_ctxMsg)return closeCtx();_replyMsg=_ctxMsg;var sName=_ctxMsg.sid==='demo'?'You':(chatUser&&chatUser.display_name||'Them');_replyMsg._sName=sName;document.getElementById('reply-name').textContent=sName;document.getElementById('reply-preview').textContent=((_ctxMsg.text&&_ctxMsg.text.startsWith('[voice:'))?'🎤 Voice message':(_ctxMsg.text||(_ctxMsg.isPhoto?'📷 Photo':''))).slice(0,50)||'…';document.getElementById('reply-bar').classList.add('on');document.getElementById('chatinp').focus();closeCtx();}
 function cancelReplyBar(){_replyMsg=null;document.getElementById('reply-bar').classList.remove('on');}
-function ctxSavePhoto(){if(!_ctxMsg||!_ctxMsg.img)return closeCtx();var a=document.createElement('a');a.href=_ctxMsg.img;a.download='fade-photo.jpg';a.click();closeCtx();T('Photo saved');}
 function ctxCopy(){if(!_ctxMsg)return closeCtx();if(navigator.clipboard)navigator.clipboard.writeText(_ctxMsg.text||'').catch(function(){});T('Copied');closeCtx();}
 function ctxUnsend(){
   if(!_ctxMsg)return closeCtx();
@@ -5354,38 +5751,57 @@ function sendPhoto(e){
   cancelReplyBar();
   appendBubble(m);SFX('send');
   e.target.value='';
+  // Use unique path under messages/ so RLS on post-images allows it
+  var path='messages/'+profile.id+'/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.jpg';
   compressImage(f, 1280, 0.82).then(function(compressed){
-  var path='chat/'+profile.id+'/'+Date.now()+'.jpg';
-  _sb.storage.from('post-images').upload(path,compressed,{contentType:'image/jpeg',upsert:true}).then(function(sr){
-    var imgUrl=blobUrl;
-    if(!sr.error){
-      var pub=_sb.storage.from('post-images').getPublicUrl(path);
-      imgUrl=(pub.data&&pub.data.publicUrl)||blobUrl;
-      // Patch the optimistic bubble's img src to the permanent URL immediately
-      var tempEl=document.querySelector('[data-msgid="'+tempId+'"]');
-      if(tempEl){var tempImg=tempEl.querySelector('img[data-msg-photo]')||tempEl.querySelector('img');if(tempImg&&imgUrl!==blobUrl)tempImg.src=imgUrl;}
-    }
-    var expires=new Date(Date.now()+86400000).toISOString();
-    _sb.from('messages').insert({
-      sender_id:profile.id,receiver_id:chatUser.id,
-      content:null,img_url:imgUrl,is_photo:true,
-      reply_to_id:replyToId||null,
-      is_read:false,expires_at:expires
-    }).select('id').single().then(function(res){
-      if(res.error){T('Photo send failed');return;}
-      var el=document.querySelector('[data-msgid="'+tempId+'"]');
-      if(el){
-        el.dataset.msgid=res.data.id;
-        m.id=res.data.id;
-        // Ensure img src is the final DB URL, not blob
-        if(imgUrl!==blobUrl){var fi=el.querySelector('img');if(fi&&fi.src!==imgUrl)fi.src=imgUrl;}
+    _sb.storage.from('post-images').upload(path, compressed, {contentType:'image/jpeg', upsert:false}).then(function(sr){
+      if(sr.error){
+        // Upload failed — still try to insert with blob url as fallback display (won't work for receiver)
+        console.error('Photo upload error:', sr.error.message);
+        T('Photo upload failed: '+(sr.error.message||'check storage bucket RLS'));
+        // Remove the optimistic bubble since it won't reach the other person
+        var tempEl=document.querySelector('[data-msgid="'+tempId+'"]');
+        if(tempEl){var w=tempEl.classList.contains('bwrap')?tempEl:tempEl.closest('.bwrap');if(w)w.remove();}
+        return;
       }
-      var cv=convos.find(function(x){return x.user.id===chatUser.id;});
-      if(cv){cv.lastMsg='\ud83d\udcf7 Photo';cv.lastSid='demo';cv.ts=Date.now();}
-      else{convos.unshift({user:chatUser,lastMsg:'\ud83d\udcf7 Photo',lastSid:'demo',ts:Date.now()});}
+      // Get permanent public URL
+      var pub=_sb.storage.from('post-images').getPublicUrl(path);
+      var imgUrl=(pub.data&&pub.data.publicUrl)||blobUrl;
+      // Patch the optimistic bubble to the permanent URL
+      var tempEl=document.querySelector('[data-msgid="'+tempId+'"]');
+      if(tempEl){
+        var tempImg=tempEl.querySelector('img[data-msg-photo]')||tempEl.querySelector('img');
+        if(tempImg)tempImg.src=imgUrl;
+      }
+      m.img=imgUrl; // keep in-memory ref current
+      var expires=new Date(Date.now()+86400000).toISOString();
+      _sb.from('messages').insert({
+        sender_id:profile.id,
+        receiver_id:chatUser.id,
+        content:null,
+        img_url:imgUrl,
+        is_photo:true,
+        reply_to_id:replyToId||null,
+        is_read:false,
+        expires_at:expires
+      }).select('id').single().then(function(res){
+        if(res.error){
+          T('Photo send failed (DB): '+(res.error.message||'check messages RLS'));
+          // Remove optimistic bubble
+          var el2=document.querySelector('[data-msgid="'+tempId+'"]');
+          if(el2){var w2=el2.classList.contains('bwrap')?el2:el2.closest('.bwrap');if(w2)w2.remove();}
+          return;
+        }
+        // Replace temp ID with real DB ID
+        var el=document.querySelector('[data-msgid="'+tempId+'"]');
+        if(el){el.dataset.msgid=res.data.id;m.id=res.data.id;}
+        // Update convo list
+        var cv=convos.find(function(x){return x.user.id===chatUser.id;});
+        if(cv){cv.lastMsg='\ud83d\udcf7 Photo';cv.lastSid='demo';cv.ts=Date.now();convos.sort(function(a,b){return b.ts-a.ts;});}
+        else{convos.unshift({user:chatUser,lastMsg:'\ud83d\udcf7 Photo',lastSid:'demo',ts:Date.now()});}
+      });
     });
-  }); // end storage upload
-  }); // end compressImage
+  });
 }
 function sendMsg(){
   var inp=document.getElementById('chatinp');var txt=inp.value.trim();if(!txt||!chatUser)return;
@@ -5398,7 +5814,7 @@ function sendMsg(){
   var replyToSender=_replyMsg&&(_replyMsg.sid==='demo'?'You':(chatUser&&chatUser.display_name||'Them'))||null;
   cancelReplyBar();
   var expires=new Date(Date.now()+86400000).toISOString();
-  // Optimistic bubble
+  // Optimistic bubble + convo list update — both happen instantly before DB
   var tempId='tmp-'+Date.now();
   var m={id:tempId,sid:'demo',text:txt,ts:Date.now(),replyToId:replyToId,replyTo:replyToText,replyToSender:replyToSender};
   appendBubble(m);
@@ -5406,6 +5822,10 @@ function sendMsg(){
   haptic('send');
   var msgs=document.getElementById('msgs');
   if(msgs)msgs.scrollTop=msgs.scrollHeight;
+  // Update convo list immediately (optimistic)
+  var cv=convos.find(function(x){return x.user.id===chatUser.id;});
+  if(cv){cv.lastMsg=txt;cv.lastSid='demo';cv.ts=Date.now();convos.sort(function(a,b){return b.ts-a.ts;});}
+  else{convos.unshift({user:chatUser,lastMsg:txt,lastSid:'demo',ts:Date.now()});}
   // Save to Supabase
   _sb.from('messages').insert({
     sender_id:profile.id,
@@ -5430,10 +5850,6 @@ function sendMsg(){
         body:JSON.stringify({recipientId:chatUser.id,type:'message',actor:{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},extra:{msgText:txt.slice(0,60)}})
       }).catch(function(e){console.log('send-push msg error:',e);});
     });
-    // Update convo list
-    var cv=convos.find(function(x){return x.user.id===chatUser.id;});
-    if(cv){cv.lastMsg=txt;cv.lastSid='demo';cv.ts=Date.now();}
-    else{convos.unshift({user:chatUser,lastMsg:txt,lastSid:'demo',ts:Date.now()});}
   });
 }
 
@@ -5530,15 +5946,23 @@ function openCS(pid){
           return lc.id&&String(lc.id).startsWith('c')&&!topLevel.find(function(tc){return tc.id===lc.id;});
         });
         p.comments=topLevel.concat(localOnly);
-        // Restore liked state for current user from comment_likes table
+        // Load liked state AND real like counts from comment_likes (avoids stale likes_count column + RLS issue)
         var allEntries=[];
         topLevel.forEach(function(c){allEntries.push(c);(c.replies||[]).forEach(function(r){allEntries.push(r);});});
         var allIds=allEntries.map(function(e){return e.id;}).filter(Boolean);
         if(allIds.length&&profile&&profile.id){
-          _sb.from('comment_likes').select('comment_id').eq('user_id',profile.id).in('comment_id',allIds).then(function(lr){
+          _sb.from('comment_likes').select('comment_id,user_id').in('comment_id',allIds).then(function(lr){
             if(csPid!==pid)return;
-            var likedSet={};(lr.data||[]).forEach(function(row){likedSet[row.comment_id]=true;});
-            allEntries.forEach(function(e){e.liked=!!likedSet[e.id];if(e.liked&&e.likes<1)e.likes=1;});
+            var likedSet={};var countMap={};
+            (lr.data||[]).forEach(function(row){
+              countMap[row.comment_id]=(countMap[row.comment_id]||0)+1;
+              if(row.user_id===profile.id)likedSet[row.comment_id]=true;
+            });
+            allEntries.forEach(function(e){
+              e.liked=!!likedSet[e.id];
+              // Use live count from comment_likes; fall back to likes_count column if no rows yet
+              if(countMap[e.id]!==undefined)e.likes=countMap[e.id];
+            });
             renderCSList();
           });
         } else {
@@ -5547,8 +5971,56 @@ function openCS(pid){
       });
     });
 }
-function closeCS(){var bg=document.getElementById('cs-bg');bg.classList.remove('on');setTimeout(function(){bg.style.display='none';csPid=null;},320);}
+function closeCS(){var bg=document.getElementById('cs-bg');bg.classList.remove('on');closeCmtDelBar();setTimeout(function(){bg.style.display='none';csPid=null;},320);}
 function csBgClose(e){if(e.target===document.getElementById('cs-bg')||e.target.classList.contains('cs-dim'))closeCS();}
+
+// ── COMMENT HOLD-TO-DELETE ────────────────────────────────────────────────────
+var _cmtDelTarget=null; // {row, commentId, isReply, parentIdx, replyIdx, commentIdx}
+function openCmtDelBar(target){
+  _cmtDelTarget=target;
+  haptic();
+  document.getElementById('cmt-del-modal').classList.add('on');
+}
+function closeCmtDelBar(){
+  _cmtDelTarget=null;
+  var m=document.getElementById('cmt-del-modal');if(m)m.classList.remove('on');
+}
+function execCmtDelete(){
+  if(!_cmtDelTarget)return;
+  var t=_cmtDelTarget;
+  closeCmtDelBar();
+  // Fade row out
+  t.row.style.transition='opacity .2s ease';
+  t.row.style.opacity='0';
+  setTimeout(function(){
+    if(t.row.parentNode)t.row.parentNode.removeChild(t.row);
+    // Remove from data
+    var p=posts.find(function(x){return x.id===csPid;});
+    if(p&&p.comments){
+      if(t.isReply){
+        var parent=p.comments[t.parentIdx];
+        if(parent&&parent.replies)parent.replies.splice(t.replyIdx,1);
+      } else {
+        p.comments.splice(t.commentIdx,1);
+      }
+    }
+    // Delete from Supabase
+    if(t.commentId){
+      _sb.from('comments').delete().eq('id',t.commentId).eq('user_id',profile.id).then(function(){});
+    }
+    // Update comment count in feed
+    document.querySelectorAll('#cc-'+csPid).forEach(function(el){
+      var p2=posts.find(function(x){return x.id===csPid;});
+      if(p2){p2.comments_count=Math.max(0,(p2.comments_count||0)-1);el.textContent=p2.comments_count||0;}
+    });
+    // Show empty state if no comments left
+    var p3=posts.find(function(x){return x.id===csPid;});
+    var list=document.getElementById('cs-list');
+    if(list&&p3&&!(p3.comments||[]).length){
+      list.innerHTML='<div class="empty" style="padding:50px 22px;text-align:center"><div class="emps">No comments yet. Be first!</div></div>';
+    }
+  },220);
+}
 function renderCSList(){
   var p=posts.find(function(x){return x.id===csPid;}),l=document.getElementById('cs-list');if(!l||!p)return;
   if(!(p.comments||[]).length){l.innerHTML='<div class="empty" style="padding:50px 22px;text-align:center"><div class="emps">No comments yet. Be first!</div></div>';return;}
@@ -5596,15 +6068,22 @@ function renderCSList(){
         hb.innerHTML='<svg width="16" height="16" fill="'+(comment.liked?'#E8352A':'none')+'" stroke="'+(comment.liked?'#E8352A':'currentColor')+'" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
         hc.textContent=comment.likes>0?comment.likes:'';
         SFX(comment.liked?'like':'unlike');
-        // Persist to Supabase — update comment_likes AND increment/decrement likes_count on the comment row
+        // Persist to Supabase — insert/delete comment_like, then recount from comment_likes (avoids RLS issue on comments table)
         if(profile&&profile.id){
-          var _newLikes=comment.likes;
           if(comment.liked){
-            _sb.from('comment_likes').insert({comment_id:comment.id,user_id:profile.id}).then(function(){});
-            _sb.from('comments').update({likes_count:_newLikes}).eq('id',comment.id).then(function(){});
+            _sb.from('comment_likes').insert({comment_id:comment.id,user_id:profile.id}).then(function(){
+              _sb.from('comment_likes').select('comment_id',{count:'exact',head:true}).eq('comment_id',comment.id).then(function(cr){
+                var real=cr.count||comment.likes;
+                comment.likes=real;hc.textContent=real>0?real:'';
+              });
+            });
           } else {
-            _sb.from('comment_likes').delete().eq('comment_id',comment.id).eq('user_id',profile.id).then(function(){});
-            _sb.from('comments').update({likes_count:_newLikes}).eq('id',comment.id).then(function(){});
+            _sb.from('comment_likes').delete().eq('comment_id',comment.id).eq('user_id',profile.id).then(function(){
+              _sb.from('comment_likes').select('comment_id',{count:'exact',head:true}).eq('comment_id',comment.id).then(function(cr){
+                var real=Math.max(0,cr.count||0);
+                comment.likes=real;hc.textContent=real>0?real:'';
+              });
+            });
           }
         }
       };
@@ -5612,6 +6091,15 @@ function renderCSList(){
     heartWrap.appendChild(heartBtn);heartWrap.appendChild(heartCount);
 
     row.appendChild(avEl);row.appendChild(bodyEl);row.appendChild(heartWrap);
+    // Hold-to-delete for own comments
+    if(c.uid&&profile&&c.uid===profile.id){
+      (function(r,commentId,commentIdx){
+        var _ht=null;
+        r.addEventListener('touchstart',function(){_ht=setTimeout(function(){openCmtDelBar({row:r,commentId:commentId,isReply:false,commentIdx:commentIdx});},500);},{passive:true});
+        r.addEventListener('touchend',function(){clearTimeout(_ht);},{passive:true});
+        r.addEventListener('touchcancel',function(){clearTimeout(_ht);},{passive:true});
+      })(row,c.id,ci);
+    }
     l.appendChild(row);
 
     // ── View replies toggle (no dash) ──
@@ -5665,12 +6153,21 @@ function renderCSList(){
         rhBtn.innerHTML='<svg width="14" height="14" fill="'+(r.liked?'#E8352A':'none')+'" stroke="'+(r.liked?'#E8352A':'currentColor')+'" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
         var rhCount=document.createElement('div');rhCount.className='cheart-count';rhCount.textContent=r.likes>0?r.likes:'';
         (function(reply,hb,hc,post,commentIdx,replyIdx){hb.onclick=function(){reply.liked=!reply.liked;reply.likes=Math.max(0,(reply.likes||0)+(reply.liked?1:-1));hb.className='cheart'+(reply.liked?' liked':'');hb.innerHTML='<svg width="14" height="14" fill="'+(reply.liked?'#E8352A':'none')+'" stroke="'+(reply.liked?'#E8352A':'currentColor')+'" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';hc.textContent=reply.likes>0?reply.likes:'';SFX(reply.liked?'like':'unlike');
-          if(profile&&profile.id){var _rNewLikes=reply.likes;if(reply.liked){_sb.from('comment_likes').insert({comment_id:reply.id,user_id:profile.id}).then(function(){});_sb.from('comments').update({likes_count:_rNewLikes}).eq('id',reply.id).then(function(){});}else{_sb.from('comment_likes').delete().eq('comment_id',reply.id).eq('user_id',profile.id).then(function(){});_sb.from('comments').update({likes_count:_rNewLikes}).eq('id',reply.id).then(function(){});}}
+          if(profile&&profile.id){if(reply.liked){_sb.from('comment_likes').insert({comment_id:reply.id,user_id:profile.id}).then(function(){_sb.from('comment_likes').select('comment_id',{count:'exact',head:true}).eq('comment_id',reply.id).then(function(cr){var real=cr.count||reply.likes;reply.likes=real;hc.textContent=real>0?real:'';});});}else{_sb.from('comment_likes').delete().eq('comment_id',reply.id).eq('user_id',profile.id).then(function(){_sb.from('comment_likes').select('comment_id',{count:'exact',head:true}).eq('comment_id',reply.id).then(function(cr){var real=Math.max(0,cr.count||0);reply.likes=real;hc.textContent=real>0?real:'';});});}}
         };})(r,rhBtn,rhCount,p,ci,c.replies.indexOf(r));
         rhWrap.appendChild(rhBtn);rhWrap.appendChild(rhCount);
 
         rb.appendChild(rnameRow);rb.appendChild(rtxtEl);rb.appendChild(rmetaEl);
         rrow.appendChild(rav);rrow.appendChild(rb);rrow.appendChild(rhWrap);
+        // Hold-to-delete for own replies
+        if(r.uid&&profile&&r.uid===profile.id){
+          (function(rr,replyId,parentIdx,replyIdx){
+            var _ht=null;
+            rr.addEventListener('touchstart',function(){_ht=setTimeout(function(){openCmtDelBar({row:rr,commentId:replyId,isReply:true,parentIdx:parentIdx,replyIdx:replyIdx});},500);},{passive:true});
+            rr.addEventListener('touchend',function(){clearTimeout(_ht);},{passive:true});
+            rr.addEventListener('touchcancel',function(){clearTimeout(_ht);},{passive:true});
+          })(rrow,r.id,ci,c.replies.indexOf(r));
+        }
         replBlock.appendChild(rrow);
       });
 
@@ -6102,6 +6599,18 @@ function closeProf(){
     ps.style.display='none';
     _profUser=null;
 
+    // Return to chat if we came from the chat window header
+    if(_profFromChat){
+      _profFromChat=false;
+      // Chat window is still open underneath — just ensure it's visible
+      var cw=document.getElementById('cw');
+      if(cw&&chatUser){
+        cw.style.display='flex';
+        requestAnimationFrame(function(){requestAnimationFrame(function(){cw.classList.add('on');});});
+      }
+      return;
+    }
+
     // Return to comment sheet if we came from there
     if(_csProfReturn){
       _csProfReturn=false;
@@ -6159,6 +6668,7 @@ function closeProf(){
 // context stack for chat back navigation:
 // each entry = {type:'prof'|'notif'|'tab', ...}
 var _chatBackCtx=null;
+var _profFromChat=false; // true when profile was opened from inside the chat window
 
 function startConvoC(uid){
   var u=USERS.find(function(x){return x.id===uid;});
@@ -6340,9 +6850,25 @@ function showPostReport(postId){
   items.innerHTML='';
   var title=document.createElement('div');title.style.cssText='padding:16px 20px 8px;font-weight:700;font-size:16px';title.textContent='Report post';items.appendChild(title);
   var sub=document.createElement('div');sub.style.cssText='padding:0 16px 8px;font-size:13.5px;color:var(--sub)';sub.textContent='Why are you reporting this?';items.appendChild(sub);
-  ['Spam','Inappropriate content','Harassment','False information','Something else'].forEach(function(cat){
+  ['Spam','Inappropriate content','Harassment','False information','Hate speech','Something else'].forEach(function(cat){
     var row=document.createElement('div');row.className='dd-item';row.textContent=cat;
-    row.onclick=function(){closeDD();if(profile)_sb.from('reports').insert({reporter_id:profile.id,post_id:postId,reason:cat}).then(function(){});T('Report submitted. Thanks.');};
+    row.onclick=function(){
+      closeDD();
+      if(!profile)return;
+      var post=posts.find(function(p){return p.id===postId;});
+      var reportedUid=post?post.uid:null;
+      _sb.from('reports').insert({
+        reporter_id:profile.id,
+        post_id:postId,
+        reported_user_id:reportedUid||null,
+        reason:cat,
+        status:'pending',
+        created_at:new Date().toISOString()
+      }).then(function(res){
+        if(res.error){T('Could not submit report. Try again.');return;}
+        T('Report submitted. Thanks.');
+      });
+    };
     items.appendChild(row);
   });
   var bg=document.getElementById('dd-bg'),sh=document.getElementById('dd-sheet');
@@ -6437,7 +6963,8 @@ function buildSRoot(){
   if(isFounder){
     sections.unshift({title:'Admin',items:[
       {ico:'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',label:'Verification Requests',act:function(){soPush('Verification Requests',buildAdminPanel);}},
-      {ico:IC.verify,label:'Manage Verified Users',act:function(){soPush('Manage Verified Users',function(el){el.innerHTML='';buildBadgeManageTab(el);});}}
+      {ico:IC.verify,label:'Manage Verified Users',act:function(){soPush('Manage Verified Users',function(el){el.innerHTML='';buildBadgeManageTab(el);});}},
+      {ico:'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',label:'Reports',act:function(){soPush('Reports',buildReportsPanel);}}
     ]});
   }
   sections.forEach(function(sec){appendSection(el,sec.title,sec.items);});
@@ -6941,9 +7468,54 @@ function copyProfileLink(){
 }
 
 // ── EDIT PROFILE ──────────────────────────────────────────────────────────────
-function openEP(){document.getElementById('ep-name').value=profile&&profile.display_name||'';document.getElementById('ep-user').value=profile&&profile.username||'';document.getElementById('ep-bio').value=profile&&profile.bio||'';var bg=document.getElementById('ep-bg');bg.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){bg.querySelector('.sheet').style.transform='translateY(0)';});});setTimeout(function(){document.getElementById('ep-name').focus();},350);}
+function openEP(){document.getElementById('ep-name').value=profile&&profile.display_name||'';document.getElementById('ep-user').value=profile&&profile.username||'';document.getElementById('ep-bio').value=profile&&profile.bio||'';var st=document.getElementById('ep-user-status');if(st)st.style.display='none';var bg=document.getElementById('ep-bg');bg.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){bg.querySelector('.sheet').style.transform='translateY(0)';});});setTimeout(function(){document.getElementById('ep-name').focus();},350);}
 function closeEP(){closeSheet('ep-bg');}
-function saveProfile(){if(!profile)return;var newName=document.getElementById('ep-name').value.trim()||profile.display_name;var newUser=document.getElementById('ep-user').value.trim()||profile.username;var newBio=document.getElementById('ep-bio').value.trim();profile.display_name=newName;profile.username=newUser;profile.bio=newBio;closeEP();renderMe();_sb.from('profiles').update({display_name:newName,username:newUser,bio:newBio}).eq('id',profile.id).then(function(res){if(res.error){T('Could not save profile');}else{T('Saved');}});}
+
+var _epUTimer=null;
+var _epUValid=true; // true = available or unchanged
+function checkEPUsername(val){
+  var el=document.getElementById('ep-user-status');if(!el)return;
+  var v=val.trim().toLowerCase().replace(/\s+/g,'');
+  // If same as current username it's always valid
+  if(v===(profile&&profile.username||'').toLowerCase()){
+    _epUValid=true;el.style.display='none';return;
+  }
+  _epUValid=false;
+  if(!v){el.style.display='none';return;}
+  el.style.display='block';el.textContent='Checking…';el.style.color='var(--sub)';
+  clearTimeout(_epUTimer);
+  _epUTimer=setTimeout(function(){
+    _sb.from('profiles').select('id',{count:'exact',head:true}).eq('username',v).then(function(res){
+      var taken=(res.count||0)>0;
+      _epUValid=!taken;
+      el.textContent=taken?'Not available':'Available';
+      el.style.color=taken?'#E8352A':'#16A34A';
+    });
+  },420);
+}
+
+function saveProfile(){
+  if(!profile)return;
+  var newName=document.getElementById('ep-name').value.trim()||profile.display_name;
+  var newUser=document.getElementById('ep-user').value.trim().toLowerCase().replace(/\s+/g,'')||profile.username;
+  var newBio=document.getElementById('ep-bio').value.trim();
+  // Block save if username is taken
+  if(!_epUValid){T('That username is taken');return;}
+  var saveBtn=document.querySelector('#ep-bg .btn-dark');
+  if(saveBtn){saveBtn.textContent='Saving…';saveBtn.disabled=true;}
+  _sb.from('profiles').update({display_name:newName,username:newUser,bio:newBio}).eq('id',profile.id).then(function(res){
+    if(saveBtn){saveBtn.textContent='Save changes';saveBtn.disabled=false;}
+    if(res.error){
+      // Unique constraint violation
+      if(res.error.code==='23505'){T('That username is already taken');var st=document.getElementById('ep-user-status');if(st){st.style.display='block';st.textContent='Not available';st.style.color='#E8352A';}_epUValid=false;}
+      else{T('Could not save profile');}
+      return;
+    }
+    profile.display_name=newName;profile.username=newUser;profile.bio=newBio;
+    _epUValid=true;
+    closeEP();renderMe();T('Saved');
+  });
+}
 
 // ── PHOTO VIEWER ──────────────────────────────────────────────────────────────
 (function(){
@@ -6956,17 +7528,7 @@ function saveProfile(){if(!profile)return;var newName=document.getElementById('e
   closeBtn.style.cssText='background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:18px';
   closeBtn.innerHTML='✕';
   closeBtn.onclick=function(){overlay.style.display='none';};
-  var saveBtn=document.createElement('button');
-  saveBtn.style.cssText='background:rgba(255,255,255,.15);border:none;border-radius:20px;padding:8px 16px;display:flex;align-items:center;gap:7px;cursor:pointer;color:#fff;font-size:13.5px;font-weight:600;font-family:Inter,sans-serif';
-  saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';
-  saveBtn.onclick=function(){
-    var src=overlay._src;if(!src)return;
-    var a=document.createElement('a');a.href=src;a.download='fade-photo.jpg';a.click();
-    saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Saved';
-    saveBtn.style.background='rgba(255,255,255,.3)';
-    setTimeout(function(){saveBtn.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save';saveBtn.style.background='rgba(255,255,255,.15)';},2000);
-  };
-  topBar.appendChild(closeBtn);topBar.appendChild(saveBtn);
+  topBar.appendChild(closeBtn);
   var img=document.createElement('img');
   img.style.cssText='max-width:100%;max-height:100dvh;object-fit:contain;border-radius:4px;padding:60px 12px max(60px,env(safe-area-inset-bottom))';
   overlay.appendChild(topBar);overlay.appendChild(img);
@@ -6976,7 +7538,6 @@ function saveProfile(){if(!profile)return;var newName=document.getElementById('e
     overlay._src=src;img.src=src;
     var chgBtn=overlay.querySelector('#pv-change-btn');
     if(opts.isProfile){
-      saveBtn.style.display='none';
       if(opts.canChange){
         if(!chgBtn){
           chgBtn=document.createElement('label');
@@ -6989,7 +7550,6 @@ function saveProfile(){if(!profile)return;var newName=document.getElementById('e
         } else { chgBtn.style.display='flex'; }
       } else { if(chgBtn)chgBtn.style.display='none'; }
     } else {
-      saveBtn.style.display='flex';
       if(chgBtn)chgBtn.style.display='none';
     }
     overlay.style.display='flex';
@@ -7602,6 +8162,275 @@ function openBadgeEditor(u,listWrap,onDone){
   panel.appendChild(body);
 }
 
+// ── REPORTS PANEL ────────────────────────────────────────────────────────────
+function buildReportsPanel(el){
+  el.innerHTML='';
+  var wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-direction:column;min-height:100%';
+  var loading=document.createElement('div');loading.style.cssText='display:flex;justify-content:center;padding:40px';loading.innerHTML='<div class="ptr-ring"></div>';
+  wrap.appendChild(loading);el.appendChild(wrap);
+
+  // Fetch all reports — pending and resolved separately from DB
+  Promise.all([
+    _sb.from('reports').select('*').or('status.eq.pending,status.is.null').order('created_at',{ascending:false}),
+    _sb.from('reports').select('*').not('status','is',null).not('status','eq','pending').order('reviewed_at',{ascending:false})
+  ]).then(function(results){
+    wrap.innerHTML='';
+    var pendingRes=results[0];
+    var resolvedRes=results[1];
+    if(pendingRes.error){
+      wrap.innerHTML='<div class="empty"><div class="empt">Access error</div><div class="emps">Make sure the reports table exists and RLS allows admin read.</div></div>';
+      return;
+    }
+
+    var pending=pendingRes.data||[];
+    var resolved=resolvedRes.data||[];
+
+    // Collect all user IDs
+    var uidSet={};
+    pending.concat(resolved).forEach(function(r){
+      if(r.reporter_id)uidSet[r.reporter_id]=1;
+      if(r.reported_user_id)uidSet[r.reported_user_id]=1;
+    });
+    var uids=Object.keys(uidSet);
+
+    function doRender(pmap){
+      var activeTab=0;
+
+      var tabBar=document.createElement('div');
+      tabBar.style.cssText='display:flex;border-bottom:1.5px solid var(--border);flex-shrink:0;background:var(--card);position:sticky;top:0;z-index:2';
+      var contentWrap=document.createElement('div');contentWrap.style.cssText='flex:1;overflow-y:auto';
+
+      var pendBadge=document.createElement('span');
+      pendBadge.style.cssText='display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:50%;background:#E8352A;color:#fff;font-size:10px;font-weight:700;margin-left:5px;padding:0 3px';
+      function updateBadge(){pendBadge.textContent=pending.length;pendBadge.style.display=pending.length?'inline-flex':'none';}
+      updateBadge();
+
+      function renderTab(idx){
+        activeTab=idx;
+        tabBar.querySelectorAll('.rep-tab').forEach(function(t,i){
+          t.style.borderBottom=i===idx?'2.5px solid var(--text)':'2.5px solid transparent';
+          t.style.color=i===idx?'var(--text)':'var(--sub)';
+          t.style.fontWeight=i===idx?'700':'500';
+        });
+        contentWrap.innerHTML='';
+        var list=idx===0?pending:resolved;
+        if(!list.length){
+          contentWrap.innerHTML='<div class="empty anim-fade-up"><div class="empt">'+(idx===0?'No pending reports':'No resolved reports yet')+'</div></div>';
+          return;
+        }
+        list.forEach(function(rep){
+          contentWrap.appendChild(_buildReportCard(rep,pmap,pending,resolved,updateBadge,contentWrap,function(){renderTab(activeTab);}));
+        });
+      }
+
+      [{label:'New',extra:pendBadge},{label:'Resolved',extra:null}].forEach(function(def,i){
+        var tab=document.createElement('button');tab.className='rep-tab';
+        tab.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;padding:14px 4px;background:none;border:none;border-bottom:2.5px solid '+(i===0?'var(--text)':'transparent')+';font-size:13px;font-weight:'+(i===0?'700':'500')+';color:'+(i===0?'var(--text)':'var(--sub)')+';font-family:Inter,sans-serif;cursor:pointer;transition:all .18s;gap:2px';
+        var lspan=document.createElement('span');lspan.textContent=def.label;tab.appendChild(lspan);
+        if(def.extra)tab.appendChild(def.extra);
+        (function(idx){tab.onclick=function(){renderTab(idx);};})(i);
+        tabBar.appendChild(tab);
+      });
+
+      wrap.appendChild(tabBar);wrap.appendChild(contentWrap);
+      renderTab(0);
+
+      // Realtime — new report pops in instantly
+      _sb.channel('admin-reports').on('postgres_changes',{event:'INSERT',schema:'public',table:'reports'},function(payload){
+        var r=payload.new;
+        if(pending.find(function(x){return x.id===r.id;}))return;
+        var uidsNeeded=[r.reporter_id,r.reported_user_id].filter(Boolean);
+        function addIt(){
+          pending.unshift(r);
+          updateBadge();
+          if(activeTab===0){
+            var empty=contentWrap.querySelector('.empty');
+            if(empty)contentWrap.innerHTML='';
+            contentWrap.insertBefore(_buildReportCard(r,pmap,pending,resolved,updateBadge,contentWrap,function(){renderTab(activeTab);}),contentWrap.firstChild);
+          }
+          T('New report received');
+        }
+        if(uidsNeeded.length){
+          _sb.from('profiles').select('id,username,display_name,avatar_url').in('id',uidsNeeded).then(function(pr){
+            (pr.data||[]).forEach(function(p){pmap[p.id]=p;});
+            addIt();
+          });
+        } else {addIt();}
+      }).subscribe();
+    }
+
+    if(!uids.length){doRender({});return;}
+    _sb.from('profiles').select('id,username,display_name,avatar_url').in('id',uids).then(function(pr){
+      var pmap={};(pr.data||[]).forEach(function(p){pmap[p.id]=p;});
+      doRender(pmap);
+    });
+  });
+}
+
+function _buildReportCard(rep,pmap,pendingArr,resolvedArr,updateBadge,contentWrap,onRerender){
+  var reporter=pmap[rep.reporter_id]||{display_name:'Unknown',username:'unknown'};
+  var reportedUser=rep.reported_user_id?(pmap[rep.reported_user_id]||{display_name:'Unknown',username:'unknown'}):null;
+  var isPending=rep.status==='pending'||!rep.status;
+  var ts=rep.created_at?new Date(rep.created_at).toLocaleDateString([],{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+
+  var card=document.createElement('div');
+  card.style.cssText='background:var(--card);border-bottom:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:12px';
+
+  // Status pill + time row
+  var topRow=document.createElement('div');topRow.style.cssText='display:flex;align-items:center;justify-content:space-between';
+  var pill=document.createElement('span');
+  var pillColor=rep.status==='dismissed'?'#6B7280':rep.status==='deleted'?'#DC2626':rep.status==='warned'?'#F59E0B':'#E8352A';
+  var pillLabel=rep.status==='dismissed'?'Dismissed':rep.status==='deleted'?'Post Deleted':rep.status==='warned'?'User Warned':'Pending';
+  pill.style.cssText='font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:'+pillColor+'1A;color:'+pillColor+';letter-spacing:.3px;text-transform:uppercase';
+  pill.textContent=pillLabel;
+  var timeEl=document.createElement('span');timeEl.style.cssText='font-size:11.5px;color:var(--sub)';timeEl.textContent=ts;
+  topRow.appendChild(pill);topRow.appendChild(timeEl);
+  card.appendChild(topRow);
+
+  // Reason
+  var reasonEl=document.createElement('div');reasonEl.style.cssText='font-size:14px;font-weight:600;color:var(--text)';reasonEl.textContent=rep.reason||'No reason given';
+  card.appendChild(reasonEl);
+
+  // Reporter row
+  var repRow=document.createElement('div');repRow.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--inp-bg);border-radius:12px';
+  var repAv=document.createElement('div');repAv.style.cssText='width:34px;height:34px;border-radius:50%;overflow:hidden;flex-shrink:0;background:'+nc(reporter.display_name||reporter.username);
+  repAv.innerHTML=avH(reporter.avatar_url,reporter.display_name||reporter.username);
+  var repInfo=document.createElement('div');repInfo.style.cssText='flex:1;min-width:0';
+  repInfo.innerHTML='<div style="font-size:11px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Reported by</div><div style="font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(reporter.display_name||reporter.username)+'<span style="color:var(--sub);font-weight:400;margin-left:4px">@'+E(reporter.username||'')+'</span></div>';
+  repRow.appendChild(repAv);repRow.appendChild(repInfo);card.appendChild(repRow);
+
+  // Reported user row (if known)
+  if(reportedUser){
+    var rUserRow=document.createElement('div');rUserRow.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;background:#FEF2F2;border-radius:12px';
+    var rUserAv=document.createElement('div');rUserAv.style.cssText='width:34px;height:34px;border-radius:50%;overflow:hidden;flex-shrink:0;background:'+nc(reportedUser.display_name||reportedUser.username);
+    rUserAv.innerHTML=avH(reportedUser.avatar_url,reportedUser.display_name||reportedUser.username);
+    var rUserInfo=document.createElement('div');rUserInfo.style.cssText='flex:1;min-width:0';
+    rUserInfo.innerHTML='<div style="font-size:11px;font-weight:600;color:#DC2626;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Reported user</div><div style="font-size:13.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(reportedUser.display_name||reportedUser.username)+'<span style="color:var(--sub);font-weight:400;margin-left:4px">@'+E(reportedUser.username||'')+'</span></div>';
+    rUserRow.appendChild(rUserAv);rUserRow.appendChild(rUserInfo);card.appendChild(rUserRow);
+  }
+
+  // Post preview (if post_id exists — try to find in local posts array)
+  if(rep.post_id){
+    var localPost=posts.find(function(p){return p.id===rep.post_id;});
+    var previewBox=document.createElement('div');previewBox.style.cssText='background:var(--inp-bg);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px';
+    var previewLabel=document.createElement('div');previewLabel.style.cssText='font-size:10px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.5px';previewLabel.textContent='Reported Post';
+    previewBox.appendChild(previewLabel);
+    if(localPost){
+      if(localPost.text){
+        var pt=document.createElement('div');pt.style.cssText='font-size:13.5px;color:var(--text);line-height:1.5';pt.textContent=localPost.text.slice(0,120)+(localPost.text.length>120?'…':'');
+        previewBox.appendChild(pt);
+      }
+      if(localPost.img){
+        var pi=document.createElement('img');pi.src=localPost.img;pi.style.cssText='width:100%;max-height:140px;object-fit:cover;border-radius:8px;cursor:pointer';
+        pi.onclick=function(){openPhotoViewer(localPost.img);};
+        previewBox.appendChild(pi);
+      }
+      if(!localPost.text&&!localPost.img){
+        previewBox.innerHTML+='<div style="font-size:13px;color:var(--sub);font-style:italic">Post has no content preview</div>';
+      }
+    } else {
+      var pidEl=document.createElement('div');pidEl.style.cssText='font-size:12px;color:var(--sub);font-family:monospace;word-break:break-all';pidEl.textContent='Post ID: '+rep.post_id;
+      var noteEl=document.createElement('div');noteEl.style.cssText='font-size:12px;color:var(--sub);margin-top:2px';noteEl.textContent='Post may have already expired.';
+      previewBox.appendChild(pidEl);previewBox.appendChild(noteEl);
+    }
+    card.appendChild(previewBox);
+  }
+
+  // Action buttons (only for pending)
+  if(isPending){
+    var btnRow=document.createElement('div');btnRow.style.cssText='display:flex;gap:8px';
+
+    function _doAction(status,label,btn,allBtns){
+      btn.textContent='…';allBtns.forEach(function(b){b.disabled=true;});
+      var now=new Date().toISOString();
+      _sb.from('reports').update({status:status,reviewed_at:now}).eq('id',rep.id).select('id,status').then(function(r){
+        if(r.error||!r.data||!r.data.length){
+          var msg=r.error?r.error.message:'Update blocked — check RLS policy.';
+          console.error('Report action failed:',msg);
+          btn.textContent=label;
+          allBtns.forEach(function(b){b.disabled=false;});
+          T('Failed: '+msg);
+          return;
+        }
+        rep.status=status;rep.reviewed_at=now;
+        var idx=pendingArr.findIndex(function(x){return x.id===rep.id;});
+        if(idx>-1)pendingArr.splice(idx,1);
+        resolvedArr.unshift(rep);
+        updateBadge();
+        card.style.transition='opacity .22s ease,max-height .28s ease .18s';
+        card.style.overflow='hidden';card.style.opacity='0';
+        setTimeout(function(){card.style.maxHeight='0';card.style.margin='0';card.style.padding='0';card.style.border='none';},220);
+        setTimeout(function(){if(card.parentNode)card.parentNode.removeChild(card);if(!pendingArr.length&&onRerender)onRerender();},460);
+
+        // Send warning notification
+        if((status==='warned'||status==='deleted')&&rep.reported_user_id){
+          var warnMsg=status==='deleted'
+            ?'Your post was removed for violating community guidelines.'
+            :'Your content was reported. Please follow community guidelines.';
+          _sb.from('notifications').insert({
+            user_id:rep.reported_user_id,
+            actor_id:profile.id,
+            type:'verification',
+            post_id:null,
+            extra:{result:'rejected',msg:warnMsg},
+            is_read:false
+          }).then(function(nr){
+            if(nr.error)console.error('Warn notification failed:',nr.error.message);
+          });
+        }
+
+        // Delete the post — uses admin delete policy
+        if(status==='deleted'&&rep.post_id){
+          _sb.from('posts').delete().eq('id',rep.post_id).then(function(dr){
+            if(dr.error){
+              console.error('Post delete failed:',dr.error.message);
+              T('Report resolved but post delete failed: '+dr.error.message);
+              return;
+            }
+            posts=posts.filter(function(p){return p.id!==rep.post_id;});
+            renderFeed();
+          });
+        }
+
+        T(status==='dismissed'?'Report dismissed':status==='deleted'?'Post deleted':'User warned');
+      });
+    }
+
+    var dismissBtn=document.createElement('button');
+    dismissBtn.style.cssText='flex:1;padding:10px;border-radius:10px;background:var(--inp-bg);color:var(--sub);border:1.5px solid var(--inp-border);font-size:12.5px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer';
+    dismissBtn.textContent='Dismiss';
+
+    var warnBtn=document.createElement('button');
+    warnBtn.style.cssText='flex:1;padding:10px;border-radius:10px;background:#FEF3C7;color:#92400E;border:1.5px solid #F59E0B;font-size:12.5px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer';
+    warnBtn.textContent='Warn User';
+
+    var delBtn=document.createElement('button');
+    delBtn.style.cssText='flex:1;padding:10px;border-radius:10px;background:#FEE2E2;color:#DC2626;border:1.5px solid #DC2626;font-size:12.5px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer';
+    delBtn.textContent='Delete Post';
+    if(!rep.post_id){delBtn.disabled=true;delBtn.style.opacity='.4';}
+
+    var allBtns=[dismissBtn,warnBtn,delBtn];
+    dismissBtn.onclick=function(){_doAction('dismissed','Dismiss',dismissBtn,allBtns);};
+    warnBtn.onclick=function(){_doAction('warned','Warn User',warnBtn,allBtns);};
+    delBtn.onclick=function(){
+      if(delBtn.dataset.confirm!=='1'){delBtn.dataset.confirm='1';delBtn.textContent='Confirm?';return;}
+      _doAction('deleted','Delete Post',delBtn,allBtns);
+    };
+
+    btnRow.appendChild(dismissBtn);btnRow.appendChild(warnBtn);btnRow.appendChild(delBtn);
+    card.appendChild(btnRow);
+  } else {
+    // Resolved — show reviewed_at
+    if(rep.reviewed_at){
+      var revEl=document.createElement('div');revEl.style.cssText='font-size:12px;color:var(--sub)';
+      revEl.textContent='Reviewed '+new Date(rep.reviewed_at).toLocaleDateString([],{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+      card.appendChild(revEl);
+    }
+  }
+
+  return card;
+}
+
 // ── FOLLOW LIST SHEET ─────────────────────────────────────────────────────────
 function openFollowSheet(uid, type){
   // type = 'followers' | 'following'
@@ -7672,6 +8501,90 @@ function closeFollowSheet(){
   document.addEventListener('focusin',function(e){var el=e.target;if(!el||!el.closest('#s-auth'))return;var tag=el.tagName;if(tag!=='INPUT'&&tag!=='TEXTAREA'&&tag!=='SELECT')return;setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'center'});},320);});
 })();
 (function(){if(!window.visualViewport)return;window.visualViewport.addEventListener('resize',function(){if(typeof _epOpen!=='undefined'&&_epOpen)return;var kbH=Math.max(0,window.innerHeight-window.visualViewport.height);var cw=document.getElementById('cw'),foot=cw&&cw.querySelector('.chatfoot'),msgs=document.getElementById('msgs');if(cw&&cw.classList.contains('on')&&foot){foot.style.marginBottom=kbH>0?kbH+'px':'0';if(kbH>0&&msgs)msgs.scrollTop=msgs.scrollHeight;}},{passive:true});})();
+
+// ── COMMENT SHEET KEYBOARD AVOID ─────────────────────────────────────────────
+(function(){
+  if(!window.visualViewport)return;
+  function adjustCS(){
+    var csBg=document.getElementById('cs-bg');
+    if(!csBg||!csBg.classList.contains('on'))return;
+    var vv=window.visualViewport;
+    var kbH=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+    var sheet=document.getElementById('cs-sheet');
+    var list=document.getElementById('cs-list');
+    if(!sheet)return;
+    if(kbH>0){
+      // Pad the sheet bottom so input sits above keyboard
+      sheet.style.paddingBottom=kbH+'px';
+      // Shrink the list so the sheet doesn't overflow — leave room for header + input (~120px)
+      if(list)list.style.maxHeight='calc(88dvh - '+kbH+'px - 120px)';
+    } else {
+      sheet.style.paddingBottom='';
+      if(list)list.style.maxHeight='';
+    }
+  }
+  window.visualViewport.addEventListener('resize',adjustCS,{passive:true});
+  window.visualViewport.addEventListener('scroll',adjustCS,{passive:true});
+  document.addEventListener('focusin',function(e){
+    if(e.target&&(e.target.id==='cs-inp'||e.target.classList.contains('csinp'))){
+      setTimeout(adjustCS,300);
+    }
+  });
+  document.addEventListener('focusout',function(e){
+    if(e.target&&(e.target.id==='cs-inp'||e.target.classList.contains('csinp'))){
+      setTimeout(adjustCS,100);
+    }
+  });
+})();
+
+// ── DROP SHEET KEYBOARD AVOID ─────────────────────────────────────────────────
+(function(){
+  if(!window.visualViewport)return;
+  function adjustCompose(){
+    var bg=document.getElementById('compose-bg');
+    if(!bg||!bg.classList.contains('on'))return;
+    var vv=window.visualViewport;
+    var kbH=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+    var sheet=bg.querySelector('.sheet');
+    if(!sheet)return;
+    if(kbH>0){
+      sheet.style.paddingBottom=kbH+'px';
+    } else {
+      sheet.style.paddingBottom='';
+    }
+  }
+  window.visualViewport.addEventListener('resize',adjustCompose,{passive:true});
+  window.visualViewport.addEventListener('scroll',adjustCompose,{passive:true});
+  document.addEventListener('focusin',function(e){
+    if(e.target&&e.target.id==='c-text'){setTimeout(adjustCompose,300);}
+  });
+  document.addEventListener('focusout',function(e){
+    if(e.target&&e.target.id==='c-text'){setTimeout(adjustCompose,100);}
+  });
+})();
+
+// ── EDIT PROFILE SHEET KEYBOARD AVOID ────────────────────────────────────────
+(function(){
+  if(!window.visualViewport)return;
+  var EP_IDS=['ep-name','ep-user','ep-bio'];
+  function adjustEP(){
+    var bg=document.getElementById('ep-bg');
+    if(!bg||!bg.classList.contains('on'))return;
+    var vv=window.visualViewport;
+    var kbH=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+    var sheet=bg.querySelector('.sheet');
+    if(!sheet)return;
+    sheet.style.paddingBottom=kbH>0?kbH+'px':'';
+  }
+  window.visualViewport.addEventListener('resize',adjustEP,{passive:true});
+  window.visualViewport.addEventListener('scroll',adjustEP,{passive:true});
+  document.addEventListener('focusin',function(e){
+    if(e.target&&EP_IDS.indexOf(e.target.id)>-1){setTimeout(adjustEP,300);}
+  });
+  document.addEventListener('focusout',function(e){
+    if(e.target&&EP_IDS.indexOf(e.target.id)>-1){setTimeout(adjustEP,100);}
+  });
+})();
 </script>
 <script>
 if('serviceWorker' in navigator){
@@ -9197,74 +10110,8 @@ function setupOfflineBar(){
   update();
 }
 
-// ── SWIPE-BACK (right-edge drag to dismiss full-screen panels) ───────────────
-function setupSwipeBack(){
-  var panels=[
-    {id:'cw',     close:closeCW},
-    {id:'prof-screen', close:closeProf},
-    {id:'notif-panel', close:closeNotif},
-    {id:'so',     close:closeSettings}
-  ];
-  panels.forEach(function(cfg){
-    var el=document.getElementById(cfg.id);
-    if(!el)return;
-    var sx=0,sy=0,dragging=false,threshold=72,maxDrag=120;
-    el.addEventListener('touchstart',function(e){
-      // Only start swipe when touch begins on left 28px (edge) OR is a clear rightward swipe
-      sx=e.touches[0].clientX;
-      sy=e.touches[0].clientY;
-      dragging=false;
-    },{passive:true});
-    el.addEventListener('touchmove',function(e){
-      var dx=e.touches[0].clientX-sx;
-      var dy=e.touches[0].clientY-sy;
-      // Must be moving more right than up/down, and started from left edge or pure swipe
-      if(!dragging){
-        if(dx>12&&Math.abs(dy)<Math.abs(dx)){
-          // Allow swipe from anywhere, not just left edge, for naturalness
-          dragging=true;
-        } else {
-          return;
-        }
-      }
-      if(dx<0)return;
-      var clamped=Math.min(dx,maxDrag);
-      el.style.transition='none';
-      el.style.transform='translateX('+clamped+'px)';
-      // Prevent scroll while dragging
-      e.preventDefault();
-    },{passive:false});
-    el.addEventListener('touchend',function(e){
-      if(!dragging)return;
-      dragging=false;
-      var dx=e.changedTouches[0].clientX-sx;
-      el.style.transition='';
-      if(dx>threshold){
-        // Commit the dismiss — animate to full width then close
-        el.style.transform='translateX(100%)';
-        setTimeout(function(){
-          el.classList.remove('on');
-          el.style.display='none';
-          el.style.transform='';
-          // Run any teardown logic from the existing close function
-          // but skip the re-animation since we already slid out
-          if(cfg.id==='cw'){
-            if(window._chatChannel){_sb.removeChannel(window._chatChannel);window._chatChannel=null;}
-            hideTypingBubble();
-            if(chatUser){unreadConvos.delete(chatUser.id);}
-            updateTalkDot();
-            chatUser=null;
-            renderTalkList();
-          }
-        },320);
-        haptic('light');
-      } else {
-        // Snap back
-        el.style.transform='translateX(0)';
-      }
-    },{passive:true});
-  });
-}
+// ── SWIPE-BACK: replaced by unified manager below ───────────────────────────
+function setupSwipeBack(){ /* no-op: unified swipe manager handles this */ }
 
 
 // ── LIVE EXPIRY TICK — updates 'fades in Xh' every 60s without re-rendering ──
@@ -10006,80 +10853,7 @@ function _buildEpCats(){
   });
 }
 
-/* ── SWIPE BACK ──────────────────────────────────────────────── */
-(function(){
-  var EDGE=28,THRESH=0.38;
-  // id, z-index, back function name, edge-only (true for screens with conflicting swipe gestures)
-  var PANELS=[
-    {id:'prof-screen', z:650, fn:'closeProf',        edge:false},
-    {id:'cw',          z:200, fn:'closeCW',           edge:true},
-    {id:'so',          z:300, fn:'soBack',            edge:false},
-    {id:'notif-panel', z:220, fn:'closeNotif',        edge:false},
-    {id:'scroll-view', z:250, fn:'closeScrollView',   edge:false},
-    {id:'sched-form-panel',z:400,fn:'closeSchedForm', edge:false},
-    {id:'circle-cw',   z:200, fn:'closeCircleCW',     edge:true},
-    {id:'circle-info', z:250, fn:'closeCircleInfo',   edge:false},
-  ];
-  var sx,sy,el,fn,dragging=false;
-
-  function topPanel(){
-    var best=null,bz=-1;
-    PANELS.forEach(function(p){
-      var e=document.getElementById(p.id);
-      if(e&&e.classList.contains('on')&&p.z>bz){bz=p.z;best=p;}
-    });
-    return best;
-  }
-
-  document.addEventListener('touchstart',function(e){
-    sx=e.touches[0].clientX; sy=e.touches[0].clientY;
-    dragging=false; el=null; fn=null;
-    var p=topPanel(); if(!p)return;
-    if(p.edge&&sx>EDGE)return;
-    el=document.getElementById(p.id); fn=p.fn;
-  },{passive:true});
-
-  document.addEventListener('touchmove',function(e){
-    if(!el)return;
-    var dx=e.touches[0].clientX-sx, dy=e.touches[0].clientY-sy;
-    if(!dragging){
-      if(Math.abs(dx)<6&&Math.abs(dy)<6)return;
-      if(Math.abs(dy)>Math.abs(dx)){el=null;return;}
-      if(dx<0){el=null;return;}
-      dragging=true;
-    }
-    if(dragging){
-      e.preventDefault();
-      el.style.transition='none';
-      el.style.transform='translateX('+Math.max(0,dx)+'px)';
-    }
-  },{passive:false});
-
-  function finish(e){
-    if(!dragging||!el){dragging=false;el=null;return;}
-    var dx=(e.changedTouches&&e.changedTouches[0]?e.changedTouches[0].clientX:sx)-sx;
-    var cur=el, back=fn;
-    dragging=false; el=null;
-    if(dx>window.innerWidth*THRESH){
-      cur.style.transition='transform .3s cubic-bezier(.4,0,.2,1)';
-      cur.style.transform='translateX(100%)';
-      setTimeout(function(){
-        cur.style.transition='none';
-        if(typeof window[back]==='function')window[back]();
-        setTimeout(function(){cur.style.transition='';},400);
-      },300);
-    }else{
-      cur.style.transition='transform .32s cubic-bezier(.25,.46,.45,.94)';
-      cur.style.transform='';
-    }
-  }
-
-  document.addEventListener('touchend',finish,{passive:true});
-  document.addEventListener('touchcancel',function(){
-    if(el){el.style.transition='';el.style.transform='';}
-    dragging=false;el=null;
-  },{passive:true});
-})();
+/* ── SWIPE BACK: consolidated into unified swipe manager (see IIFE below) ── */
 
 </script>
 
@@ -10094,6 +10868,608 @@ function _buildEpCats(){
 </div>
 
 
+
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   NATIVE FEEL PATCH — JS side
+   Phase 1 + 6 : patch open/close to use visibility, not display:none
+   Phase 2     : parallax background recession on panel open/close
+   Phase 4     : instant 0ms touchstart press feedback
+   Phase 5     : swipe-back depth shadow
+   ═══════════════════════════════════════════════════════════════════ */
+
+(function(){
+
+  /* ── PHASE 1 + 6: Visibility-swap helpers ────────────────────────
+     The CSS already keeps all panels display:flex at all times.
+     These helpers patch the existing open/close functions so they
+     no longer set display:none / display:flex (which caused flicker),
+     and instead just manage the .on class + visibility.
+     We wrap the originals rather than replace them, so all their
+     Supabase / state logic still runs untouched.
+  ──────────────────────────────────────────────────────────────────*/
+
+  /* Utility: zero-out any inline display style the original code set,
+     and ensure the panel is in the right visibility state. */
+  function syncPanel(id, isOpen) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    // Clear any inline display the legacy code may have set
+    el.style.display = '';
+    if (isOpen) {
+      el.style.visibility = 'visible';
+      el.style.pointerEvents = 'auto';
+    } else {
+      el.style.visibility = '';
+      el.style.pointerEvents = '';
+    }
+  }
+
+  /* Patch openNotif — remove the display:'flex' set, let CSS handle it */
+  var _origOpenNotif = window.openNotif;
+  window.openNotif = function() {
+    var el = document.getElementById('notif-panel');
+    if (el) { el.style.display = ''; }
+    _origOpenNotif && _origOpenNotif.apply(this, arguments);
+    syncPanel('notif-panel', true);
+  };
+
+  var _origCloseNotif = window.closeNotif;
+  window.closeNotif = function() {
+    _origCloseNotif && _origCloseNotif.apply(this, arguments);
+    var el = document.getElementById('notif-panel');
+    if (!el) return;
+    // After the slide-out animation (350ms), clear inline display
+    setTimeout(function() {
+      el.style.display = '';
+      syncPanel('notif-panel', false);
+    }, 360);
+  };
+
+  /* Patch openChat (opens #cw) */
+  var _origOpenChat = window.openChat;
+  window.openChat = function() {
+    var el = document.getElementById('cw');
+    if (el) { el.style.display = ''; }
+    _origOpenChat && _origOpenChat.apply(this, arguments);
+    syncPanel('cw', true);
+  };
+
+  var _origCloseCW = window.closeCW;
+  window.closeCW = function() {
+    _origCloseCW && _origCloseCW.apply(this, arguments);
+    setTimeout(function() {
+      var el = document.getElementById('cw');
+      if (el) { el.style.display = ''; }
+      syncPanel('cw', false);
+    }, 360);
+  };
+
+  /* Patch openProf */
+  var _origOpenProf = window.openProf;
+  window.openProf = function() {
+    var el = document.getElementById('prof-screen');
+    if (el) { el.style.display = ''; }
+    _origOpenProf && _origOpenProf.apply(this, arguments);
+    syncPanel('prof-screen', true);
+  };
+
+  var _origCloseProf = window.closeProf;
+  window.closeProf = function() {
+    _origCloseProf && _origCloseProf.apply(this, arguments);
+    setTimeout(function() {
+      var el = document.getElementById('prof-screen');
+      if (el) { el.style.display = ''; }
+      syncPanel('prof-screen', false);
+    }, 360);
+  };
+
+  /* Patch openSettings */
+  var _origOpenSettings = window.openSettings;
+  window.openSettings = function() {
+    var el = document.getElementById('so');
+    if (el) { el.style.display = ''; }
+    _origOpenSettings && _origOpenSettings.apply(this, arguments);
+    syncPanel('so', true);
+  };
+
+  var _origCloseSettings = window.closeSettings;
+  window.closeSettings = function() {
+    _origCloseSettings && _origCloseSettings.apply(this, arguments);
+    setTimeout(function() {
+      var el = document.getElementById('so');
+      if (el) { el.style.display = ''; }
+      syncPanel('so', false);
+    }, 360);
+  };
+
+  /* Patch openCircleCW */
+  var _origOpenCircleCW = window.openCircleCW;
+  window.openCircleCW = function() {
+    var el = document.getElementById('circle-cw');
+    if (el) { el.style.display = ''; }
+    _origOpenCircleCW && _origOpenCircleCW.apply(this, arguments);
+    syncPanel('circle-cw', true);
+  };
+
+  var _origCloseCircleCW = window.closeCircleCW;
+  window.closeCircleCW = function() {
+    _origCloseCircleCW && _origCloseCircleCW.apply(this, arguments);
+    setTimeout(function() {
+      var el = document.getElementById('circle-cw');
+      if (el) { el.style.display = ''; }
+      syncPanel('circle-cw', false);
+    }, 360);
+  };
+
+  /* Patch openSchedForm */
+  var _origOpenSchedForm = window.openSchedForm;
+  window.openSchedForm = function() {
+    var el = document.getElementById('sched-form-panel');
+    if (el) { el.style.display = ''; }
+    _origOpenSchedForm && _origOpenSchedForm.apply(this, arguments);
+    syncPanel('sched-form-panel', true);
+  };
+
+  var _origCloseSchedForm = window.closeSchedForm;
+  window.closeSchedForm = function() {
+    _origCloseSchedForm && _origCloseSchedForm.apply(this, arguments);
+    setTimeout(function() {
+      var el = document.getElementById('sched-form-panel');
+      if (el) { el.style.display = ''; }
+      syncPanel('sched-form-panel', false);
+    }, 360);
+  };
+
+  /* ── Also sync circle-info which uses same on/off pattern ── */
+  var _origOpenCircleInfo = window.openCircleInfo;
+  window.openCircleInfo = function() {
+    var el = document.getElementById('circle-info');
+    if (el) { el.style.display = ''; }
+    _origOpenCircleInfo && _origOpenCircleInfo.apply(this, arguments);
+    syncPanel('circle-info', true);
+  };
+
+  var _origCloseCircleInfo = window.closeCircleInfo;
+  window.closeCircleInfo = function() {
+    _origCloseCircleInfo && _origCloseCircleInfo.apply(this, arguments);
+    setTimeout(function() {
+      var el = document.getElementById('circle-info');
+      if (el) { el.style.display = ''; }
+      syncPanel('circle-info', false);
+    }, 360);
+  };
+
+  /* ── PHASE 2: Parallax background recession ─────────────────────
+     When a panel opens, the background (#sw — the main screen
+     container) slides back 26% simultaneously. This is the single
+     biggest native-feel improvement: it creates depth, making the
+     overlay panel feel like it's truly above a real layer behind it.
+
+     Rules:
+     - Only #sw recedes (the tab screens). Never the auth screen.
+     - Recession happens on the same frame the panel opens.
+     - On close, #sw snaps forward again in sync with the slide-out.
+     - We track an open-panel count so nested panels (e.g. profile
+       opened from chat) don't double-recede.
+     - Uses the same spring easing as the panels themselves.
+     - If the user is mid-swipe (Phase 5), we don't fight it.
+  ──────────────────────────────────────────────────────────────────*/
+
+  var _paralaxDepth = 0; // how many panels are currently open
+
+  var RECEDE_TRANSLATE = '26%';  // how far back the bg slides
+  var RECEDE_SCALE     = '0.94'; // slight scale-down for depth illusion
+  var RECEDE_DURATION  = '340ms';
+  var RECEDE_EASE_IN   = 'cubic-bezier(.32,0,.67,0)';
+  var RECEDE_EASE_OUT  = 'cubic-bezier(.33,1,.68,1)';
+
+  function _getSW() {
+    return document.getElementById('sw');
+  }
+
+  function _recedeBackground() {
+    var sw = _getSW();
+    if (!sw) return;
+    _paralaxDepth++;
+    if (_paralaxDepth > 1) return; // already receded — don't stack
+    sw.style.transition =
+      'transform ' + RECEDE_DURATION + ' ' + RECEDE_EASE_IN + ', ' +
+      'opacity '   + RECEDE_DURATION + ' ' + RECEDE_EASE_IN;
+    // Small rAF to let the panel's .on class land first, then recede
+    requestAnimationFrame(function() {
+      sw.style.transform = 'translateX(-' + RECEDE_TRANSLATE + ') scale(' + RECEDE_SCALE + ')';
+      sw.style.opacity   = '0.88';
+      sw.style.borderRadius = '14px';
+    });
+  }
+
+  function _advanceBackground() {
+    _paralaxDepth = Math.max(0, _paralaxDepth - 1);
+    if (_paralaxDepth > 0) return; // another panel still open
+    var sw = _getSW();
+    if (!sw) return;
+    sw.style.transition =
+      'transform ' + RECEDE_DURATION + ' ' + RECEDE_EASE_OUT + ', ' +
+      'opacity '   + RECEDE_DURATION + ' ' + RECEDE_EASE_OUT;
+    sw.style.transform    = '';
+    sw.style.opacity      = '';
+    sw.style.borderRadius = '';
+  }
+
+  /* ── PHASE 5: Swipe-back depth shadow ────────────────────────────
+     During a swipe-back gesture, a shadow on the panel's left edge
+     reinforces the illusion that the panel is floating above the
+     background screen. Shadow opacity is tied to drag progress:
+     0% drag = full shadow, 100% threshold = shadow fades to 0.
+
+     Also: as the user drags, the background advances proportionally
+     (partial de-recession) so the parallax feels continuous.
+
+     Implementation: we add a single shadow pseudo-element via an
+     injected CSS rule, then control its opacity via a CSS variable
+     on the panel element.
+  ──────────────────────────────────────────────────────────────────*/
+
+  /* Inject shadow styles */
+  var _shadowStyle = document.createElement('style');
+  _shadowStyle.textContent = [
+    /* Left-edge shadow on any panel that's being dragged */
+    '#cw::before,',
+    '#notif-panel::before,',
+    '#prof-screen::before,',
+    '#circle-cw::before,',
+    '#sched-form-panel::before,',
+    '#circle-info::before,',
+    '#so::before {',
+    '  content: "";',
+    '  position: absolute;',
+    '  top: 0; left: -18px; bottom: 0;',
+    '  width: 18px;',
+    '  background: linear-gradient(to right, transparent, rgba(0,0,0,var(--swipe-shadow,0)));',
+    '  pointer-events: none;',
+    '  z-index: 1;',
+    '  border-radius: 0;',
+    '}'
+  ].join('\n');
+  document.head.appendChild(_shadowStyle);
+
+  /* Hook into the existing swipe-back IIFE via a MutationObserver
+     on inline style changes during drag. We watch for translateX
+     being set on panel elements and derive progress from it. */
+  var _swipePanelIds = ['cw','notif-panel','prof-screen','circle-cw','sched-form-panel','circle-info','so'];
+
+  function _onSwipeDrag(el, dx) {
+    var sw    = _getSW();
+    var vw    = window.innerWidth;
+    var pct   = Math.min(1, Math.max(0, dx / (vw * 0.38))); // 0→1 as drag→threshold
+    var shadow = (1 - pct) * 0.18;                          // 0.18 max shadow opacity
+
+    el.style.setProperty('--swipe-shadow', shadow.toFixed(3));
+
+    /* Partially advance the background proportionally */
+    if (sw && _paralaxDepth > 0) {
+      var retreatPct  = 1 - pct;
+      var tx  = parseFloat(RECEDE_TRANSLATE) * retreatPct;
+      var sc  = 1 - (1 - parseFloat(RECEDE_SCALE)) * retreatPct;
+      var op  = 1 - (1 - 0.88) * retreatPct;
+      sw.style.transition = 'none';
+      sw.style.transform  = 'translateX(-' + tx + '%) scale(' + sc + ')';
+      sw.style.opacity    = op.toFixed(3);
+    }
+  }
+
+  function _onSwipeRelease(el, committed) {
+    el.style.setProperty('--swipe-shadow', '0');
+    if (committed) {
+      // Panel is flying out — advance bg in sync
+      _advanceBackground();
+    } else {
+      // Snap back — restore full recession
+      var sw = _getSW();
+      if (sw && _paralaxDepth > 0) {
+        sw.style.transition =
+          'transform 320ms cubic-bezier(.25,.46,.45,.94), ' +
+          'opacity 320ms cubic-bezier(.25,.46,.45,.94)';
+        sw.style.transform  = 'translateX(-' + RECEDE_TRANSLATE + ') scale(' + RECEDE_SCALE + ')';
+        sw.style.opacity    = '0.88';
+      }
+    }
+  }
+
+  /* Shadow drag + bg parallax are now handled inside the unified swipe manager below */
+
+  /* ── Wire parallax into open/close wrappers ──────────────────────
+     The wrappers already exist above (Phase 1+6). We add _recede /
+     _advance calls to them here by re-wrapping the already-wrapped
+     functions. Since each wrapper calls the original, we just need
+     to intercept the outermost version.
+  ──────────────────────────────────────────────────────────────────*/
+
+  function _addParallax(openFnName, closeFnName) {
+    var origOpen  = window[openFnName];
+    var origClose = window[closeFnName];
+
+    if (origOpen) {
+      window[openFnName] = function() {
+        _recedeBackground();
+        origOpen.apply(this, arguments);
+      };
+    }
+
+    if (origClose) {
+      window[closeFnName] = function() {
+        origClose.apply(this, arguments);
+        _advanceBackground();
+      };
+    }
+  }
+
+  _addParallax('openNotif',      'closeNotif');
+  _addParallax('openChat',       'closeCW');
+  _addParallax('openProf',       'closeProf');
+  _addParallax('openSettings',   'closeSettings');
+  _addParallax('openCircleCW',   'closeCircleCW');
+  _addParallax('openSchedForm',  'closeSchedForm');
+  _addParallax('openCircleInfo', 'closeCircleInfo');
+
+  /* ── UNIFIED SWIPE-BACK MANAGER ──────────────────────────────────
+     Single document-level touch handler for all swipe-back panels.
+     Replaces: setupSwipeBack() per-panel listeners + the standalone
+     IIFE swipe-back block + the Phase-5 duplicate document listeners.
+
+     Rules:
+       • edge:true  → swipe only starts from left 28px (panels with
+                      internal horizontal content like chat)
+       • edge:false → swipe starts from anywhere on screen
+       • Direction lock: first 6px of movement decides scroll vs swipe;
+         if |dy| > |dx| we abort and let the scroller take over.
+       • e.preventDefault() called ONLY after direction is locked as
+         horizontal — never during the ambiguous first 6px.
+       • On commit: slide out, call the close function, clean up.
+       • On cancel/snap-back: restore transform via CSS transition.
+  ──────────────────────────────────────────────────────────────────*/
+  (function(){
+    var EDGE   = 28;
+    var THRESH = 0.38; // fraction of screen width to commit
+
+    var PANELS = [
+      {id:'prof-screen',       z:650, fn:'closeProf',       edge:false},
+      {id:'cw',                z:200, fn:'closeCW',          edge:true},
+      {id:'so',                z:300, fn:'soBack',           edge:false},
+      {id:'notif-panel',       z:220, fn:'closeNotif',       edge:false},
+      {id:'scroll-view',       z:250, fn:'closeScrollView',  edge:false},
+      {id:'sched-form-panel',  z:400, fn:'closeSchedForm',   edge:false},
+      {id:'circle-cw',         z:200, fn:'closeCircleCW',    edge:true},
+      {id:'circle-info',       z:250, fn:'closeCircleInfo',  edge:false},
+    ];
+
+    /* State — one gesture at a time */
+    var _sx=0, _sy=0, _el=null, _cfg=null, _dragging=false, _locked=false;
+
+    function _topPanel(){
+      var best=null, bz=-1;
+      for(var i=0;i<PANELS.length;i++){
+        var p=PANELS[i];
+        var e=document.getElementById(p.id);
+        if(e && e.classList.contains('on') && p.z>bz){ bz=p.z; best=p; }
+      }
+      return best;
+    }
+
+    function _cwTeardown(){
+      if(window._chatChannel){_sb.removeChannel(window._chatChannel);window._chatChannel=null;}
+      if(typeof hideTypingBubble==='function') hideTypingBubble();
+      if(typeof chatUser!=='undefined'&&chatUser){ unreadConvos.delete(chatUser.id); }
+      if(typeof updateTalkDot==='function') updateTalkDot();
+      if(typeof chatUser!=='undefined') chatUser=null;
+      if(typeof renderTalkList==='function') renderTalkList();
+    }
+
+    function _reset(){
+      _dragging=false; _locked=false; _el=null; _cfg=null;
+    }
+
+    function _snapBack(){
+      if(!_el) return;
+      _el.style.transition='transform .32s cubic-bezier(.25,.46,.45,.94)';
+      _el.style.transform='';
+      _onSwipeRelease(_el, false);
+      _reset();
+    }
+
+    function _commit(){
+      if(!_el||!_cfg) return;
+      var cur=_el, cfg=_cfg;
+      _onSwipeRelease(cur, true);
+      _reset();
+      cur.style.transition='transform .3s cubic-bezier(.4,0,.2,1)';
+      cur.style.transform='translateX(100%)';
+      haptic('light');
+      setTimeout(function(){
+        cur.style.transition='none';
+        /* Call the official close function so all state is cleaned up */
+        if(cfg.id==='cw'){
+          _cwTeardown();
+          cur.classList.remove('on');
+          cur.style.display='none';
+          cur.style.transform='';
+        } else if(typeof window[cfg.fn]==='function'){
+          window[cfg.fn]();
+        }
+        setTimeout(function(){ cur.style.transition=''; },400);
+      },300);
+    }
+
+    document.addEventListener('touchstart',function(e){
+      _reset();
+      _sx=e.touches[0].clientX;
+      _sy=e.touches[0].clientY;
+      var p=_topPanel();
+      if(!p) return;
+      if(p.edge && _sx>EDGE) return; // edge-only panel: must start from left edge
+      _el=document.getElementById(p.id);
+      _cfg=p;
+    },{passive:true});
+
+    document.addEventListener('touchmove',function(e){
+      if(!_el) return;
+      var dx=e.touches[0].clientX-_sx;
+      var dy=e.touches[0].clientY-_sy;
+
+      if(!_locked){
+        /* Not enough movement yet — wait */
+        if(Math.abs(dx)<6 && Math.abs(dy)<6) return;
+        /* Vertical scroll wins — abort swipe */
+        if(Math.abs(dy)>=Math.abs(dx)){ _reset(); return; }
+        /* Moving left — not a back swipe */
+        if(dx<0){ _reset(); return; }
+        /* Confirmed horizontal rightward — lock in */
+        _locked=true;
+        _dragging=true;
+      }
+
+      /* Safe to prevent scroll now that direction is confirmed */
+      e.preventDefault();
+      var tx=Math.max(0,dx);
+      _el.style.transition='none';
+      _el.style.transform='translateX('+tx+'px)';
+      _onSwipeDrag(_el, tx);
+    },{passive:false});
+
+    function _onEnd(e){
+      if(!_dragging||!_el){ _reset(); return; }
+      var dx=(e.changedTouches&&e.changedTouches[0]?e.changedTouches[0].clientX:_sx)-_sx;
+      if(dx>window.innerWidth*THRESH){
+        _commit();
+      } else {
+        _snapBack();
+      }
+    }
+
+    document.addEventListener('touchend',   _onEnd,   {passive:true});
+    document.addEventListener('touchcancel',function(){
+      if(_el){ _el.style.transition=''; _el.style.transform=''; _onSwipeRelease(_el,false); }
+      _reset();
+    },{passive:true});
+
+  })();
+
+  /* ── PHASE 4: Instant touchstart press feedback ──────────────────
+     CSS :active fires ~80ms after touchstart on mobile due to the
+     300ms click delay mitigation logic in WebKit. By listening to
+     touchstart directly and adding a class, press feedback is
+     instant — 0ms from finger contact to visual response.
+  ──────────────────────────────────────────────────────────────────*/
+
+  var PRESS_SELECTOR = [
+    '.btn',
+    '.ibtn',
+    '.nbtn',
+    '.actbtn',
+    '.drow',
+    '.ni',
+    '.dd-item',
+    '.ctx-item',
+    '.sitm',
+    '.view-row',
+    '.mention-row',
+    '.sched-act-btn',
+    '.sc-tbtn',
+    '.sc-share',
+    '.dropbtn',
+    '.cssend',
+    '.chat-send',
+    '.svlbtn',
+    '.ilbl',
+    '.sc-pb'
+  ].join(',');
+
+  var _pressedEl = null;
+
+  document.addEventListener('touchstart', function(e) {
+    var target = e.target;
+    var el = null;
+
+    /* Walk up max 4 levels to find a pressable ancestor */
+    for (var i = 0; i < 4; i++) {
+      if (!target || target === document.body) break;
+      if (target.matches && target.matches(PRESS_SELECTOR)) {
+        el = target;
+        break;
+      }
+      target = target.parentElement;
+    }
+
+    if (!el) return;
+
+    _pressedEl = el;
+    el.classList.add('_pressed');
+
+    /* Remove :active CSS so they don't fight each other */
+    el.style.transform = '';
+    el.style.opacity = '';
+
+  }, { passive: true });
+
+  function _releasePress(e) {
+    if (!_pressedEl) return;
+    var el = _pressedEl;
+    _pressedEl = null;
+
+    /* Spring back */
+    el.classList.remove('_pressed');
+    el.classList.add('_press-release');
+
+    setTimeout(function() {
+      el.classList.remove('_press-release');
+    }, 300);
+  }
+
+  document.addEventListener('touchend',    _releasePress, { passive: true });
+  document.addEventListener('touchcancel', function() {
+    if (_pressedEl) {
+      _pressedEl.classList.remove('_pressed');
+      _pressedEl.classList.remove('_press-release');
+      _pressedEl = null;
+    }
+  }, { passive: true });
+
+  /* ── PHASE 1: Force initial state on all panels at load ──────────
+     Since CSS keeps them display:flex, we need to make sure they
+     start off-screen (transform already set by existing CSS) and
+     invisible until explicitly opened.
+  ──────────────────────────────────────────────────────────────────*/
+  var PANELS = [
+    'cw', 'notif-panel', 'prof-screen',
+    'circle-cw', 'sched-form-panel', 'circle-info', 'so'
+  ];
+
+  /* Run after DOM is fully parsed */
+  function initPanels() {
+    PANELS.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      /* Clear any inline display that boot code may have set */
+      el.style.display = '';
+      /* If not .on, ensure invisible */
+      if (!el.classList.contains('on')) {
+        el.style.visibility = 'hidden';
+        el.style.pointerEvents = 'none';
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPanels);
+  } else {
+    /* Already parsed */
+    setTimeout(initPanels, 0);
+  }
+
+})();
+</script>
 
 </body>
 </html>
