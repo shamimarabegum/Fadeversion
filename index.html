@@ -139,7 +139,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .posthd{display:flex;align-items:center;gap:13px;padding:14px 16px 10px}
-.post{background:var(--card)}
+.post{background:var(--card);-webkit-user-select:none;user-select:none}
 .av{width:42px;height:42px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;cursor:pointer;font-size:16px}
 .postmeta{flex:1;cursor:pointer}
 .postname{font-weight:700;font-size:14.5px;letter-spacing:-.1px}
@@ -4079,8 +4079,9 @@ function buildPost(p, showDelete){
     var tgt=e.target;
     // Don't fire on buttons, avatars, or action row
     if(tgt.closest('.postacts')||tgt.closest('.post-menu-btn')||tgt.closest('.av'))return;
+    // Always prevent default to block native text-selection menu on any tap
+    e.preventDefault();
     if(now-_lastTap<300){
-      e.preventDefault();
       if(!p.liked){
         likePost(p.id,el.querySelector('#lb-'+p.id));
         // Show heart overlay
@@ -4459,6 +4460,8 @@ function renderStrip(){
     (function(idx){el.onclick=function(){openSV(idx);};})(gi);
     strip.appendChild(el);
   });
+  // Re-render talk list so story rings reflect current svGroups state
+  if(typeof _renderTalkFromCache==='function')_renderTalkFromCache();
 }
 
 // ── STORY CREATOR ─────────────────────────────────────────────────────────────
@@ -4702,7 +4705,8 @@ function openSV(gi){
   var body=document.getElementById('svbody');
   body.addEventListener('touchstart',svHoldStart,{passive:true});body.addEventListener('touchend',svHoldEnd,{passive:true});
   body.addEventListener('mousedown',svHoldStart);body.addEventListener('mouseup',svHoldEnd);body.addEventListener('mouseleave',svHoldEnd);
-  var sv=document.getElementById('sv');sv.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){sv.style.opacity='1';});});
+  var sv=document.getElementById('sv');
+  sv.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){sv.style.opacity='1';});});
   renderSVFrame(false);startSVTmr();
 }
 function svHoldStart(){if(svPaused||svViewsOpen)return;svPaused=true;clearTimeout(svTmr);var elapsed=Date.now()-svBarStart;svBarDone=Math.min(svBarDone+elapsed,5000);var f=document.getElementById('svf-'+svII);if(f){var pct=(svBarDone/5000)*100;f.style.transition='none';f.style.width=pct+'%';}}
@@ -4712,7 +4716,8 @@ function closeSV(){
   var body=document.getElementById('svbody');
   body.removeEventListener('touchstart',svHoldStart);body.removeEventListener('touchend',svHoldEnd);
   body.removeEventListener('mousedown',svHoldStart);body.removeEventListener('mouseup',svHoldEnd);body.removeEventListener('mouseleave',svHoldEnd);
-  var sv=document.getElementById('sv');sv.style.opacity='0';
+  var sv=document.getElementById('sv');
+  sv.style.opacity='0';
   var returnCtx=_svReturnCtx;_svReturnCtx=null;
   setTimeout(function(){
     sv.style.display='none';
@@ -4869,8 +4874,9 @@ function startSVTmr(){
   if(f){f.style.transition='none';f.style.width='0%';requestAnimationFrame(function(){requestAnimationFrame(function(){if(!isOwn){f.style.transition='width 5s linear';f.style.width='100%';}else{f.style.width='100%';}});});}
   if(!isOwn){svTmr=setTimeout(function(){svBarDone=0;svNext();},5000);}
 }
-function svNext(){if(svViewsOpen)return;clearTimeout(svTmr);svBarDone=0;svPaused=false;var g=svGroups[svGI];if(!g)return closeSV();var isOwn=g.user.id==='demo';if(svII<g.items.length-1){svII++;renderSVFrame(true);startSVTmr();}else if(!isOwn){var nextGI=-1;for(var i=svGI+1;i<svGroups.length;i++){if(svGroups[i].items&&svGroups[i].items.length>0){nextGI=i;break;}}if(nextGI>=0){svGI=nextGI;svII=0;renderSVFrame(true);startSVTmr();}else closeSV();}}
-function svPrev(){if(svViewsOpen)return;clearTimeout(svTmr);svBarDone=0;svPaused=false;if(svII>0){svII--;}else if(svGI>0){for(var i=svGI-1;i>=0;i--){if(svGroups[i].items&&svGroups[i].items.length>0){svGI=i;svII=svGroups[svGI].items.length-1;break;}}}renderSVFrame(true);startSVTmr();}
+function svNext(){if(svViewsOpen)return;clearTimeout(svTmr);svBarDone=0;svPaused=false;var g=svGroups[svGI];if(!g)return closeSV();var isOwn=g.user.id==='demo';if(svII<g.items.length-1){svII++;renderSVFrame(true);startSVTmr();}else if(!isOwn){// If opened from talk or chat, close instead of jumping to another user's story
+if(_svReturnCtx==='talk'||_svReturnCtx==='chat'){closeSV();return;}var nextGI=-1;for(var i=svGI+1;i<svGroups.length;i++){if(svGroups[i].items&&svGroups[i].items.length>0){nextGI=i;break;}}if(nextGI>=0){svGI=nextGI;svII=0;renderSVFrame(true);startSVTmr();}else closeSV();}}
+function svPrev(){if(svViewsOpen)return;clearTimeout(svTmr);svBarDone=0;svPaused=false;if(svII>0){svII--;}else if(svGI>0&&_svReturnCtx!=='talk'&&_svReturnCtx!=='chat'){for(var i=svGI-1;i>=0;i--){if(svGroups[i].items&&svGroups[i].items.length>0){svGI=i;svII=svGroups[svGI].items.length-1;break;}}}renderSVFrame(true);startSVTmr();}
 
 // ── VIEWS SHEET ───────────────────────────────────────────────────────────────
 function openViewsSheet(){
@@ -8085,12 +8091,14 @@ function openSVFromTalk(uid){
   var gi=storyGIForUser(uid);
   if(gi<0){T('No active moments');return;}
   _svReturnCtx='talk';
+  history.pushState({_fade:'sv'},'');
   openSV(gi);
 }
 function openSVFromChat(uid){
   var gi=storyGIForUser(uid);
   if(gi<0){T('No active moments');return;}
   _svReturnCtx='chat';
+  history.pushState({_fade:'sv'},'');
   openSV(gi);
 }
 // ── TALK LIST STORY RING HELPER ───────────────────────────────────────────────
@@ -11975,6 +11983,13 @@ function _buildEpCats(){
   // popstate: fired by native OS swipe-back or Android back button
   window.addEventListener('popstate', function(e) {
     var state = e.state;
+
+    // Story viewer: native swipe-back closes it and returns to talk/chat
+    var svEl = document.getElementById('sv');
+    if (svEl && svEl.style.display === 'flex') {
+      if (typeof window.closeSV === 'function') window.closeSV();
+      return;
+    }
 
     // Settings sub-page back — go one level inside settings
     if (state && state._fade === 'so-sub') {
