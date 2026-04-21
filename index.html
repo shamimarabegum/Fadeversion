@@ -2703,6 +2703,13 @@ function trySignup(){
 
 function initApp(userProfile){
   profile = userProfile;
+  // Prevent double-tap text selection in browsers (already blocked in PWA via user-select:none on .post)
+  (function(){
+    var _ssTarget=document.getElementById('feed')||document.body;
+    _ssTarget.addEventListener('selectstart',function(e){
+      var t=e.target;while(t&&t!==document.body){if(t.classList&&(t.classList.contains('post')||t.classList.contains('postbody')||t.classList.contains('postcap'))){e.preventDefault();return;}t=t.parentElement;}
+    });
+  })();
   // Restore per-user dark mode preference
   try{
     var _dk=localStorage.getItem('fade_dark_'+profile.id);
@@ -5379,6 +5386,7 @@ function openChat(u){
         }
         var rawContent=r.content||'';
         var storyPreviewParsed=null;
+        var postShareParsed=null;
         var displayText=rawContent;
         if(rawContent.startsWith('[storyreply:')){
           var nlIdx=rawContent.indexOf('\n');
@@ -5386,6 +5394,12 @@ function openChat(u){
           if(jsonPart.endsWith(']'))jsonPart=jsonPart.slice(0,-1);
           try{storyPreviewParsed=JSON.parse(jsonPart);}catch(e){}
           displayText=nlIdx>0?rawContent.slice(nlIdx+1):'';
+        } else if(rawContent.startsWith('[postshare:')){
+          var psEnd=rawContent.indexOf(']',11);
+          var psJson=rawContent.slice(11,psEnd>0?psEnd+1:rawContent.length);
+          if(psJson.endsWith(']'))psJson=psJson.slice(0,-1);
+          try{postShareParsed=JSON.parse(psJson);}catch(e){}
+          displayText='';
         }
         var m={
           id:r.id,
@@ -5399,6 +5413,7 @@ function openChat(u){
           replyTo:replyToText,
           replyToSender:replyToSender,
           preview:storyPreviewParsed,
+          postShare:postShareParsed,
           ts:new Date(r.created_at).getTime(),
           isRead:r.is_read
         };
@@ -5491,6 +5506,7 @@ function subscribeToChat(partnerId){
       }
       var rawContent2=r.content||r.text||'';
       var storyPreview2=null;
+      var postShare2=null;
       var displayText2=rawContent2;
       if(rawContent2.startsWith('[storyreply:')){
         var nlIdx2=rawContent2.indexOf('\n');
@@ -5498,6 +5514,12 @@ function subscribeToChat(partnerId){
         if(jsonPart2.endsWith(']'))jsonPart2=jsonPart2.slice(0,-1);
         try{storyPreview2=JSON.parse(jsonPart2);}catch(e){}
         displayText2=nlIdx2>0?rawContent2.slice(nlIdx2+1):'';
+      } else if(rawContent2.startsWith('[postshare:')){
+        var psEnd2=rawContent2.indexOf(']',11);
+        var psJson2=rawContent2.slice(11,psEnd2>0?psEnd2+1:rawContent2.length);
+        if(psJson2.endsWith(']'))psJson2=psJson2.slice(0,-1);
+        try{postShare2=JSON.parse(psJson2);}catch(e){}
+        displayText2='';
       }
       var m={
         id:r.id,
@@ -5510,6 +5532,7 @@ function subscribeToChat(partnerId){
         replyTo:null,
         replyToSender:null,
         preview:storyPreview2,
+        postShare:postShare2,
         ts:new Date(r.created_at).getTime(),
         isRead:r.is_read
       };
@@ -5900,7 +5923,13 @@ function appendBubble(m){
     b.classList.add('anim-bubble-in');
     b.style.transformOrigin=isMine?'bottom right':'bottom left';
 
-    if(m.preview){
+    if(m.postShare){
+      // Post share card
+      b.style.cssText='display:inline-flex;flex-direction:column;gap:0;background:none;align-items:'+(isMine?'flex-end':'flex-start');
+      var psc=buildPostShareCard(m.postShare,isMine);
+      b.appendChild(psc);
+      attachHold(b,m,wrap,bs,isMine);
+    } else if(m.preview){
       // Story reply — Instagram style: compact card above, reply bubble below, aligned to side
       b.style.cssText='display:inline-flex;flex-direction:column;gap:6px;background:none;align-items:'+(isMine?'flex-end':'flex-start');
       // Story preview card (compact, auto-width)
@@ -6067,6 +6096,136 @@ function buildSRC(p,isMine){
 
   return card;
 }
+// == POST SHARE CARD (in DM bubbles) ==========================================
+function buildPostShareCard(p,isMine){
+  var card=document.createElement('div');
+  card.style.cssText='width:220px;border-radius:16px;overflow:hidden;cursor:pointer;background:var(--card);border:1.5px solid var(--border)';
+  var hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 12px 9px';
+  var avDiv=document.createElement('div');
+  avDiv.style.cssText='width:24px;height:24px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;background:'+nc(p.authorName||'?');
+  avDiv.innerHTML=avH(p.authorAvatar||null,p.authorName||'?');
+  var meta=document.createElement('div');
+  meta.style.cssText='flex:1;min-width:0';
+  meta.innerHTML='<div style="font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(p.authorName||'Someone')+'</div><div style="font-size:11px;color:var(--sub);margin-top:1px">shared a drop</div>';
+  hdr.appendChild(avDiv);hdr.appendChild(meta);card.appendChild(hdr);
+  var divEl=document.createElement('div');divEl.style.cssText='height:1px;background:var(--border)';card.appendChild(divEl);
+  if(p.img){
+    var imgEl=document.createElement('img');imgEl.src=p.img;
+    imgEl.style.cssText='width:100%;height:130px;display:block;object-fit:cover';
+    imgEl.onerror=function(){this.style.display='none';};
+    card.appendChild(imgEl);
+    if(p.caption){var capEl=document.createElement('div');capEl.style.cssText='padding:9px 12px;font-size:12.5px;color:var(--sub);line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';capEl.textContent=p.caption;card.appendChild(capEl);}
+  } else if(p.caption){
+    var txtBox=document.createElement('div');txtBox.style.cssText='padding:12px;min-height:72px;display:flex;align-items:center';
+    var txtEl=document.createElement('p');txtEl.style.cssText='font-size:13.5px;line-height:1.55;color:var(--text);margin:0;word-break:break-word;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden';
+    txtEl.textContent=p.caption;txtBox.appendChild(txtEl);card.appendChild(txtBox);
+  } else {
+    var fadedB=document.createElement('div');fadedB.style.cssText='padding:14px 12px;text-align:center';fadedB.innerHTML='<span style="font-size:12px;color:var(--sub)">Drop</span>';card.appendChild(fadedB);
+  }
+  var foot=document.createElement('div');foot.style.cssText='padding:8px 12px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border)';
+  foot.innerHTML='<span style="font-size:11.5px;color:var(--sub);font-weight:500">Tap to view</span><svg width="12" height="12" fill="none" stroke="var(--sub)" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+  card.appendChild(foot);
+  card.onclick=function(){
+    if(!p.postId){T('This drop has faded');return;}
+    var found=posts.find(function(x){return x.id===p.postId;});
+    if(!found){T('This drop has faded');return;}
+    goTab('today');
+    setTimeout(function(){
+      var el=document.querySelector('[data-pid="'+p.postId+'"]');
+      if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.transition='background .3s';el.style.background='var(--inp-bg)';setTimeout(function(){el.style.background='';},1000);}
+      else{T('Drop is on the feed');}
+    },420);
+  };
+  return card;
+}
+function sendPostShareMsg(toUser,postId){
+  if(!profile||!toUser)return;
+  var p=posts.find(function(x){return x.id===postId;});
+  if(!p){T('Post not found');return;}
+  var cardData={postId:p.id,authorName:(p.author&&(p.author.display_name||p.author.username))||'Someone',authorAvatar:(p.author&&p.author.avatar_url)||null,authorId:p.uid||null,caption:(p.text||'').slice(0,120),img:p.img||null};
+  var encoded='[postshare:'+JSON.stringify(cardData)+']';
+  var expires=new Date(Date.now()+86400000).toISOString();
+  var tempId='tmp-'+Date.now();
+  var m={id:tempId,sid:'demo',text:encoded,postShare:cardData,ts:Date.now()};
+  if(chatUser&&chatUser.id===toUser.id){appendBubble(m);var msgs=document.getElementById('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;}
+  var cv=convos.find(function(x){return x.user.id===toUser.id;});
+  if(cv){cv.lastMsg='\uD83D\uDCCC Drop';cv.lastSid='demo';cv.ts=Date.now();convos.sort(function(a,b){return b.ts-a.ts;});}
+  else{convos.unshift({user:toUser,lastMsg:'\uD83D\uDCCC Drop',lastSid:'demo',ts:Date.now()});}
+  _sb.from('messages').insert({sender_id:profile.id,receiver_id:toUser.id,content:encoded,is_read:false,expires_at:expires}).select('id').single().then(function(res){
+    if(res.error){T('Send failed ('+res.error.code+')');return;}
+    var el=document.querySelector('[data-msgid="'+tempId+'"]');if(el)el.dataset.msgid=res.data.id;m.id=res.data.id;
+    _sb.auth.getSession().then(function(sr){
+      var token=sr.data&&sr.data.session&&sr.data.session.access_token;if(!token)return;
+      fetch('https://xmgmpewuevzgriqgsoct.supabase.co/functions/v1/send-push',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({recipientId:toUser.id,type:'message',actor:{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},extra:{msgText:'Shared a drop with you'}})}).catch(function(){});
+    });
+  });
+  T('Sent to @'+(toUser.username||toUser.display_name));SFX('send');haptic('send');
+}
+function sendProfileShareMsg(toUser){
+  if(!profile||!toUser)return;
+  var url=window.location.origin+'?user='+(profile.username||'');
+  var txt='\uD83D\uDC64 '+(profile.display_name||profile.username)+' on Fade\n'+url;
+  var expires=new Date(Date.now()+86400000).toISOString();
+  var tempId='tmp-'+Date.now();
+  var m={id:tempId,sid:'demo',text:txt,ts:Date.now()};
+  if(chatUser&&chatUser.id===toUser.id){appendBubble(m);var msgs=document.getElementById('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;}
+  var cv=convos.find(function(x){return x.user.id===toUser.id;});
+  if(cv){cv.lastMsg=txt.slice(0,40);cv.lastSid='demo';cv.ts=Date.now();convos.sort(function(a,b){return b.ts-a.ts;});}
+  else{convos.unshift({user:toUser,lastMsg:txt.slice(0,40),lastSid:'demo',ts:Date.now()});}
+  _sb.from('messages').insert({sender_id:profile.id,receiver_id:toUser.id,content:txt,is_read:false,expires_at:expires}).select('id').single().then(function(res){
+    if(res.error){T('Send failed ('+res.error.code+')');return;}
+    var el=document.querySelector('[data-msgid="'+tempId+'"]');if(el)el.dataset.msgid=res.data.id;
+  });
+  T('Sent to @'+(toUser.username||toUser.display_name));SFX('send');haptic('send');
+}
+function openPostSharePicker(postId){_openFadePicker(function(u){sendPostShareMsg(u,postId);},'Share Drop');}
+function openProfileSharePicker(){_openFadePicker(function(u){sendProfileShareMsg(u);},'Share Profile');}
+function _openFadePicker(onSelect,title){
+  var ex=document.getElementById('fade-picker-ov');if(ex)ex.remove();
+  var ov=document.createElement('div');ov.id='fade-picker-ov';
+  ov.style.cssText='position:fixed;inset:0;z-index:820;background:rgba(0,0,0,.45);display:flex;align-items:flex-end';
+  var sheet=document.createElement('div');
+  sheet.style.cssText='background:var(--card);width:100%;border-radius:20px 20px 0 0;padding:0 0 max(28px,env(safe-area-inset-bottom));max-height:75vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94)';
+  var handle=document.createElement('div');handle.style.cssText='width:36px;height:3px;background:var(--border);border-radius:2px;margin:12px auto 0;flex-shrink:0';
+  var hdr=document.createElement('div');hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;flex-shrink:0';
+  hdr.innerHTML='<span style="font-weight:700;font-size:15px">'+E(title||'Send in Fade')+'</span><button id="fade-picker-x" style="background:var(--inp-bg);border:none;cursor:pointer;color:var(--sub);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-family:Inter,sans-serif">&#10005;</button>';
+  var searchWrap=document.createElement('div');searchWrap.style.cssText='padding:0 16px 10px;flex-shrink:0';
+  var searchInp=document.createElement('input');searchInp.type='text';searchInp.placeholder='Search people...';searchInp.className='inp';searchInp.style.cssText='width:100%;padding:11px 14px;font-size:14px;border-radius:12px';searchInp.autocomplete='off';
+  searchWrap.appendChild(searchInp);
+  var list=document.createElement('div');list.style.cssText='overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch';
+  function close(){sheet.style.transform='translateY(100%)';setTimeout(function(){ov.remove();},300);}
+  function renderPickerList(query){
+    list.innerHTML='';query=(query||'').toLowerCase().trim();
+    var seen={},candidates=[];
+    convos.forEach(function(c){if(!c.user||c.user.id===profile.id)return;seen[c.user.id]=true;candidates.push({user:c.user,section:'Recent'});});
+    USERS.forEach(function(u){if(u.id===profile.id||!following.has(u.id)||seen[u.id])return;seen[u.id]=true;candidates.push({user:u,section:'Following'});});
+    if(query){candidates=candidates.filter(function(c){var n=(c.user.display_name||'').toLowerCase(),un=(c.user.username||'').toLowerCase();return n.includes(query)||un.includes(query);});}
+    if(!candidates.length){list.innerHTML='<div style="padding:28px 16px;text-align:center;font-size:14px;color:var(--sub)">No people found</div>';return;}
+    var lastSec=null;
+    candidates.forEach(function(c){
+      var u=c.user;
+      if(!query&&c.section!==lastSec){lastSec=c.section;var sec=document.createElement('div');sec.style.cssText='padding:10px 18px 4px;font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--sub);text-transform:uppercase';sec.textContent=c.section;list.appendChild(sec);}
+      var row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:13px;padding:11px 18px;cursor:pointer;-webkit-tap-highlight-color:transparent';
+      var avD=document.createElement('div');avD.style.cssText='width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;background:'+nc(u.display_name||u.username);avD.innerHTML=avH(u.avatar_url,u.display_name||u.username);
+      var inf=document.createElement('div');inf.style.cssText='flex:1;min-width:0';
+      inf.innerHTML='<div style="font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(u.display_name||u.username)+' '+badgeFor(u.id)+'</div><div style="font-size:12.5px;color:var(--sub);margin-top:1px">@'+E(u.username||'')+'</div>';
+      var sendBtn=document.createElement('button');sendBtn.style.cssText='background:var(--text);color:var(--card);border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;flex-shrink:0';sendBtn.textContent='Send';
+      (function(user){sendBtn.onclick=function(e){e.stopPropagation();close();onSelect(user);};row.onclick=function(){close();onSelect(user);};})(u);
+      row.appendChild(avD);row.appendChild(inf);row.appendChild(sendBtn);list.appendChild(row);
+    });
+  }
+  renderPickerList('');
+  searchInp.oninput=function(){renderPickerList(this.value);};
+  sheet.appendChild(handle);sheet.appendChild(hdr);sheet.appendChild(searchWrap);sheet.appendChild(list);
+  ov.appendChild(sheet);document.body.appendChild(ov);
+  ov.onclick=function(e){if(e.target===ov)close();};
+  document.getElementById('fade-picker-x').onclick=close;
+  requestAnimationFrame(function(){requestAnimationFrame(function(){sheet.style.transform='translateY(0)';});});
+  setTimeout(function(){searchInp.focus();},350);
+}
+
+
 function attachHold(el,m,w,bs,isMine){
   var t=null,fired=false;
   el.style.userSelect='none';
@@ -7295,6 +7454,10 @@ function openPostMenu(postId,uid,e){
     ca.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Change audience';
     ca.onclick=function(ev){ev.stopPropagation();closeDD();setTimeout(function(){openChangeAudience(postId);},340);};
     items.appendChild(ca);
+    var sif2=document.createElement('div');sif2.className='dd-item';
+    sif2.innerHTML='<svg width="16" height="16" fill="none" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Send in Fade';
+    sif2.onclick=function(){closeDD();openPostSharePicker(postId);};
+    items.appendChild(sif2);
     var sh2=document.createElement('div');sh2.className='dd-item';
     sh2.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share post';
     sh2.onclick=function(){closeDD();sharePost(postId);};
@@ -7305,13 +7468,19 @@ function openPostMenu(postId,uid,e){
     items.appendChild(d);
   } else {
     items.innerHTML='';
+    var sif=document.createElement('div');sif.className='dd-item';
+    sif.innerHTML='<svg width="16" height="16" fill="none" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Send in Fade';
+    sif.onclick=function(){closeDD();openPostSharePicker(postId);};
+    var sh3=document.createElement('div');sh3.className='dd-item';
+    sh3.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share post';
+    sh3.onclick=function(){closeDD();sharePost(postId);};
     var r=document.createElement('div');r.className='dd-item red';
     r.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>Report post';
     r.onclick=function(){showPostReport(postId);};
     var b=document.createElement('div');b.className='dd-item';
     b.innerHTML='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>Block user';
     b.onclick=function(){closeDD();_blockUser(uid);renderFeed();T('Blocked');};
-    items.appendChild(r);items.appendChild(b);
+    items.appendChild(sif);items.appendChild(sh3);items.appendChild(r);items.appendChild(b);
   }
   var bg=document.getElementById('dd-bg'),sh=document.getElementById('dd-sheet');
   bg.style.display='flex';
@@ -7874,48 +8043,40 @@ function buildReportPage(el){el.innerHTML='';var wrap=document.createElement('di
 function getShareURL(){return window.location.origin+'?user='+(profile&&profile.username||'user');}
 function getShareText(){return'Check out '+(profile&&profile.display_name||'my profile')+' on Fade — gone in 24h';}
 var SHARE_OPTIONS=[
-  {label:'Messages',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',color:'#22C55E',act:function(){
-    var url=getShareURL(),txt=getShareText();
-    // iOS iMessage deep link
-    window.open('sms:?&body='+encodeURIComponent(txt+' '+url),'_blank');
+  {label:'Send in Fade',ico:'<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',color:'var(--text)',act:function(){
     closeShareSheet();
+    openProfileSharePicker();
   }},
-  {label:'WhatsApp',ico:'<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.979-1.406A9.95 9.95 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm4.93 13.667c-.207.583-1.216 1.114-1.663 1.154-.447.04-.46.352-2.896-.713-2.436-1.064-3.857-3.571-3.972-3.733-.116-.163-.946-1.315-.887-2.478.059-1.163.663-1.706.893-1.938.23-.232.499-.284.666-.284h.473c.152 0 .36-.058.563.473.207.543.703 1.851.764 1.985.062.133.1.29.02.463-.082.173-.123.28-.243.43-.12.15-.252.335-.36.45-.12.12-.245.25-.105.49.14.24.623 1.073 1.336 1.737.917.85 1.69 1.113 1.93 1.237.24.124.38.104.52-.063.14-.166.6-.696.76-.936.16-.24.32-.2.54-.12.22.08 1.397.658 1.636.778.24.12.4.18.46.28.06.1.06.583-.147 1.166z"/></svg>',color:'#25D366',act:function(){
+  {label:'WhatsApp',ico:'<svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor"><path d="M16 3C8.82 3 3 8.82 3 16c0 2.3.6 4.5 1.74 6.44L3 29l6.72-1.72A13 13 0 0 0 16 29c7.18 0 13-5.82 13-13S23.18 3 16 3zm6.38 18.15c-.28.78-1.63 1.49-2.24 1.55-.57.05-.6.44-3.87-.95-3.27-1.42-5.16-4.76-5.32-4.98-.15-.22-1.27-1.76-1.19-3.32.08-1.55.88-2.28 1.19-2.58.31-.31.67-.38.9-.38h.63c.2 0 .48-.08.75.63.28.72.94 2.47 1.02 2.65.08.18.13.39.03.62-.1.23-.16.37-.32.57-.16.2-.34.45-.48.6-.16.16-.33.34-.14.66.19.32.83 1.43 1.79 2.32 1.23 1.14 2.26 1.49 2.58 1.65.32.17.51.14.7-.08.19-.22.8-.93 1.01-1.25.21-.32.43-.27.72-.16.3.11 1.87.88 2.19 1.04.32.16.53.24.61.37.08.14.08.78-.2 1.56z"/></svg>',color:'#25D366',act:function(){
     var url=getShareURL(),txt=getShareText();
     window.open('https://wa.me/?text='+encodeURIComponent(txt+' '+url),'_blank');
     closeShareSheet();
   }},
-  {label:'Instagram',ico:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',color:'#E1306C',act:function(){
-    // Instagram has no share URL API — copy link then open app
+  {label:'Instagram',ico:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><defs><linearGradient id="ig-g" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f09433"/><stop offset="25%" stop-color="#e6683c"/><stop offset="50%" stop-color="#dc2743"/><stop offset="75%" stop-color="#cc2366"/><stop offset="100%" stop-color="#bc1888"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="5.5" fill="url(#ig-g)"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6" fill="none"/><circle cx="17.2" cy="6.8" r="1.1" fill="#fff"/></svg>',color:'#E1306C',act:function(){
     copyProfileLink();
     setTimeout(function(){window.open('instagram://','_blank');},400);
     closeShareSheet();
     T('Link copied — paste it in Instagram');
   }},
-  {label:'X',ico:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',color:'#000',act:function(){
+  {label:'X',ico:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',color:'var(--text)',act:function(){
     var url=getShareURL(),txt=getShareText();
     window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(txt)+'&url='+encodeURIComponent(url),'_blank');
     closeShareSheet();
   }},
-  {label:'Telegram',ico:'<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.93 6.82-1.68 7.92c-.12.54-.45.67-.91.42l-2.52-1.86-1.22 1.17c-.13.14-.25.25-.5.25l.18-2.57 4.66-4.21c.2-.18-.04-.28-.32-.1L7.8 14.18l-2.47-.77c-.54-.17-.55-.54.11-.8l9.64-3.72c.45-.16.84.11.75.79z"/></svg>',color:'#26A5E4',act:function(){
-    var url=getShareURL(),txt=getShareText();
-    window.open('https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(txt),'_blank');
-    closeShareSheet();
-  }},
-  {label:'Copy Link',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',color:'#7C3AED',act:function(){copyProfileLink();closeShareSheet();}},
-  {label:'QR Code',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="5" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="16" y="5" width="3" height="3" fill="currentColor" stroke="none"/><rect x="5" y="16" width="3" height="3" fill="currentColor" stroke="none"/><line x1="14" y1="14" x2="14" y2="14.01"/><line x1="17" y1="14" x2="21" y2="14"/><line x1="21" y1="17" x2="21" y2="21"/><line x1="14" y1="17" x2="17" y2="17"/><line x1="14" y1="21" x2="17" y2="21"/></svg>',color:'#0EA5E9',act:function(){
-    var url=getShareURL();
-    window.open('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(url),'_blank');
-    closeShareSheet();
-  }},
-  {label:'More',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',color:'#6B7280',act:function(){
+  {label:'More',ico:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 12h6M12 9v6" stroke-linecap="round"/></svg>',color:'#6B7280',act:function(){
     var url=getShareURL(),txt=getShareText();
     if(navigator.share){navigator.share({title:txt,url:url}).catch(function(){});}
-    else{copyProfileLink();}
+    else{copyProfileLink();T('Link copied');}
     closeShareSheet();
   }},
 ];
 function openShareSheet(){
+  var prev=document.getElementById('share-preview');
+  var dName=profile&&profile.display_name||'You';
+  var uname='@'+(profile&&profile.username||'you');
+  var avContent=profPhotoUrl?'<img src="'+profPhotoUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>':('<div class="lav" style="font-size:18px;background:'+nc(dName)+'">'+nl(dName)+'</div>');
+  prev.innerHTML='<div style="width:48px;height:48px;border-radius:50%;overflow:hidden;flex-shrink:0">'+avContent+'</div><div><div style="font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:4px">'+E(dName)+badgeSVGFor(profile&&profile.id)+'</div><div style="font-size:13px;color:var(--sub);margin-top:2px">'+E(uname)+' · '+E((profile&&profile.bio||'').slice(0,32)||(profile&&profile.bio?'':'Living in the now'))+'</div></div>';
+  var grid=document.getElementById('share-grid');grid.innerHTML='';
   var prev=document.getElementById('share-preview');
   var dName=profile&&profile.display_name||'You';
   var uname='@'+(profile&&profile.username||'you');
