@@ -3223,19 +3223,31 @@ function openSearch(){
     sw.style.transform='none';
     sw.style.opacity='1';
     sw.style.borderRadius='0';
-    void sw.offsetWidth; /* force reflow so 'none' settles before class changes */
+    void sw.offsetWidth;
     sw.style.transition='';
   }
   if(typeof window._isReceded!=='undefined') window._isReceded=false;
-  /* 2. Set all screens to correct state — hide others fully (no opacity bleed) */
+  /* 2. Hide all other screens (no bleed), position search off-screen right */
   document.querySelectorAll('#sw .screen').forEach(function(sc){
     sc.classList.remove('active','left');
-    /* Don't add 'left' to sibling screens — keeps them invisible (translateX(100%))
-       so they don't bleed through the search screen background */
   });
-  ss.classList.add('active');
+  /* 3. Slide search in from the right — same motion as every other panel */
+  ss.style.transition='none';
+  ss.style.transform='translateX(100%)';
+  ss.style.opacity='0';
+  void ss.offsetWidth; /* force reflow before animating */
+  ss.style.transition='transform .32s cubic-bezier(.25,.46,.45,.94),opacity .22s ease';
+  ss.style.transform='translateX(0)';
+  ss.style.opacity='1';
+  /* Clean up inline styles once animation ends, then mark active */
+  setTimeout(function(){
+    ss.style.transition='';
+    ss.style.transform='';
+    ss.style.opacity='';
+    ss.classList.add('active');
+    var si=document.getElementById('sinp');if(si)si.focus();
+  },320);
   showSearchHome();
-  setTimeout(function(){var si=document.getElementById('sinp');if(si)si.focus();},320);
 }
 function closeSearch(){
   var ct=typeof curTab!=='undefined'?curTab:'today';
@@ -3864,6 +3876,7 @@ function tapNewPostsBanner(){
   if(scroller)scroller.scrollTo({top:0,behavior:'smooth'});
   renderFeed();
 }
+var _feedHasEverLoaded=false;
 function renderFeed(){
   var f=document.getElementById('feed');
   // Reset pagination state
@@ -3872,16 +3885,19 @@ function renderFeed(){
   _feedLoading=false;
   // Tear down previous sentinel observer
   if(_feedSentinelObs){_feedSentinelObs.disconnect();_feedSentinelObs=null;}
-  // Only show skeleton on cold load (no existing posts in DOM).
-  // On refresh/pull-to-refresh keep existing content visible — no blink.
-  var hasPosts=posts.length>0;
-  if(!hasPosts){
+  // Only show skeleton on a true cold load (DOM is empty AND no cached posts).
+  // If we already have content rendered, keep it visible while the fetch runs —
+  // this eliminates the blink on every tab-switch and pull-to-refresh.
+  var hasDOMContent=f.children.length>0;
+  var hasCachedPosts=posts.length>0;
+  if(!hasDOMContent&&!hasCachedPosts){
     var skHTML='';
     for(var si=0;si<4;si++){
       skHTML+='<div class="skeleton-post" style="opacity:'+(1-si*0.18)+'"><div class="skeleton-post-hd"><div class="skeleton skeleton-avatar" style="width:42px;height:42px;flex-shrink:0"></div><div style="flex:1;display:flex;flex-direction:column;gap:7px"><div class="skeleton skeleton-text" style="width:36%"></div><div class="skeleton skeleton-text" style="width:20%"></div></div></div>'+(si%2===0?'<div class="skeleton skeleton-img" style="width:100%;aspect-ratio:4/5"></div>':'<div class="skeleton skeleton-text" style="width:78%"></div><div class="skeleton skeleton-text" style="width:58%"></div>')+'<div style="display:flex;gap:16px;padding-top:2px"><div class="skeleton skeleton-round" style="width:52px;height:20px"></div><div class="skeleton skeleton-round" style="width:52px;height:20px"></div></div></div>';
     }
     f.innerHTML=skHTML;
   }
+  // Keep posts array intact so existing DOM stays correct; _loadFeedPage will replace it
   posts=[];
   _loadFeedPage(true);
 }
@@ -3949,32 +3965,39 @@ function renderFeedRows(rows,likedIds,isFirst){
   });
 
   if(isFirst){
-    // Full re-render
+    // Build into a DocumentFragment first — swap atomically to kill the blink
     posts=newPosts;
     var ranked=rankFeed(posts);
+    var frag=document.createDocumentFragment();
     if(!ranked.length){
-      f.innerHTML='<div class="empty anim-fade-up" style="padding:48px 28px;text-align:center"><div style="font-size:36px;margin-bottom:16px">👋</div><div class="empt" style="font-size:17px;font-weight:700;margin-bottom:8px">Nothing here yet</div><div class="emps" style="font-size:14px;line-height:1.6;color:var(--sub)">Follow people to see their drops.<br>Everything fades in 24 hours.</div><button onclick="openSearch()" style="margin-top:22px;background:var(--text);color:var(--card);border:none;border-radius:14px;padding:13px 28px;font-family:Inter,sans-serif;font-size:14px;font-weight:600;cursor:pointer">Find people</button></div>';
+      var emptyDiv=document.createElement('div');
+      emptyDiv.className='empty anim-fade-up';
+      emptyDiv.style.cssText='padding:48px 28px;text-align:center';
+      emptyDiv.innerHTML='<div style="font-size:36px;margin-bottom:16px">👋</div><div class="empt" style="font-size:17px;font-weight:700;margin-bottom:8px">Nothing here yet</div><div class="emps" style="font-size:14px;line-height:1.6;color:var(--sub)">Follow people to see their drops.<br>Everything fades in 24 hours.</div><button onclick="openSearch()" style="margin-top:22px;background:var(--text);color:var(--card);border:none;border-radius:14px;padding:13px 28px;font-family:Inter,sans-serif;font-size:14px;font-weight:600;cursor:pointer">Find people</button>';
+      frag.appendChild(emptyDiv);
+      f.innerHTML='';
+      f.appendChild(frag);
       return;
     }
-    f.innerHTML='';
+    var isCold=!_feedHasEverLoaded;
+    _feedHasEverLoaded=true;
     var lastGroup=-1,animIdx=0;
     ranked.forEach(function(p){
       var g=getPostGroup(p);
       if(g!==lastGroup&&g!==0&&GROUP_LABELS[g]){
         var div=document.createElement('div');div.style.cssText='padding:20px 14px 6px';
-        div.classList.add('anim-fade-up');div.style.animationDelay=(Math.min(animIdx,8)*30)+'ms';
+        if(isCold){div.classList.add('anim-fade-up');div.style.animationDelay=(Math.min(animIdx,8)*30)+'ms';}
         div.innerHTML='<span style="font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.7px">'+GROUP_LABELS[g]+'</span>';
-        f.appendChild(div);animIdx++;
+        frag.appendChild(div);animIdx++;
       }
       lastGroup=g;
       var el=buildPost(p,false);
-      el.classList.add('anim-fade-up');el.style.animationDelay=(Math.min(animIdx,8)*30)+'ms';
-      animIdx++;f.appendChild(el);
+      if(isCold){el.classList.add('anim-fade-up');el.style.animationDelay=(Math.min(animIdx,8)*30)+'ms';}
+      animIdx++;frag.appendChild(el);
       if(p.liked){
-        var h=document.getElementById('hi-'+p.id);if(h)h.setAttribute('fill','currentColor');
-        var lb=document.getElementById('lb-'+p.id);if(lb)lb.classList.add('liked');
+        var h=el.querySelector('#hi-'+p.id);if(h)h.setAttribute('fill','currentColor');
+        var lb=el.querySelector('#lb-'+p.id);if(lb)lb.classList.add('liked');
       }
-      // Mark suggested posts as seen when they scroll into view
       if(g===4){
         (function(pid,postEl){
           var obs=new IntersectionObserver(function(entries){
@@ -3984,6 +4007,9 @@ function renderFeedRows(rows,likedIds,isFirst){
         })(p.id,el);
       }
     });
+    // Single atomic DOM swap — no blank frame ever shown
+    f.innerHTML='';
+    f.appendChild(frag);
   } else {
     // Append mode — remove old sentinel first
     var oldSentinel=document.getElementById('feed-sentinel');if(oldSentinel)oldSentinel.remove();
