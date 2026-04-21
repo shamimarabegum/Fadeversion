@@ -6130,7 +6130,7 @@ function closeCW(){
   if(chatUser){unreadConvos.delete(chatUser.id);}
   updateTalkDot();
   cw.style.transform='translateX(100%)';
-  setTimeout(function(){cw.classList.remove('on');cw.style.display='';cw.style.transform='';cw.style.visibility='hidden';cw.style.pointerEvents='none';chatUser=null;renderTalkList();},320);
+  setTimeout(function(){cw.classList.remove('on');cw.style.display='';cw.style.transform='';cw.style.zIndex='';cw.style.visibility='hidden';cw.style.pointerEvents='none';chatUser=null;renderTalkList();},320);
 }
 function renderMentions(text){
   return E(text).replace(/@(\w+)/g,function(match,handle){
@@ -6890,6 +6890,8 @@ function closeProf(){
           csSheet.style.transition='';
           csSheet.style.transform='translateY(0)';
           csBg.classList.add('on');
+          // Push a history entry so swipe-back from CS closes it properly
+          history.pushState({ _fade: 'cs-bg' }, '');
         });});
       }
       return;
@@ -11414,7 +11416,10 @@ function _buildEpCats(){
     { openFn: 'openCircleCW',   closeFn: 'closeCircleCW',    panelId: 'circle-cw'        },
     { openFn: 'openSchedForm',  closeFn: 'closeSchedForm',   panelId: 'sched-form-panel' },
     { openFn: 'openCircleInfo', closeFn: 'closeCircleInfo',  panelId: 'circle-info'      },
-    { openFn: 'openSearch',     closeFn: 'closeSearch',      panelId: 's-search'         },
+    { openFn: 'openSearch',      closeFn: 'closeSearch',      panelId: 's-search'         },
+    { openFn: 'openScrollView',  closeFn: 'closeScrollView',  panelId: 'scroll-view'      },
+    { openFn: 'openCS',          closeFn: 'closeCS',          panelId: 'cs-bg'            },
+    { openFn: 'openNotifPost',   closeFn: 'closeScrollView',  panelId: 'scroll-view'      },
   ];
 
   // Push a base state so the very first popstate has somewhere to land
@@ -11436,8 +11441,12 @@ function _buildEpCats(){
   // _anyPanelOpen() returns false and _advanceBackground() always
   // restores #sw — regardless of whether called from back button or popstate.
   // NOTE: notif-panel is excluded — closeNotif manages its own .on removal.
+  var _wrappedCloseFns = {};
   _HISTORY_PANELS.forEach(function(cfg) {
     if (cfg.panelId === 'notif-panel') return; // notif manages itself
+    var key = cfg.closeFn + '::' + cfg.panelId;
+    if (_wrappedCloseFns[key]) return; // already wrapped this exact pair
+    _wrappedCloseFns[key] = true;
     var origClose = window[cfg.closeFn];
     if (!origClose) return;
     window[cfg.closeFn] = function() {
@@ -11484,29 +11493,35 @@ function _buildEpCats(){
 
     var closed = false;
 
-    // Search screen uses .active (not .on) — check it first
-    var searchEl = document.getElementById('s-search');
-    if (searchEl && searchEl.classList.contains('active')) {
-      if (typeof window.closeSearch === 'function') window.closeSearch();
-      closed = true;
-    }
-
-    if (!closed) {
-    var priority = ['prof-screen', 'sched-form-panel', 'circle-info', 'cw', 'circle-cw', 'so'];
-    for (var i = 0; i < priority.length; i++) {
-      var el = document.getElementById(priority[i]);
+    // Close the topmost visible layer first (highest z-index wins).
+    // cs-bg:700, scroll-view:660, prof-screen:650, notif/cw:200-220
+    var _toClose = [
+      ['cs-bg',            'closeCS'         ],
+      ['prof-screen',      'closeProf'       ],
+      ['scroll-view',      'closeScrollView' ],
+      ['sched-form-panel', 'closeSchedForm'  ],
+      ['circle-info',      'closeCircleInfo' ],
+      ['cw',               'closeCW'         ],
+      ['circle-cw',        'closeCircleCW'   ],
+      ['so',               'closeSettings'   ],
+    ];
+    for (var i = 0; i < _toClose.length; i++) {
+      var el = document.getElementById(_toClose[i][0]);
       if (el && el.classList.contains('on')) {
-        for (var j = 0; j < _HISTORY_PANELS.length; j++) {
-          if (_HISTORY_PANELS[j].panelId === priority[i]) {
-            var closeFn = window[_HISTORY_PANELS[j].closeFn];
-            if (typeof closeFn === 'function') closeFn();
-            closed = true;
-            break;
-          }
-        }
-        if (closed) break;
+        var fn = window[_toClose[i][1]];
+        if (typeof fn === 'function') fn();
+        closed = true;
+        break;
       }
     }
+
+    // Search screen uses .active (not .on)
+    if (!closed) {
+      var searchEl = document.getElementById('s-search');
+      if (searchEl && searchEl.classList.contains('active')) {
+        if (typeof window.closeSearch === 'function') window.closeSearch();
+        closed = true;
+      }
     }
 
     // If no panel was open, push base state back so next swipe doesn't exit
