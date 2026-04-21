@@ -1763,15 +1763,53 @@ function setupRealtime(){
       var r=payload.new;
       // Ignore own posts (already in feed via optimistic)
       if(profile&&r.user_id===profile.id)return;
-      // Only show banner if user is on the feed tab and hasn't scrolled to top
-      _pendingNewPosts=((_pendingNewPosts||0)+1);
-      var scroller=document.getElementById('today-scroll');
-      var alreadyAtTop=scroller&&scroller.scrollTop<80;
-      if(alreadyAtTop){
-        // Just silently reload if already at top
-        renderFeed();_pendingNewPosts=0;
+      // Guard: ignore expired or invisible posts
+      if(r.expires_at&&new Date(r.expires_at).getTime()<=Date.now())return;
+      // Resolve author — may already be in USERS cache
+      function _injectPost(author){
+        var newPost={
+          id:r.id, uid:r.user_id,
+          author:{display_name:author.display_name||author.username||'User',username:author.username||'',avatar_url:author.avatar_url||null},
+          text:r.text||'', img:r.img_url||null,
+          likes:r.likes_count||0, liked:false,
+          comments:[], commentsCount:r.comments_count||0,
+          ts:r.created_at, audience:r.audience||'everyone'
+        };
+        if(!isVisibleToMe(newPost))return;
+        // Add to local posts array at the front
+        if(!posts.find(function(p){return p.id===r.id;}))posts.unshift(newPost);
+        var scroller=document.getElementById('today-scroll');
+        var alreadyAtTop=scroller&&scroller.scrollTop<80;
+        if(alreadyAtTop){
+          // User is at top — silently prepend card, no blink, no full reload
+          var feed=document.getElementById('feed');
+          if(feed){
+            var el=buildPost(newPost,false);
+            el.style.opacity='0';
+            el.style.transform='translateY(-12px)';
+            el.style.transition='opacity .32s ease, transform .32s cubic-bezier(.25,.46,.45,.94)';
+            feed.insertBefore(el,feed.firstChild);
+            requestAnimationFrame(function(){requestAnimationFrame(function(){
+              el.style.opacity='1';
+              el.style.transform='translateY(0)';
+              setTimeout(function(){el.style.transition='';el.style.opacity='';el.style.transform='';},340);
+            });});
+          }
+        } else {
+          // User scrolled down — show "New posts" banner
+          _pendingNewPosts=((_pendingNewPosts||0)+1);
+          showNewPostsBanner(_pendingNewPosts);
+        }
+      }
+      var known=USERS.find(function(u){return u.id===r.user_id;});
+      if(known){
+        _injectPost(known);
       } else {
-        showNewPostsBanner(_pendingNewPosts);
+        _sb.from('profiles').select('id,username,display_name,avatar_url').eq('id',r.user_id).single().then(function(pr){
+          var u=pr.data||{id:r.user_id,username:'user',display_name:'User',avatar_url:null};
+          if(!USERS.find(function(x){return x.id===u.id;}))USERS.push(u);
+          _injectPost(u);
+        });
       }
     })
     // ── POSTS (likes_count / comments_count columns) ───────
@@ -3872,9 +3910,10 @@ function hideNewPostsBanner(){
 }
 function tapNewPostsBanner(){
   hideNewPostsBanner();
+  // Posts are already live in the feed (injected by realtime handler).
+  // Just smooth-scroll to top — no reload, no blink.
   var scroller=document.getElementById('today-scroll');
   if(scroller)scroller.scrollTo({top:0,behavior:'smooth'});
-  renderFeed();
 }
 var _feedHasEverLoaded=false;
 function renderFeed(){
@@ -4332,8 +4371,28 @@ function getOwnGroupIndex(){
   return svGroups.findIndex(function(g){return g.user.id==='demo'||(profile&&g.user.id===profile.id);});
 }
 function renderStrip(){
-  var strip=document.getElementById('strip');strip.innerHTML='';
+  var strip=document.getElementById('strip');
+  // Prune expired items first (no DOM touch yet)
   svGroups.forEach(function(g){g.items=g.items.filter(function(s){return Date.now()-new Date(s.ts).getTime()<86400000;});});
+  // Diff approach: only wipe if structure changed (count differs).
+  // This prevents the story strip from blinking on every renderStrip call.
+  var existingItems=strip.querySelectorAll('.sitm');
+  var expectedCount=1+svGroups.filter(function(g){return g.user.id!=='demo'&&(profile?g.user.id!==profile.id:true)&&g.items.length>0;}).length;
+  if(existingItems.length!==expectedCount){strip.innerHTML='';}
+  else{
+    // Same count — just update ring classes/seen state in place, no full rebuild
+    var ringEls=strip.querySelectorAll('.sitm .sring');
+    var si=1;
+    svGroups.forEach(function(g,gi){
+      if(g.user.id==='demo'||(profile&&g.user.id===profile.id)||!g.items.length)return;
+      if(ringEls[si]){
+        ringEls[si].className='sring '+(g.seen?'sring-seen':'sring-active');
+        if(!g.seen)ringEls[si].classList.add('anim-ring-pulse');
+      }
+      si++;
+    });
+    return; // skip full rebuild
+  }
   var ownIdx=getOwnGroupIndex();
   var ownGroup=ownIdx>=0?svGroups[ownIdx]:null;
   var hasOwn=!!(ownGroup&&ownGroup.items.length>0);
