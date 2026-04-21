@@ -1530,7 +1530,7 @@ body {
     <!-- Profile preview card -->
     <div id="share-preview" style="display:flex;align-items:center;gap:12px;background:var(--inp-bg);border-radius:14px;padding:13px 14px;margin-bottom:18px"></div>
     <!-- Share options grid -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px" id="share-grid"></div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:8px;padding:0 0 4px" id="share-grid"></div>
     <!-- Copy link row -->
     <div style="margin-top:6px;display:flex;align-items:center;background:var(--inp-bg);border-radius:14px;overflow:hidden">
       <div id="share-url" style="flex:1;padding:13px 14px;font-size:13.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
@@ -6129,9 +6129,17 @@ function buildPostShareCard(p,isMine){
     hdr.style.cursor='pointer';
     hdr.addEventListener('click',function(e){
       e.stopPropagation();
+      var sv=document.getElementById('scroll-view');
+      var svOpen=sv&&sv.classList.contains('on');
       var ps=document.getElementById('prof-screen');
-      ps.style.zIndex='670'; // above scroll-view (660)
-      _profFromScrollView=true;
+      if(svOpen){
+        // Opened from the post overlay — lift prof-screen above it
+        ps.style.zIndex='670';
+        _profFromScrollView=true;
+      } else {
+        // Opened from inside the chat window — treat same as tapping chat header
+        _profFromChat=true;
+      }
       openProf(authorUser2);
     });
   }
