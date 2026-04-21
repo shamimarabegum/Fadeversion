@@ -2474,10 +2474,19 @@ var _sb = (function(){
 
 // Restore session on page load
 (function(){
-  // Hide splash after fonts load or max 1.5s
-  function hideSplash(){var s=document.getElementById('splash');if(!s)return;s.classList.add('hide');setTimeout(function(){s.style.display='none';},420);}
-  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,600);});}
-  else{var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,800);}
+  // Hide splash — instant for returning users (cached session), brief for fresh loads
+  function hideSplash(){var s=document.getElementById('splash');if(!s)return;s.classList.add('hide');setTimeout(function(){s.style.display='none';},300);}
+  // For new/logged-out users show a quick logo animation; for returning users skip it
+  var _isReturning=false;
+  try{var _tr=localStorage.getItem('sb-xmgmpewuevzgriqgsoct-auth-token');_isReturning=!!(_tr&&JSON.parse(_tr)&&JSON.parse(_tr).user);}catch(e){}
+  if(_isReturning){
+    // Returning user: hide splash immediately — feed renders underneath with no delay
+    hideSplash();
+  } else if(document.fonts&&document.fonts.ready){
+    document.fonts.ready.then(function(){var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,350);});
+  } else {
+    var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,500);
+  }
 
   // ── Instant session boot ──────────────────────────────────────────────────
   // Read Supabase session directly from localStorage using the known key.
@@ -4374,22 +4383,26 @@ function renderStrip(){
   var strip=document.getElementById('strip');
   // Prune expired items first (no DOM touch yet)
   svGroups.forEach(function(g){g.items=g.items.filter(function(s){return Date.now()-new Date(s.ts).getTime()<86400000;});});
-  // Diff approach: only wipe if structure changed (count differs).
-  // This prevents the story strip from blinking on every renderStrip call.
+  // Diff: only full-rebuild when count changes. Otherwise patch ring classes in place.
   var existingItems=strip.querySelectorAll('.sitm');
-  var expectedCount=1+svGroups.filter(function(g){return g.user.id!=='demo'&&(profile?g.user.id!==profile.id:true)&&g.items.length>0;}).length;
-  if(existingItems.length!==expectedCount){strip.innerHTML='';}
-  else{
-    // Same count — just update ring classes/seen state in place, no full rebuild
+  var visibleGroups=svGroups.filter(function(g){return g.user.id!=='demo'&&!(profile&&g.user.id===profile.id)&&g.items.length>0;});
+  var expectedCount=1+visibleGroups.length;
+  if(existingItems.length!==expectedCount){
+    strip.innerHTML=''; // structure changed — full rebuild below
+  } else {
+    // Same structure — patch seen/unseen ring class on each avatar in place
     var ringEls=strip.querySelectorAll('.sitm .sring');
-    var si=1;
-    svGroups.forEach(function(g,gi){
-      if(g.user.id==='demo'||(profile&&g.user.id===profile.id)||!g.items.length)return;
-      if(ringEls[si]){
-        ringEls[si].className='sring '+(g.seen?'sring-seen':'sring-active');
-        if(!g.seen)ringEls[si].classList.add('anim-ring-pulse');
-      }
-      si++;
+    // First ring (index 0) is own avatar — update its seen state too
+    var ownIdx2=getOwnGroupIndex();
+    var ownG2=ownIdx2>=0?svGroups[ownIdx2]:null;
+    if(ringEls[0]&&ownG2&&ownG2.items.length){
+      ringEls[0].className='sring '+(ownG2.seen?'sring-seen':'sring-active');
+    }
+    visibleGroups.forEach(function(g,i){
+      var rd=ringEls[i+1];
+      if(!rd)return;
+      rd.className='sring '+(g.seen?'sring-seen':'sring-active');
+      if(!g.seen)rd.classList.add('anim-ring-pulse');
     });
     return; // skip full rebuild
   }
@@ -4840,8 +4853,8 @@ function renderSVFrame(animate){
   // Record view in Supabase for every frame (not just first)
   if(!isOwnStory&&item.id&&profile){
     _sb.from('story_views').upsert({story_id:item.id,user_id:profile.id},{onConflict:'story_id,user_id'}).then(function(){});
-    // Mark group as seen in memory
-    if(svGroups[svGI])svGroups[svGI].seen=true;
+    // Mark group as seen in memory and update ring instantly (no blink — diff path)
+    if(svGroups[svGI]){svGroups[svGI].seen=true;renderStrip();}
   }
   if(animate){body.style.opacity='0';requestAnimationFrame(function(){body.style.transition='opacity .18s ease';body.style.opacity='1';setTimeout(function(){body.style.transition='';},200);});}
 }
