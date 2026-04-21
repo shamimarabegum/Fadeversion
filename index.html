@@ -3239,7 +3239,32 @@ function openSearch(){
 }
 function closeSearch(){
   var ct=typeof curTab!=='undefined'?curTab:'today';
-  goTab(ct);
+  var ss=document.getElementById('s-search');
+  var returnSc=document.getElementById('s-'+ct);
+  if(ss){
+    /* Slide search out to right; simultaneously slide current tab in from left */
+    ss.style.transition='transform .32s cubic-bezier(.25,.46,.45,.94),opacity .22s ease';
+    ss.style.transform='translateX(100%)';
+    ss.style.opacity='0';
+    if(returnSc){
+      returnSc.style.transition='none';
+      returnSc.style.transform='translateX(-20%)';
+      returnSc.style.opacity='0.6';
+      void returnSc.offsetWidth; /* force reflow */
+      returnSc.style.transition='transform .32s cubic-bezier(.25,.46,.45,.94),opacity .22s ease';
+      returnSc.style.transform='translateX(0)';
+      returnSc.style.opacity='1';
+    }
+    setTimeout(function(){
+      ss.style.transition='';
+      ss.style.transform='';
+      ss.style.opacity='';
+      if(returnSc){returnSc.style.transition='';returnSc.style.transform='';returnSc.style.opacity='';}
+      goTab(ct);
+    },320);
+  } else {
+    goTab(ct);
+  }
 }
 function markNotifRead(n){
   if(n.read)return;
