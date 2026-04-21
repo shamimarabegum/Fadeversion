@@ -3227,10 +3227,11 @@ function openSearch(){
     sw.style.transition='';
   }
   if(typeof window._isReceded!=='undefined') window._isReceded=false;
-  /* 2. Set all screens to correct state */
+  /* 2. Set all screens to correct state — hide others fully (no opacity bleed) */
   document.querySelectorAll('#sw .screen').forEach(function(sc){
     sc.classList.remove('active','left');
-    if(sc.id!=='s-search') sc.classList.add('left');
+    /* Don't add 'left' to sibling screens — keeps them invisible (translateX(100%))
+       so they don't bleed through the search screen background */
   });
   ss.classList.add('active');
   showSearchHome();
