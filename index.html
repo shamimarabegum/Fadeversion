@@ -1884,6 +1884,7 @@ var _profFromViews=false;
 var _notifProfReturn=false;
 var _notifPostReturn=false;
 var _csProfReturn=false; // when true, closing profile returns to comment sheet
+var _profFromScrollView=false; // when true, closing profile returns to scroll-view post overlay
 var _savedSVState=null; // {gi, ii, paused} — saved when opening profile from views
 var _ctxMsg=null,_ctxBsEl=null,_ctxIsMine=false,_replyMsg=null;
 var _dobChanges=[],_emailChanges=[];
@@ -4282,10 +4283,11 @@ function sharePost(postId){
 
   // Share options grid
   var grid=document.createElement('div');
-  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 12px';
+  grid.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:0 16px 12px';
   var shareOpts=[
     {label:'Messages',color:'#22C55E',ico:'<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',act:function(){ov.remove();window.open('sms:?&body='+encodeURIComponent('Check out this drop on Fade: '+url),'_blank');}},
     {label:'WhatsApp',color:'#25D366',ico:'<svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor"><path d="M16 3C8.82 3 3 8.82 3 16c0 2.3.6 4.5 1.74 6.44L3 29l6.72-1.72A13 13 0 0 0 16 29c7.18 0 13-5.82 13-13S23.18 3 16 3zm6.38 18.15c-.28.78-1.63 1.49-2.24 1.55-.57.05-.6.44-3.87-.95-3.27-1.42-5.16-4.76-5.32-4.98-.15-.22-1.27-1.76-1.19-3.32.08-1.55.88-2.28 1.19-2.58.31-.31.67-.38.9-.38h.63c.2 0 .48-.08.75.63.28.72.94 2.47 1.02 2.65.08.18.13.39.03.62-.1.23-.16.37-.32.57-.16.2-.34.45-.48.6-.16.16-.33.34-.14.66.19.32.83 1.43 1.79 2.32 1.23 1.14 2.26 1.49 2.58 1.65.32.17.51.14.7-.08.19-.22.8-.93 1.01-1.25.21-.32.43-.27.72-.16.3.11 1.87.88 2.19 1.04.32.16.53.24.61.37.08.14.08.78-.2 1.56z"/></svg>',act:function(){ov.remove();window.open('https://wa.me/?text='+encodeURIComponent('Check out this drop on Fade: '+url),'_blank');}},
+    {label:'Instagram',color:'#E1306C',ico:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><defs><linearGradient id="ig-g2" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#f09433"/><stop offset="25%" stop-color="#e6683c"/><stop offset="50%" stop-color="#dc2743"/><stop offset="75%" stop-color="#cc2366"/><stop offset="100%" stop-color="#bc1888"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="5.5" fill="url(#ig-g2)"/><circle cx="12" cy="12" r="4.5" stroke="#fff" stroke-width="1.6" fill="none"/><circle cx="17.2" cy="6.8" r="1.1" fill="#fff"/></svg>',act:function(){ov.remove();if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('Link copied — paste in Instagram');}).catch(function(){});setTimeout(function(){window.open('instagram://','_blank');},300);}},
     {label:'X',color:'var(--text)',ico:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',act:function(){ov.remove();window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Check out this drop on Fade')+'&url='+encodeURIComponent(url),'_blank');}},
     {label:'More',color:'#6B7280',ico:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 12h6M12 9v6" stroke-linecap="round"/></svg>',act:function(){ov.remove();if(navigator.share){navigator.share({title:'Drop on Fade',url:url}).catch(function(){});}else{if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('Link copied');});else T(url);}}}
   ];
@@ -6120,7 +6122,20 @@ function buildPostShareCard(p,isMine){
   var meta=document.createElement('div');
   meta.style.cssText='flex:1;min-width:0';
   meta.innerHTML='<div style="font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(p.authorName||'Someone')+'</div><div style="font-size:11px;color:var(--sub);margin-top:1px">shared a drop</div>';
-  hdr.appendChild(avDiv);hdr.appendChild(meta);card.appendChild(hdr);
+  hdr.appendChild(avDiv);hdr.appendChild(meta);
+  // Tap author name → open their profile above the scroll-view overlay
+  var authorUser2=p.authorId?USERS.find(function(x){return x.id===p.authorId;})||{id:p.authorId,display_name:p.authorName||'Someone',username:(p.authorName||'someone').toLowerCase(),avatar_url:p.authorAvatar||null}:null;
+  if(authorUser2){
+    hdr.style.cursor='pointer';
+    hdr.addEventListener('click',function(e){
+      e.stopPropagation();
+      var ps=document.getElementById('prof-screen');
+      ps.style.zIndex='670'; // above scroll-view (660)
+      _profFromScrollView=true;
+      openProf(authorUser2);
+    });
+  }
+  card.appendChild(hdr);
   var divEl=document.createElement('div');divEl.style.cssText='height:1px;background:var(--border)';card.appendChild(divEl);
   if(p.img){
     var imgEl=document.createElement('img');imgEl.src=p.img;
@@ -7025,6 +7040,8 @@ function openNotifPost(pid, csHint){
     });
   }
   sv.style.display='flex';
+  sv.style.visibility='';
+  sv.style.pointerEvents='';
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     sv.classList.add('on');
     // after scroll view slides in, open comment sheet + scroll to target
@@ -7227,6 +7244,16 @@ function closeProf(){
   setTimeout(function(){ps.classList.remove('on');ps.style.transform='';
     ps.style.display='';ps.style.visibility='hidden';ps.style.pointerEvents='none';
     _profUser=null;
+
+    // Return to scroll-view post overlay if we came from a postshare card tap
+    if(_profFromScrollView){
+      _profFromScrollView=false;
+      var psEl=document.getElementById('prof-screen');
+      psEl.style.zIndex=''; // reset back to CSS default (650)
+      var svEl2=document.getElementById('scroll-view');
+      if(svEl2){svEl2.style.visibility='';svEl2.style.pointerEvents='';}
+      return;
+    }
 
     // Return to chat if we came from the chat window header
     if(_profFromChat){
