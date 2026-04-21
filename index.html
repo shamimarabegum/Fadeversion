@@ -6150,12 +6150,19 @@ function openProfFromCS(u){
   var full=USERS.find(function(x){return x.id===u.id||x.username===u.username||x.display_name===u.display_name;})||u;
   var csBg=document.getElementById('cs-bg');
   var csSheet=document.getElementById('cs-sheet');
+  // Slide CS sheet out — but keep cs-bg history entry alive.
+  // We replace it with a prof-screen entry so the stack stays 1:1 with visible screens.
   csBg.classList.remove('on');
   csSheet.style.transform='translateY(100%)';
   setTimeout(function(){
     csBg.style.display='none';
     _csProfReturn=true;
-    openProf(full);
+    // openProf is wrapped — it will push its own history entry.
+    // But we must first consume the cs-bg history entry so there's no phantom.
+    // Replace current history state with prof-screen so swipe back lands correctly.
+    history.replaceState({ _fade: 'prof-screen' }, '');
+    var origOpenProf = window._origOpenProf || window.openProf;
+    origOpenProf(full);
   },200);
 }
 
@@ -6890,8 +6897,9 @@ function closeProf(){
           csSheet.style.transition='';
           csSheet.style.transform='translateY(0)';
           csBg.classList.add('on');
-          // Push a history entry so swipe-back from CS closes it properly
-          history.pushState({ _fade: 'cs-bg' }, '');
+          // The cs-bg history entry is already in the stack (from when openCS was called).
+          // openProfFromCS did replaceState(prof-screen) so the entry below is cs-bg.
+          // No extra push needed — swipe back from here will pop cs-bg correctly.
         });});
       }
       return;
@@ -11426,6 +11434,9 @@ function _buildEpCats(){
   if (!history.state || !history.state._fade) {
     history.replaceState({ _fade: 'base' }, '');
   }
+
+  // Save originals before wrapping (used by openProfFromCS to avoid double-push)
+  window._origOpenProf = window.openProf;
 
   // Wrap each open function to push a history entry
   _HISTORY_PANELS.forEach(function(cfg) {
