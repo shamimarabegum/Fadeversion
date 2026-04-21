@@ -101,6 +101,11 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .prof-av-ring-active{background:var(--text)}
 .prof-av-ring-seen{background:var(--border)}
 .prof-av-ring-none{background:none}
+/* story ring on talk list / chat avatars */
+.talk-story-ring{border-radius:50%;padding:2.5px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:opacity .15s}
+.talk-story-ring.has-story{background:var(--text)}
+.talk-story-ring.story-seen{background:var(--border)}
+.talk-story-ring.no-story{background:none;padding:0}
 .sring-seen{background:var(--border)}
 .sring-none{background:none;border:1.5px dashed var(--border);padding:0;display:flex;align-items:center;justify-content:center}
 .sinner{width:100%;height:100%;border-radius:50%;background:var(--card);padding:2px;overflow:hidden;display:flex;align-items:center;justify-content:center}
@@ -582,6 +587,10 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
+}
+@keyframes sheetUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
 }
 
 /* Sheet: slide down to bottom */
@@ -1763,53 +1772,15 @@ function setupRealtime(){
       var r=payload.new;
       // Ignore own posts (already in feed via optimistic)
       if(profile&&r.user_id===profile.id)return;
-      // Guard: ignore expired or invisible posts
-      if(r.expires_at&&new Date(r.expires_at).getTime()<=Date.now())return;
-      // Resolve author — may already be in USERS cache
-      function _injectPost(author){
-        var newPost={
-          id:r.id, uid:r.user_id,
-          author:{display_name:author.display_name||author.username||'User',username:author.username||'',avatar_url:author.avatar_url||null},
-          text:r.text||'', img:r.img_url||null,
-          likes:r.likes_count||0, liked:false,
-          comments:[], commentsCount:r.comments_count||0,
-          ts:r.created_at, audience:r.audience||'everyone'
-        };
-        if(!isVisibleToMe(newPost))return;
-        // Add to local posts array at the front
-        if(!posts.find(function(p){return p.id===r.id;}))posts.unshift(newPost);
-        var scroller=document.getElementById('today-scroll');
-        var alreadyAtTop=scroller&&scroller.scrollTop<80;
-        if(alreadyAtTop){
-          // User is at top — silently prepend card, no blink, no full reload
-          var feed=document.getElementById('feed');
-          if(feed){
-            var el=buildPost(newPost,false);
-            el.style.opacity='0';
-            el.style.transform='translateY(-12px)';
-            el.style.transition='opacity .32s ease, transform .32s cubic-bezier(.25,.46,.45,.94)';
-            feed.insertBefore(el,feed.firstChild);
-            requestAnimationFrame(function(){requestAnimationFrame(function(){
-              el.style.opacity='1';
-              el.style.transform='translateY(0)';
-              setTimeout(function(){el.style.transition='';el.style.opacity='';el.style.transform='';},340);
-            });});
-          }
-        } else {
-          // User scrolled down — show "New posts" banner
-          _pendingNewPosts=((_pendingNewPosts||0)+1);
-          showNewPostsBanner(_pendingNewPosts);
-        }
-      }
-      var known=USERS.find(function(u){return u.id===r.user_id;});
-      if(known){
-        _injectPost(known);
+      // Only show banner if user is on the feed tab and hasn't scrolled to top
+      _pendingNewPosts=((_pendingNewPosts||0)+1);
+      var scroller=document.getElementById('today-scroll');
+      var alreadyAtTop=scroller&&scroller.scrollTop<80;
+      if(alreadyAtTop){
+        // Just silently reload if already at top
+        renderFeed();_pendingNewPosts=0;
       } else {
-        _sb.from('profiles').select('id,username,display_name,avatar_url').eq('id',r.user_id).single().then(function(pr){
-          var u=pr.data||{id:r.user_id,username:'user',display_name:'User',avatar_url:null};
-          if(!USERS.find(function(x){return x.id===u.id;}))USERS.push(u);
-          _injectPost(u);
-        });
+        showNewPostsBanner(_pendingNewPosts);
       }
     })
     // ── POSTS (likes_count / comments_count columns) ───────
@@ -1908,6 +1879,7 @@ var scheduled=[],_schedListEl=null,_schedEditIdx=-1,_schedImgUrl=null;
 var soStack=[];
 var _profUser=null;
 var _svFromProf=false; // when true, closeSV re-shows prof-screen
+var _svReturnCtx=null; // 'talk' | 'chat' — where to return after closeSV
 var _profFromViews=false;
 var _notifProfReturn=false;
 var _notifPostReturn=false;
@@ -2474,19 +2446,10 @@ var _sb = (function(){
 
 // Restore session on page load
 (function(){
-  // Hide splash — instant for returning users (cached session), brief for fresh loads
-  function hideSplash(){var s=document.getElementById('splash');if(!s)return;s.classList.add('hide');setTimeout(function(){s.style.display='none';},300);}
-  // For new/logged-out users show a quick logo animation; for returning users skip it
-  var _isReturning=false;
-  try{var _tr=localStorage.getItem('sb-xmgmpewuevzgriqgsoct-auth-token');_isReturning=!!(_tr&&JSON.parse(_tr)&&JSON.parse(_tr).user);}catch(e){}
-  if(_isReturning){
-    // Returning user: hide splash immediately — feed renders underneath with no delay
-    hideSplash();
-  } else if(document.fonts&&document.fonts.ready){
-    document.fonts.ready.then(function(){var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,350);});
-  } else {
-    var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,500);
-  }
+  // Hide splash after fonts load or max 1.5s
+  function hideSplash(){var s=document.getElementById('splash');if(!s)return;s.classList.add('hide');setTimeout(function(){s.style.display='none';},420);}
+  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,600);});}
+  else{var l=document.querySelector('.splash-logo');if(l)l.classList.add('ready');setTimeout(hideSplash,800);}
 
   // ── Instant session boot ──────────────────────────────────────────────────
   // Read Supabase session directly from localStorage using the known key.
@@ -2790,6 +2753,8 @@ function initApp(userProfile){
 
   loadStories();
   renderFeed();
+  // Fire event so deep link handler knows profile is ready
+  document.dispatchEvent(new Event('fadeProfileLoaded'));
   _sb.from('profiles').select('cmt_perm,story_audience,is_private,hide_likes,activity_visible,last_active').eq('id',profile.id).single().then(function(res){
     if(res.data){
       if(res.data.cmt_perm){S.cmtPerm=res.data.cmt_perm;}
@@ -3919,10 +3884,9 @@ function hideNewPostsBanner(){
 }
 function tapNewPostsBanner(){
   hideNewPostsBanner();
-  // Posts are already live in the feed (injected by realtime handler).
-  // Just smooth-scroll to top — no reload, no blink.
   var scroller=document.getElementById('today-scroll');
   if(scroller)scroller.scrollTo({top:0,behavior:'smooth'});
+  renderFeed();
 }
 var _feedHasEverLoaded=false;
 function renderFeed(){
@@ -4278,9 +4242,59 @@ function openChangeAudience(postId){
 function sharePost(postId){
   var p=posts.find(function(x){return x.id===postId;});if(!p)return;
   var url=window.location.origin+'?post='+postId;
-  var text=(p.text?p.text.slice(0,80)+' — ':'')+' shared from Fade';
-  if(navigator.share){navigator.share({title:'Check this drop on Fade',text:text,url:url}).catch(function(){});return;}
-  if(navigator.clipboard){navigator.clipboard.writeText(url).then(function(){T('Link copied');}).catch(function(){T(url);});}else{T(url);}
+  var textPreview=(p.text?p.text.slice(0,60)+'…':'📸 Photo drop');
+  var authorName=(p.author&&(p.author.display_name||p.author.username))||'Someone';
+
+  // Build a share sheet similar to profile share
+  var ex=document.getElementById('post-share-ov');if(ex)ex.remove();
+  var ov=document.createElement('div');ov.id='post-share-ov';
+  ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.45);display:flex;align-items:flex-end';
+  var sheet=document.createElement('div');
+  sheet.style.cssText='position:relative;background:var(--card);width:100%;border-radius:20px 20px 0 0;padding:0 0 max(28px,env(safe-area-inset-bottom));animation:sheetUp .28s ease both';
+
+  var handle=document.createElement('div');handle.style.cssText='width:36px;height:3px;background:var(--border);border-radius:2px;margin:12px auto 0;flex-shrink:0';
+  var hdr=document.createElement('div');hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px';
+  hdr.innerHTML='<div style="font-weight:700;font-size:15px">Share Drop</div><button onclick="document.getElementById(\'post-share-ov\').remove()" style="background:var(--inp-bg);border:none;cursor:pointer;color:var(--sub);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px">✕</button>';
+
+  // Post preview
+  var prev=document.createElement('div');
+  prev.style.cssText='display:flex;align-items:center;gap:12px;background:var(--inp-bg);border-radius:14px;padding:12px 14px;margin:0 16px 16px';
+  prev.innerHTML='<div style="width:42px;height:42px;border-radius:10px;overflow:hidden;background:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center">'+(p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/>':'<svg width="18" height="18" fill="none" stroke="var(--sub)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0C18 9.5 12 3 12 3z"/></svg>')+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+E(authorName)+'\'s drop</div><div style="font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">'+E(textPreview)+'</div></div>';
+
+  // Share options grid
+  var grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 12px';
+  var shareOpts=[
+    {label:'Messages',color:'#22C55E',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',act:function(){ov.remove();window.open('sms:?&body='+encodeURIComponent('Check out this drop on Fade: '+url),'_blank');}},
+    {label:'WhatsApp',color:'#25D366',ico:'<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.979-1.406A9.95 9.95 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm4.93 13.667c-.207.583-1.216 1.114-1.663 1.154-.447.04-.46.352-2.896-.713-2.436-1.064-3.857-3.571-3.972-3.733-.116-.163-.946-1.315-.887-2.478.059-1.163.663-1.706.893-1.938.23-.232.499-.284.666-.284h.473c.152 0 .36-.058.563.473.207.543.703 1.851.764 1.985.062.133.1.29.02.463-.082.173-.123.28-.243.43-.12.15-.252.335-.36.45-.12.12-.245.25-.105.49.14.24.623 1.073 1.336 1.737.917.85 1.69 1.113 1.93 1.237.24.124.38.104.52-.063.14-.166.6-.696.76-.936.16-.24.32-.2.54-.12.22.08 1.397.658 1.636.778.24.12.4.18.46.28.06.1.06.583-.147 1.166z"/></svg>',act:function(){ov.remove();window.open('https://wa.me/?text='+encodeURIComponent('Check out this drop on Fade: '+url),'_blank');}},
+    {label:'X (Twitter)',color:'#000',ico:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',act:function(){ov.remove();window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Check out this drop on Fade')+'&url='+encodeURIComponent(url),'_blank');}},
+    {label:'Copy Link',color:'#7C3AED',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',act:function(){ov.remove();if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('Link copied');}).catch(function(){T(url);});else T(url);}},
+    {label:'More',color:'#6B7280',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',act:function(){ov.remove();if(navigator.share){navigator.share({title:'Drop on Fade',url:url}).catch(function(){});}else{if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('Link copied');});else T(url);}}}
+  ];
+  shareOpts.forEach(function(o){
+    var cell=document.createElement('div');
+    cell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer';
+    cell.innerHTML='<div style="width:54px;height:54px;border-radius:16px;background:var(--inp-bg);display:flex;align-items:center;justify-content:center;color:'+o.color+'">'+o.ico+'</div><div style="font-size:11px;font-weight:500;color:var(--sub);text-align:center">'+o.label+'</div>';
+    cell.addEventListener('click',o.act);
+    grid.appendChild(cell);
+  });
+
+  // Copy link row at bottom
+  var copyRow=document.createElement('div');
+  copyRow.style.cssText='display:flex;align-items:center;background:var(--inp-bg);border-radius:14px;overflow:hidden;margin:4px 16px 0';
+  var urlLabel=document.createElement('div');
+  urlLabel.style.cssText='flex:1;padding:13px 14px;font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  urlLabel.textContent=url.replace('https://','');
+  var copyBtn=document.createElement('button');
+  copyBtn.style.cssText='background:var(--text);color:var(--card);border:none;padding:13px 18px;font-size:13.5px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap';
+  copyBtn.textContent='Copy';
+  copyBtn.onclick=function(){ov.remove();if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('Link copied');}).catch(function(){T(url);});else T(url);};
+  copyRow.appendChild(urlLabel);copyRow.appendChild(copyBtn);
+
+  sheet.appendChild(handle);sheet.appendChild(hdr);sheet.appendChild(prev);sheet.appendChild(grid);sheet.appendChild(copyRow);
+  ov.appendChild(sheet);
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
 }
 
 
@@ -4380,32 +4394,8 @@ function getOwnGroupIndex(){
   return svGroups.findIndex(function(g){return g.user.id==='demo'||(profile&&g.user.id===profile.id);});
 }
 function renderStrip(){
-  var strip=document.getElementById('strip');
-  // Prune expired items first (no DOM touch yet)
+  var strip=document.getElementById('strip');strip.innerHTML='';
   svGroups.forEach(function(g){g.items=g.items.filter(function(s){return Date.now()-new Date(s.ts).getTime()<86400000;});});
-  // Diff: only full-rebuild when count changes. Otherwise patch ring classes in place.
-  var existingItems=strip.querySelectorAll('.sitm');
-  var visibleGroups=svGroups.filter(function(g){return g.user.id!=='demo'&&!(profile&&g.user.id===profile.id)&&g.items.length>0;});
-  var expectedCount=1+visibleGroups.length;
-  if(existingItems.length!==expectedCount){
-    strip.innerHTML=''; // structure changed — full rebuild below
-  } else {
-    // Same structure — patch seen/unseen ring class on each avatar in place
-    var ringEls=strip.querySelectorAll('.sitm .sring');
-    // First ring (index 0) is own avatar — update its seen state too
-    var ownIdx2=getOwnGroupIndex();
-    var ownG2=ownIdx2>=0?svGroups[ownIdx2]:null;
-    if(ringEls[0]&&ownG2&&ownG2.items.length){
-      ringEls[0].className='sring '+(ownG2.seen?'sring-seen':'sring-active');
-    }
-    visibleGroups.forEach(function(g,i){
-      var rd=ringEls[i+1];
-      if(!rd)return;
-      rd.className='sring '+(g.seen?'sring-seen':'sring-active');
-      if(!g.seen)rd.classList.add('anim-ring-pulse');
-    });
-    return; // skip full rebuild
-  }
   var ownIdx=getOwnGroupIndex();
   var ownGroup=ownIdx>=0?svGroups[ownIdx]:null;
   var hasOwn=!!(ownGroup&&ownGroup.items.length>0);
@@ -4723,6 +4713,7 @@ function closeSV(){
   body.removeEventListener('touchstart',svHoldStart);body.removeEventListener('touchend',svHoldEnd);
   body.removeEventListener('mousedown',svHoldStart);body.removeEventListener('mouseup',svHoldEnd);body.removeEventListener('mouseleave',svHoldEnd);
   var sv=document.getElementById('sv');sv.style.opacity='0';
+  var returnCtx=_svReturnCtx;_svReturnCtx=null;
   setTimeout(function(){
     sv.style.display='none';
     // if opened from profile screen, restore it
@@ -4730,9 +4721,22 @@ function closeSV(){
       _svFromProf=false;
       var ps=document.getElementById('prof-screen');
       if(ps){
-        // display was kept, just animate .on back in
         requestAnimationFrame(function(){requestAnimationFrame(function(){ps.classList.add('on');});});
       }
+      return;
+    }
+    // Return to chat window if opened from inside chat
+    if(returnCtx==='chat'){
+      var cw=document.getElementById('cw');
+      if(cw&&chatUser){
+        cw.style.display='';cw.style.visibility='';cw.style.pointerEvents='';
+        cw.classList.add('on');
+      }
+      return;
+    }
+    // Return to talk tab if opened from talk list
+    if(returnCtx==='talk'){
+      goTab('talk');
     }
   },220);
 }
@@ -4853,8 +4857,8 @@ function renderSVFrame(animate){
   // Record view in Supabase for every frame (not just first)
   if(!isOwnStory&&item.id&&profile){
     _sb.from('story_views').upsert({story_id:item.id,user_id:profile.id},{onConflict:'story_id,user_id'}).then(function(){});
-    // Mark group as seen in memory and update ring instantly (no blink — diff path)
-    if(svGroups[svGI]){svGroups[svGI].seen=true;renderStrip();}
+    // Mark group as seen in memory
+    if(svGroups[svGI])svGroups[svGI].seen=true;
   }
   if(animate){body.style.opacity='0';requestAnimationFrame(function(){body.style.transition='opacity .18s ease';body.style.opacity='1';setTimeout(function(){body.style.transition='';},200);});}
 }
@@ -5144,13 +5148,25 @@ function _renderTalkFromCache(){
       row.style.cssText='display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;background:var(--card);-webkit-tap-highlight-color:transparent';
       row.classList.add('anim-fade-up');
 
+      // Avatar with story ring
+      var gi=storyGIForUser(uid);
+      var hasStory=gi>=0;
+      var storySeen=hasStory&&svGroups[gi]&&svGroups[gi].seen;
+
       var avWrap=document.createElement('div');
       avWrap.setAttribute('data-av-wrap','1');
-      avWrap.style.cssText='position:relative;width:54px;height:54px;min-width:54px;flex-shrink:0';
-      var avInner=document.createElement('div');
-      avInner.style.cssText='width:54px;height:54px;border-radius:50%;overflow:hidden;background:'+nc(u.display_name||u.username)+';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700';
-      avInner.innerHTML=avH(u.avatar_url,u.display_name||u.username);
-      avWrap.appendChild(avInner);
+      avWrap.style.cssText='position:relative;width:58px;height:58px;min-width:58px;flex-shrink:0';
+
+      var storyRing=document.createElement('div');
+      storyRing.style.cssText='width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;'+(hasStory?(storySeen?'background:var(--border)':'background:var(--text)'):'');
+
+      var avPad=document.createElement('div');
+      avPad.style.cssText='width:'+(hasStory?'52px':'58px')+';height:'+(hasStory?'52px':'58px')+';border-radius:50%;overflow:hidden;background:'+nc(u.display_name||u.username)+';display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;'+(hasStory?'border:2.5px solid var(--card)':'');
+      avPad.innerHTML=avH(u.avatar_url,u.display_name||u.username);
+
+      storyRing.appendChild(avPad);
+      avWrap.appendChild(storyRing);
+
       if(_active){
         var gd=document.createElement('div');
         gd.setAttribute('data-green-dot','1');
@@ -5186,6 +5202,23 @@ function _renderTalkFromCache(){
       row.addEventListener('touchend',function(){clearTimeout(_holdT);},{passive:true});
       row.addEventListener('touchmove',function(){clearTimeout(_holdT);},{passive:true});
       row.addEventListener('contextmenu',function(e){e.preventDefault();showConvoMenu(u,row);});
+
+      // Avatar taps open story (if user has one); row taps open chat
+      (function(userId,storyRingEl){
+        storyRingEl.addEventListener('click',function(e){
+          e.stopPropagation();
+          if(_holdFired)return;
+          var sgi=storyGIForUser(userId);
+          if(sgi>=0){openSVFromTalk(userId);}
+          else{
+            // no story — open chat normally
+            _sb.from('messages').update({is_read:true})
+              .eq('sender_id',userId).eq('receiver_id',profile.id).eq('is_read',false).then(function(){});
+            unreadConvos.delete(userId);updateTalkDot();openChat(u);
+          }
+        });
+      })(uid,storyRing);
+
       row.onclick=function(){
         if(_holdFired)return;
         _sb.from('messages').update({is_read:true})
@@ -5262,6 +5295,25 @@ function setChatHeader(u){
   var cwavEl=document.getElementById('cwav');
   cwavEl.style.background=nc(u.display_name);
   setAv(cwavEl,u.avatar_url,u.display_name);
+
+  // Story ring on chat avatar
+  var cwavWrap=document.getElementById('cwav-wrap');
+  if(cwavWrap){
+    var gi=storyGIForUser(u.id);
+    var hasStory=gi>=0;
+    var storySeen=hasStory&&svGroups[gi]&&svGroups[gi].seen;
+    cwavWrap.style.cssText='position:relative;flex-shrink:0;width:'+(hasStory?'42px':'38px')+';height:'+(hasStory?'42px':'38px');
+    cwavWrap.style.borderRadius='50%';
+    cwavWrap.style.padding=hasStory?'2.5px':'0';
+    cwavWrap.style.background=hasStory?(storySeen?'var(--border)':'var(--text)'):'';
+    cwavWrap.style.cursor=hasStory?'pointer':'default';
+    cwavWrap.onclick=hasStory?function(e){e.stopPropagation();openSVFromChat(u.id);}:null;
+    // Resize inner avatar to fit ring
+    cwavEl.style.width=hasStory?'37px':'38px';
+    cwavEl.style.height=hasStory?'37px':'38px';
+    cwavEl.style.border=hasStory?'2.5px solid var(--card)':'';
+  }
+
   var active=isActiveNow(u.id);
   var statusEl=document.getElementById('cw-status');
   var dotEl=document.getElementById('cw-dot');
@@ -6269,6 +6321,30 @@ function openCS(pid){
   var p=posts.find(function(x){return x.id===pid;});if(!p){T('Post not found');return;}
   document.getElementById('cs-pp').innerHTML='';
 
+  // ── Sync live counts from DB whenever a post is opened ──
+  _sb.from('posts').select('likes_count,comments_count').eq('id',pid).single().then(function(res){
+    if(!res.data)return;
+    if(res.data.likes_count!=null&&res.data.likes_count!==p.likes){
+      p.likes=res.data.likes_count;
+      document.querySelectorAll('#lc-'+pid).forEach(function(el){el.textContent=p.likes;});
+    }
+    if(res.data.comments_count!=null&&res.data.comments_count!==p.commentsCount){
+      p.commentsCount=res.data.comments_count;
+      document.querySelectorAll('#cc-'+pid).forEach(function(el){el.textContent=p.commentsCount;});
+    }
+  });
+  // Sync own like state
+  if(profile){
+    _sb.from('likes').select('id',{head:true,count:'exact'}).eq('post_id',pid).eq('user_id',profile.id).then(function(res){
+      var nowLiked=(res.count||0)>0;
+      if(p.liked!==nowLiked){
+        p.liked=nowLiked;
+        document.querySelectorAll('#lb-'+pid).forEach(function(b){b.classList.toggle('liked',nowLiked);});
+        document.querySelectorAll('#hi-'+pid).forEach(function(h){h.setAttribute('fill',nowLiked?'currentColor':'none');});
+      }
+    });
+  }
+
   // Clear stale comments BEFORE sheet opens — nothing old ever flashes
   p.comments=[];
   var list=document.getElementById('cs-list');
@@ -6725,11 +6801,25 @@ function openNotifPost(pid, csHint){
       var now=Date.now();
       if(r.expires_at&&new Date(r.expires_at).getTime()<now){T('Post has expired');return;}
       var author=USERS.find(function(x){return x.id===r.user_id;})||{id:r.user_id,display_name:'User',username:'user',avatar_url:null};
-      var fetchedPost={id:r.id,uid:r.user_id,author:{display_name:author.display_name,username:author.username,avatar_url:author.avatar_url},text:r.content||'',img:r.img_url||null,likes:r.likes_count||0,liked:false,comments:[],ts:r.created_at};
+      var fetchedPost={id:r.id,uid:r.user_id,author:{display_name:author.display_name,username:author.username,avatar_url:author.avatar_url},text:r.content||'',img:r.img_url||null,likes:r.likes_count||0,liked:false,commentsCount:r.comments_count||0,comments:[],ts:r.created_at};
       posts.push(fetchedPost);
       openNotifPost(pid,csHint);
     });
     return;
+  }
+  // ── Always sync live counts from DB before rendering ──
+  _sb.from('posts').select('likes_count,comments_count').eq('id',pid).single().then(function(res){
+    if(res.data){
+      if(res.data.likes_count!=null){p.likes=res.data.likes_count;document.querySelectorAll('#lc-'+pid).forEach(function(el){el.textContent=p.likes;});}
+      if(res.data.comments_count!=null){p.commentsCount=res.data.comments_count;document.querySelectorAll('#cc-'+pid).forEach(function(el){el.textContent=p.commentsCount;});}
+    }
+  });
+  // Also sync own liked state from DB
+  if(profile){
+    _sb.from('likes').select('id',{head:true,count:'exact'}).eq('post_id',pid).eq('user_id',profile.id).then(function(res){
+      var nowLiked=(res.count||0)>0;
+      if(p.liked!==nowLiked){p.liked=nowLiked;document.querySelectorAll('#lb-'+pid).forEach(function(b){b.classList.toggle('liked',nowLiked);});document.querySelectorAll('#hi-'+pid).forEach(function(h){h.setAttribute('fill',nowLiked?'currentColor':'none');});}
+    });
   }
   _notifPostReturn=true;
   var f=document.getElementById('sv-feed');f.innerHTML='';
@@ -7313,7 +7403,11 @@ function ddAct(a){
   else if(a==='block'){_blockUser(u.id);closeProf();T('Blocked');}
   else if(a==='restrict'){_restrictUser(u.id);}
   else if(a==='about'){T('Connect Supabase for account info');}
-  else if(a==='copyurl'){var url='fade.app/'+u.username;if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('URL copied');}).catch(function(){T(url);});else T(url);}
+  else if(a==='copyurl'){
+    var url=window.location.origin+'?user='+(u.username||u.id);
+    if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('Profile URL copied');}).catch(function(){T(url);});
+    else T(url);
+  }
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
@@ -7771,8 +7865,8 @@ function buildCFPage(el){el.innerHTML='';var wrap=document.createElement('div');
 function buildReportPage(el){el.innerHTML='';var wrap=document.createElement('div');wrap.style.cssText='padding:20px 16px;display:flex;flex-direction:column;gap:14px';var desc=document.createElement('div');desc.style.cssText='font-size:14px;color:var(--sub);line-height:1.6';desc.textContent='Tell us what went wrong and we will look into it.';wrap.appendChild(desc);var cats=['Bug or technical issue','Inappropriate content','Spam','Harassment','Something else'];var f1=document.createElement('div');f1.className='field';f1.innerHTML='<label class="lbl">Category</label>';var sel=document.createElement('select');sel.className='inp';cats.forEach(function(c){var opt=document.createElement('option');opt.value=c;opt.textContent=c;sel.appendChild(opt);});f1.appendChild(sel);wrap.appendChild(f1);var f2=document.createElement('div');f2.className='field';f2.innerHTML='<label class="lbl">Description</label>';var ta=document.createElement('textarea');ta.className='inp';ta.rows=4;ta.placeholder='What happened?';f2.appendChild(ta);wrap.appendChild(f2);var btn=document.createElement('button');btn.className='btn btn-dark';btn.textContent='Submit Report';btn.onclick=function(){if(!ta.value.trim())return T('Write something first');T('Got it, thanks.');soBack();};wrap.appendChild(btn);el.appendChild(wrap);}
 
 // ── SHARE SHEET ───────────────────────────────────────────────────────────────
-function getShareURL(){return window.location.origin+'/'+(profile&&profile.username||'user');}
-function getShareText(){return'Check out '+(profile&&profile.display_name||'my')+' on Fade — gone in 24h';}
+function getShareURL(){return window.location.origin+'?user='+(profile&&profile.username||'user');}
+function getShareText(){return'Check out '+(profile&&profile.display_name||'my profile')+' on Fade — gone in 24h';}
 var SHARE_OPTIONS=[
   {label:'Messages',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',color:'#22C55E',act:function(){
     var url=getShareURL(),txt=getShareText();
@@ -7831,14 +7925,14 @@ function openShareSheet(){
     cell.addEventListener('touchend',function(){cell.querySelector('div').style.opacity='';cell.querySelector('div').style.transform='';},{passive:true});
     grid.appendChild(cell);
   });
-  var url='fade.app/'+(profile&&profile.username||'user');
-  document.getElementById('share-url').textContent=url;
+  var url=getShareURL();
+  document.getElementById('share-url').textContent=url.replace('https://','');
   var bg=document.getElementById('share-bg');bg.style.display='flex';
   requestAnimationFrame(function(){requestAnimationFrame(function(){bg.querySelector('.sheet').style.transform='translateY(0)';});});
 }
 function closeShareSheet(){closeSheet('share-bg');}
 function copyProfileLink(){
-  var url='https://fade.app/'+(profile&&profile.username||'user');
+  var url=window.location.origin+'?user='+(profile&&profile.username||'user');
   if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('Link copied');}).catch(function(){T(url);});
   else T(url);
 }
@@ -7986,7 +8080,45 @@ function attachAvatarInteractions(el,avatarUrl,isOwn,uid){
 
 
 
-// ── SCHEDULED PERSISTENCE ─────────────────────────────────────────────────────
+// ── OPEN STORY FROM TALK / CHAT CONTEXT ──────────────────────────────────────
+function openSVFromTalk(uid){
+  var gi=storyGIForUser(uid);
+  if(gi<0){T('No active moments');return;}
+  _svReturnCtx='talk';
+  openSV(gi);
+}
+function openSVFromChat(uid){
+  var gi=storyGIForUser(uid);
+  if(gi<0){T('No active moments');return;}
+  _svReturnCtx='chat';
+  openSV(gi);
+}
+// ── TALK LIST STORY RING HELPER ───────────────────────────────────────────────
+function buildTalkAvWithRing(u,size){
+  // Returns a wrapper element: story ring around avatar if user has story
+  var uid=u.id;
+  var gi=storyGIForUser(uid);
+  var hasStory=gi>=0;
+  var seen=hasStory&&svGroups[gi]&&svGroups[gi].seen;
+
+  var outer=document.createElement('div');
+  outer.style.cssText='position:relative;width:'+(size+2)+'px;height:'+(size+2)+'px;flex-shrink:0;min-width:'+(size+2)+'px';
+
+  var ring=document.createElement('div');
+  ring.className='talk-story-ring '+(hasStory?(seen?'story-seen':'has-story'):'no-story');
+  ring.style.cssText='width:'+(size+2)+'px;height:'+(size+2)+'px;border-radius:50%;display:flex;align-items:center;justify-content:center';
+
+  var avInner=document.createElement('div');
+  avInner.style.cssText='width:'+size+'px;height:'+size+'px;border-radius:50%;overflow:hidden;background:'+nc(u.display_name||u.username)+';display:flex;align-items:center;justify-content:center;font-size:'+(size*0.37)+'px;font-weight:700;'+(hasStory?'padding:2px;background:var(--card)':'');
+  // actual avatar circle inside ring
+  var avCircle=document.createElement('div');
+  avCircle.style.cssText='width:100%;height:100%;border-radius:50%;overflow:hidden;background:'+nc(u.display_name||u.username)+';display:flex;align-items:center;justify-content:center;font-size:'+(size*0.37)+'px;font-weight:700';
+  avCircle.innerHTML=avH(u.avatar_url,u.display_name||u.username);
+  avInner.appendChild(avCircle);
+  ring.appendChild(avInner);
+  outer.appendChild(ring);
+  return{el:outer,ring:ring,avWrap:outer};
+}
 function saveScheduled(){
   try{localStorage.setItem('fade_scheduled',JSON.stringify(scheduled));}catch(e){}
 }
@@ -10924,8 +11056,273 @@ function _sendVoiceNote(blob){
 }
 
 
-// ── EMOJI PANEL ──────────────────────────────────────────────────────────────
-var _epOpen=false;
+// ── DEEP LINK HANDLER ─────────────────────────────────────────────────────────
+// Reads ?user=username or ?post=postId from the URL and opens the right content.
+// Works for signed-in users (redirect), signed-out users (preview + sign in),
+// and guests with no account (preview, gated interactions).
+
+var _deepLinkHandled=false;
+
+function _showGuestAuthPrompt(action){
+  // Show a modal prompting sign in / sign up
+  var ex=document.getElementById('guest-auth-modal');if(ex)ex.remove();
+  var ov=document.createElement('div');ov.id='guest-auth-modal';
+  ov.style.cssText='position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:24px';
+  var modal=document.createElement('div');
+  modal.style.cssText='background:var(--card);border-radius:20px;width:100%;max-width:320px;padding:28px 22px;display:flex;flex-direction:column;gap:16px;animation:modalPop .25s cubic-bezier(.34,1.3,.64,1)';
+  var logo=document.createElement('div');
+  logo.style.cssText='font-family:"Playfair Display",serif;font-size:40px;font-style:italic;text-align:center;line-height:1';
+  logo.textContent='Fade';
+  var title=document.createElement('div');
+  title.style.cssText='font-weight:700;font-size:17px;text-align:center';
+  title.textContent='Join Fade to '+(action||'interact');
+  var sub=document.createElement('div');
+  sub.style.cssText='font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55';
+  sub.textContent='Sign in or create a free account to like, comment, follow, and message on Fade.';
+  var signInBtn=document.createElement('button');
+  signInBtn.className='btn btn-dark';signInBtn.textContent='Sign in';
+  signInBtn.onclick=function(){ov.remove();var authEl=document.getElementById('s-auth');if(authEl){authEl.style.display='flex';authEl.style.opacity='1';authEl.style.pointerEvents='auto';showLogin();}};
+  var signUpBtn=document.createElement('button');
+  signUpBtn.className='btn btn-ghost';signUpBtn.textContent='Create account';
+  signUpBtn.onclick=function(){ov.remove();var authEl=document.getElementById('s-auth');if(authEl){authEl.style.display='flex';authEl.style.opacity='1';authEl.style.pointerEvents='auto';showSignup();}};
+  var cancelBtn=document.createElement('button');
+  cancelBtn.style.cssText='background:none;border:none;font-size:14px;color:var(--sub);cursor:pointer;font-family:Inter,sans-serif;padding:4px;text-align:center';
+  cancelBtn.textContent='Maybe later';
+  cancelBtn.onclick=function(){ov.remove();};
+  modal.appendChild(logo);modal.appendChild(title);modal.appendChild(sub);modal.appendChild(signInBtn);modal.appendChild(signUpBtn);modal.appendChild(cancelBtn);
+  ov.appendChild(modal);
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  document.body.appendChild(ov);
+}
+
+// Patch interactive elements on a post/profile for guest mode (no account)
+function _patchGuestActions(container){
+  if(!container)return;
+  // Intercept all action buttons
+  var actionSels=['.actbtn','[onclick*="likePost"]','[onclick*="openCS"]','[onclick*="toggleFollow"]','[onclick*="openChat"]','[onclick*="startConvo"]'];
+  actionSels.forEach(function(sel){
+    container.querySelectorAll(sel).forEach(function(el){
+      // Replace onclick with guest prompt
+      var originalOnclick=el.onclick;
+      el.onclick=null;
+      el.removeAttribute('onclick');
+      el.addEventListener('click',function(e){
+        e.stopPropagation();
+        var action='interact';
+        if(el.textContent.trim().toLowerCase().indexOf('like')>-1||el.querySelector&&el.querySelector('svg'))action='like posts';
+        if(el.textContent.trim().toLowerCase().indexOf('comment')>-1)action='comment';
+        if(el.textContent.trim().toLowerCase().indexOf('follow')>-1)action='follow users';
+        if(el.textContent.trim().toLowerCase().indexOf('message')>-1)action='send messages';
+        _showGuestAuthPrompt(action);
+      });
+    });
+  });
+}
+
+function _handleDeepLink(){
+  if(_deepLinkHandled)return;
+  var params=new URLSearchParams(window.location.search);
+  var userParam=params.get('user');
+  var postParam=params.get('post');
+  if(!userParam&&!postParam)return;
+  _deepLinkHandled=true;
+
+  // If user is already signed in, handle redirect immediately
+  if(profile){
+    if(postParam){
+      // Open post view
+      closeNotif&&closeNotif();
+      var p=posts.find(function(x){return x.id===postParam;});
+      if(p){
+        openNotifPost(postParam,null);
+      } else {
+        // Fetch from DB
+        _sb.from('posts').select('id,user_id,text,img_url,likes_count,comments_count,created_at,expires_at,profiles:user_id(id,username,display_name,avatar_url)').eq('id',postParam).single().then(function(res){
+          if(res.error||!res.data){T('Post not found or has expired');return;}
+          var r=res.data;var now=Date.now();
+          if(r.expires_at&&new Date(r.expires_at).getTime()<now){T('This drop has faded');return;}
+          var au=r.profiles||{id:r.user_id,display_name:'User',username:'user',avatar_url:null};
+          var np={id:r.id,uid:r.user_id,author:{display_name:au.display_name||au.username,username:au.username,avatar_url:au.avatar_url},text:r.text||'',img:r.img_url||null,likes:r.likes_count||0,liked:false,commentsCount:r.comments_count||0,comments:[],ts:r.created_at};
+          if(!posts.find(function(x){return x.id===np.id;}))posts.push(np);
+          if(!USERS.find(function(x){return x.id===au.id;}))USERS.push(au);
+          openNotifPost(postParam,null);
+        });
+      }
+    } else if(userParam){
+      // Open profile
+      var u=USERS.find(function(x){return x.username===userParam||x.id===userParam;});
+      if(u){
+        setTimeout(function(){openProf(u);},400);
+      } else {
+        _sb.from('profiles').select('id,username,display_name,avatar_url,bio,is_verified,badge_type').eq('username',userParam).single().then(function(res){
+          if(res.error||!res.data){T('User not found');return;}
+          var u2=res.data;
+          if(!USERS.find(function(x){return x.id===u2.id;}))USERS.push(u2);
+          setTimeout(function(){openProf(u2);},400);
+        });
+      }
+    }
+    // Clean up URL
+    history.replaceState({},'',window.location.pathname);
+    return;
+  }
+
+  // ── Not signed in: show a guest preview ──────────────────────────────────
+  // Hide the auth screen so we can show preview first
+  var authEl=document.getElementById('s-auth');
+  if(authEl){authEl.style.display='none';}
+
+  // Show a full-screen guest preview overlay
+  var guestOv=document.createElement('div');
+  guestOv.id='guest-preview-ov';
+  guestOv.style.cssText='position:fixed;inset:0;z-index:600;background:var(--bg);display:flex;flex-direction:column;overflow:hidden';
+
+  // Top bar
+  var topBar=document.createElement('div');
+  topBar.style.cssText='display:flex;align-items:center;padding:max(16px,env(safe-area-inset-top)) 16px 12px;background:var(--card);flex-shrink:0;gap:12px';
+  var logoEl=document.createElement('div');
+  logoEl.style.cssText='font-family:"Playfair Display",serif;font-size:24px;font-style:italic;flex:1;text-align:center';
+  logoEl.textContent='Fade';
+  var signInTopBtn=document.createElement('button');
+  signInTopBtn.style.cssText='background:var(--text);color:var(--card);border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap';
+  signInTopBtn.textContent='Sign in';
+  signInTopBtn.onclick=function(){guestOv.remove();if(authEl){authEl.style.display='flex';authEl.style.opacity='1';authEl.style.pointerEvents='auto';showLogin();}};
+  topBar.appendChild(logoEl);topBar.appendChild(signInTopBtn);
+  guestOv.appendChild(topBar);
+
+  var content=document.createElement('div');
+  content.style.cssText='flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;';
+  guestOv.appendChild(content);
+
+  // Bottom CTA bar
+  var ctaBar=document.createElement('div');
+  ctaBar.style.cssText='background:var(--card);border-top:1px solid var(--border);padding:14px 16px max(24px,env(safe-area-inset-bottom));flex-shrink:0;display:flex;flex-direction:column;gap:10px';
+  var ctaTitle=document.createElement('div');
+  ctaTitle.style.cssText='font-size:14px;font-weight:600;text-align:center;color:var(--text)';
+  ctaTitle.textContent='Join Fade to like, comment, follow, and message';
+  var ctaBtns=document.createElement('div');
+  ctaBtns.style.cssText='display:flex;gap:10px';
+  var ctaSignIn=document.createElement('button');
+  ctaSignIn.className='btn btn-ghost';ctaSignIn.style.flex='1';ctaSignIn.textContent='Sign in';
+  ctaSignIn.onclick=function(){guestOv.remove();if(authEl){authEl.style.display='flex';authEl.style.opacity='1';authEl.style.pointerEvents='auto';showLogin();}};
+  var ctaSignUp=document.createElement('button');
+  ctaSignUp.className='btn btn-dark';ctaSignUp.style.flex='1';ctaSignUp.textContent='Create account';
+  ctaSignUp.onclick=function(){guestOv.remove();if(authEl){authEl.style.display='flex';authEl.style.opacity='1';authEl.style.pointerEvents='auto';showSignup();}};
+  ctaBtns.appendChild(ctaSignIn);ctaBtns.appendChild(ctaSignUp);
+  ctaBar.appendChild(ctaTitle);ctaBar.appendChild(ctaBtns);
+  guestOv.appendChild(ctaBar);
+
+  document.getElementById('root').appendChild(guestOv);
+  history.replaceState({},'',window.location.pathname);
+
+  // ── Render content in guest overlay ──────────────────────────────────────
+  function _renderGuestPost(postData){
+    var authorName=(postData.author&&(postData.author.display_name||postData.author.username))||'User';
+    var authorUser=postData.author||{};
+    var avBg=nc(authorName);
+    var avContent=authorUser.avatar_url?'<img src="'+authorUser.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>'
+      :'<span style="font-size:16px;font-weight:700;color:#fff">'+nl(authorName)+'</span>';
+    var timeAgo=postData.ts?ago(postData.ts):'';
+    var card=document.createElement('div');
+    card.style.cssText='background:var(--card);margin-bottom:1px';
+    card.innerHTML=
+      '<div style="display:flex;align-items:center;gap:13px;padding:14px 16px 10px">'+
+        '<div style="width:42px;height:42px;border-radius:50%;background:'+avBg+';display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">'+avContent+'</div>'+
+        '<div><div style="font-weight:700;font-size:14.5px">'+E(authorName)+'</div><div style="font-size:11.5px;color:var(--sub)">'+timeAgo+'</div></div>'+
+      '</div>'+
+      (postData.text?'<div style="font-size:15px;line-height:1.75;padding:8px 16px 2px">'+E(postData.text)+'</div>':'')+
+      (postData.img?'<img src="'+postData.img+'" style="width:100%;display:block;max-height:420px;object-fit:cover"/>':'')+
+      '<div style="display:flex;gap:20px;padding:10px 16px 18px;align-items:center">'+
+        '<button style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--sub);font-family:Inter,sans-serif" onclick="_showGuestAuthPrompt(\'like posts\')"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(postData.likes||0)+'</button>'+
+        '<button style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--sub);font-family:Inter,sans-serif" onclick="_showGuestAuthPrompt(\'comment\')"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(postData.commentsCount||0)+'</button>'+
+      '</div>';
+    content.appendChild(card);
+  }
+
+  function _renderGuestProfile(userData){
+    var dName=userData.display_name||userData.username||'User';
+    var avBg=nc(dName);
+    var avContent=userData.avatar_url?'<img src="'+userData.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>':'<span style="font-size:28px;font-weight:700;color:#fff">'+nl(dName)+'</span>';
+    var profCard=document.createElement('div');
+    profCard.style.cssText='background:var(--card);padding:20px 16px 16px';
+    profCard.innerHTML=
+      '<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">'+
+        '<div style="width:76px;height:76px;border-radius:50%;background:'+avBg+';display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:28px">'+avContent+'</div>'+
+        '<div><div style="font-weight:700;font-size:16px;margin-bottom:2px">'+E(dName)+'</div><div style="font-size:13px;color:var(--sub)">@'+E(userData.username||'')+'</div>'+
+        (userData.bio?'<div style="font-size:13.5px;margin-top:8px;line-height:1.5;color:var(--text)">'+E(userData.bio)+'</div>':'')+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px">'+
+        '<button class="btn btn-dark" style="flex:1" onclick="_showGuestAuthPrompt(\'follow users\')">Follow</button>'+
+        '<button class="btn btn-ghost" style="flex:1" onclick="_showGuestAuthPrompt(\'send messages\')">Message</button>'+
+      '</div>';
+    content.appendChild(profCard);
+
+    // Divider label
+    var dropsLabel=document.createElement('div');
+    dropsLabel.style.cssText='font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--sub);padding:16px 16px 8px';
+    dropsLabel.textContent='Recent drops';
+    content.appendChild(dropsLabel);
+  }
+
+  // Fetch and render
+  if(postParam){
+    var loadingEl=document.createElement('div');
+    loadingEl.style.cssText='display:flex;justify-content:center;padding:48px';
+    loadingEl.innerHTML='<div class="ptr-ring"></div>';
+    content.appendChild(loadingEl);
+    _sb.from('posts').select('id,user_id,text,img_url,likes_count,comments_count,created_at,expires_at,profiles:user_id(id,username,display_name,avatar_url)').eq('id',postParam).single().then(function(res){
+      content.innerHTML='';
+      if(res.error||!res.data){
+        content.innerHTML='<div class="empty"><div class="empt">Post not found</div><div class="emps">This drop may have faded or doesn\'t exist.</div></div>';
+        return;
+      }
+      var r=res.data;var now=Date.now();
+      if(r.expires_at&&new Date(r.expires_at).getTime()<now){
+        content.innerHTML='<div class="empty"><div class="empt">This drop has faded ✨</div><div class="emps">Fade posts disappear after 24 hours. Join to see what\'s happening now.</div></div>';
+        return;
+      }
+      var au=r.profiles||{id:r.user_id,display_name:'User',username:'user',avatar_url:null};
+      _renderGuestPost({id:r.id,uid:r.user_id,author:{display_name:au.display_name||au.username,username:au.username,avatar_url:au.avatar_url},text:r.text||'',img:r.img_url||null,likes:r.likes_count||0,commentsCount:r.comments_count||0,ts:r.created_at});
+    });
+  } else if(userParam){
+    var loadingEl2=document.createElement('div');
+    loadingEl2.style.cssText='display:flex;justify-content:center;padding:48px';
+    loadingEl2.innerHTML='<div class="ptr-ring"></div>';
+    content.appendChild(loadingEl2);
+    _sb.from('profiles').select('id,username,display_name,avatar_url,bio,is_verified,badge_type').eq('username',userParam).single().then(function(res){
+      if(res.error||!res.data){
+        content.innerHTML='<div class="empty"><div class="empt">User not found</div><div class="emps">This profile doesn\'t exist on Fade.</div></div>';
+        return;
+      }
+      var u2=res.data;
+      content.innerHTML='';
+      _renderGuestProfile(u2);
+      // Load their recent posts
+      var since=new Date(Date.now()-86400000).toISOString();
+      _sb.from('posts').select('id,user_id,text,img_url,likes_count,comments_count,created_at').eq('user_id',u2.id).gte('created_at',since).order('created_at',{ascending:false}).limit(5).then(function(pr){
+        if(pr.error||!pr.data||!pr.data.length){
+          var empty=document.createElement('div');
+          empty.style.cssText='padding:32px;text-align:center;color:var(--sub);font-size:14px';
+          empty.textContent='No drops yet today.';
+          content.appendChild(empty);
+          return;
+        }
+        pr.data.forEach(function(r){
+          _renderGuestPost({id:r.id,uid:r.user_id,author:{display_name:u2.display_name||u2.username,username:u2.username,avatar_url:u2.avatar_url},text:r.text||'',img:r.img_url||null,likes:r.likes_count||0,commentsCount:r.comments_count||0,ts:r.created_at});
+        });
+      });
+    });
+  }
+}
+
+// Run deep link check after a brief delay to let Supabase session resolve
+setTimeout(function(){_handleDeepLink();},800);
+// Also run immediately in case session was cached and profile loaded fast
+document.addEventListener('fadeProfileLoaded',function(){
+  if(!_deepLinkHandled)_handleDeepLink();
+},{once:true});
+
 var _recentEmoji=[];
 try{_recentEmoji=JSON.parse(localStorage.getItem('fade_recent_emoji')||'[]');}catch(e){}
 
