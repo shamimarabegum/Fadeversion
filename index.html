@@ -2183,6 +2183,17 @@ function stripStoryPrefix(c){
     var s=m?parseInt(m[1]):0;
     return '▶ Voice · '+(s>=60?Math.floor(s/60)+'m '+(s%60?s%60+'s':''):s+'s');
   }
+  if(c.startsWith('[postshare:')){
+    try{
+      var psEnd=c.indexOf(']',11);
+      var psJson=c.slice(11,psEnd>0?psEnd+1:c.length);
+      if(psJson.endsWith(']'))psJson=psJson.slice(0,-1);
+      var parsed=JSON.parse(psJson);
+      var ptype=parsed.type||'post';
+      if(ptype==='profile'){return '👤 Shared a profile';}
+      return parsed.img?'📸 Shared a drop':'📌 Shared a drop';
+    }catch(e){return '📌 Shared a drop';}
+  }
   return c;
 }
 function fadeIn(ts){var rem=Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);return rem<=0?'soon':h>0?h+'h':m+'m';}
@@ -4273,17 +4284,18 @@ function sharePost(postId){
   var grid=document.createElement('div');
   grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 12px';
   var shareOpts=[
-    {label:'Messages',color:'#22C55E',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',act:function(){ov.remove();window.open('sms:?&body='+encodeURIComponent('Check out this drop on Fade: '+url),'_blank');}},
-    {label:'WhatsApp',color:'#25D366',ico:'<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.979-1.406A9.95 9.95 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm4.93 13.667c-.207.583-1.216 1.114-1.663 1.154-.447.04-.46.352-2.896-.713-2.436-1.064-3.857-3.571-3.972-3.733-.116-.163-.946-1.315-.887-2.478.059-1.163.663-1.706.893-1.938.23-.232.499-.284.666-.284h.473c.152 0 .36-.058.563.473.207.543.703 1.851.764 1.985.062.133.1.29.02.463-.082.173-.123.28-.243.43-.12.15-.252.335-.36.45-.12.12-.245.25-.105.49.14.24.623 1.073 1.336 1.737.917.85 1.69 1.113 1.93 1.237.24.124.38.104.52-.063.14-.166.6-.696.76-.936.16-.24.32-.2.54-.12.22.08 1.397.658 1.636.778.24.12.4.18.46.28.06.1.06.583-.147 1.166z"/></svg>',act:function(){ov.remove();window.open('https://wa.me/?text='+encodeURIComponent('Check out this drop on Fade: '+url),'_blank');}},
-    {label:'X (Twitter)',color:'#000',ico:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',act:function(){ov.remove();window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Check out this drop on Fade')+'&url='+encodeURIComponent(url),'_blank');}},
-    {label:'Copy Link',color:'#7C3AED',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',act:function(){ov.remove();if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('Link copied');}).catch(function(){T(url);});else T(url);}},
-    {label:'More',color:'#6B7280',ico:'<svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',act:function(){ov.remove();if(navigator.share){navigator.share({title:'Drop on Fade',url:url}).catch(function(){});}else{if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('Link copied');});else T(url);}}}
+    {label:'Messages',color:'#22C55E',ico:'<svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',act:function(){ov.remove();window.open('sms:?&body='+encodeURIComponent('Check out this drop on Fade: '+url),'_blank');}},
+    {label:'WhatsApp',color:'#25D366',ico:'<svg width="22" height="22" viewBox="0 0 32 32" fill="currentColor"><path d="M16 3C8.82 3 3 8.82 3 16c0 2.3.6 4.5 1.74 6.44L3 29l6.72-1.72A13 13 0 0 0 16 29c7.18 0 13-5.82 13-13S23.18 3 16 3zm6.38 18.15c-.28.78-1.63 1.49-2.24 1.55-.57.05-.6.44-3.87-.95-3.27-1.42-5.16-4.76-5.32-4.98-.15-.22-1.27-1.76-1.19-3.32.08-1.55.88-2.28 1.19-2.58.31-.31.67-.38.9-.38h.63c.2 0 .48-.08.75.63.28.72.94 2.47 1.02 2.65.08.18.13.39.03.62-.1.23-.16.37-.32.57-.16.2-.34.45-.48.6-.16.16-.33.34-.14.66.19.32.83 1.43 1.79 2.32 1.23 1.14 2.26 1.49 2.58 1.65.32.17.51.14.7-.08.19-.22.8-.93 1.01-1.25.21-.32.43-.27.72-.16.3.11 1.87.88 2.19 1.04.32.16.53.24.61.37.08.14.08.78-.2 1.56z"/></svg>',act:function(){ov.remove();window.open('https://wa.me/?text='+encodeURIComponent('Check out this drop on Fade: '+url),'_blank');}},
+    {label:'X',color:'var(--text)',ico:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',act:function(){ov.remove();window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent('Check out this drop on Fade')+'&url='+encodeURIComponent(url),'_blank');}},
+    {label:'More',color:'#6B7280',ico:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 12h6M12 9v6" stroke-linecap="round"/></svg>',act:function(){ov.remove();if(navigator.share){navigator.share({title:'Drop on Fade',url:url}).catch(function(){});}else{if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){T('Link copied');});else T(url);}}}
   ];
   shareOpts.forEach(function(o){
     var cell=document.createElement('div');
-    cell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer';
-    cell.innerHTML='<div style="width:54px;height:54px;border-radius:16px;background:var(--inp-bg);display:flex;align-items:center;justify-content:center;color:'+o.color+'">'+o.ico+'</div><div style="font-size:11px;font-weight:500;color:var(--sub);text-align:center">'+o.label+'</div>';
+    cell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;-webkit-tap-highlight-color:transparent';
+    cell.innerHTML='<div style="width:54px;height:54px;border-radius:16px;background:var(--inp-bg);display:flex;align-items:center;justify-content:center;color:'+o.color+';transition:opacity .15s,transform .12s">'+o.ico+'</div><div style="font-size:11px;font-weight:500;color:var(--sub);text-align:center;line-height:1.3">'+o.label+'</div>';
     cell.addEventListener('click',o.act);
+    cell.addEventListener('touchstart',function(){cell.querySelector('div').style.opacity='.5';cell.querySelector('div').style.transform='scale(.9)';},{passive:true});
+    cell.addEventListener('touchend',function(){cell.querySelector('div').style.opacity='';cell.querySelector('div').style.transform='';},{passive:true});
     grid.appendChild(cell);
   });
 
@@ -6128,14 +6140,7 @@ function buildPostShareCard(p,isMine){
   card.appendChild(foot);
   card.onclick=function(){
     if(!p.postId){T('This drop has faded');return;}
-    var found=posts.find(function(x){return x.id===p.postId;});
-    if(!found){T('This drop has faded');return;}
-    goTab('today');
-    setTimeout(function(){
-      var el=document.querySelector('[data-pid="'+p.postId+'"]');
-      if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.transition='background .3s';el.style.background='var(--inp-bg)';setTimeout(function(){el.style.background='';},1000);}
-      else{T('Drop is on the feed');}
-    },420);
+    openNotifPost(p.postId,null);
   };
   return card;
 }
@@ -6150,8 +6155,8 @@ function sendPostShareMsg(toUser,postId){
   var m={id:tempId,sid:'demo',text:encoded,postShare:cardData,ts:Date.now()};
   if(chatUser&&chatUser.id===toUser.id){appendBubble(m);var msgs=document.getElementById('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;}
   var cv=convos.find(function(x){return x.user.id===toUser.id;});
-  if(cv){cv.lastMsg='\uD83D\uDCCC Drop';cv.lastSid='demo';cv.ts=Date.now();convos.sort(function(a,b){return b.ts-a.ts;});}
-  else{convos.unshift({user:toUser,lastMsg:'\uD83D\uDCCC Drop',lastSid:'demo',ts:Date.now()});}
+  if(cv){cv.lastMsg='[postshare:'+JSON.stringify(cardData)+']';cv.lastSid='demo';cv.ts=Date.now();convos.sort(function(a,b){return b.ts-a.ts;});}
+  else{convos.unshift({user:toUser,lastMsg:'[postshare:'+JSON.stringify(cardData)+']',lastSid:'demo',ts:Date.now()});}
   _sb.from('messages').insert({sender_id:profile.id,receiver_id:toUser.id,content:encoded,is_read:false,expires_at:expires}).select('id').single().then(function(res){
     if(res.error){T('Send failed ('+res.error.code+')');return;}
     var el=document.querySelector('[data-msgid="'+tempId+'"]');if(el)el.dataset.msgid=res.data.id;m.id=res.data.id;
