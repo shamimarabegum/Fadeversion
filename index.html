@@ -6188,7 +6188,7 @@ function sendPostShareMsg(toUser,postId){
       fetch('https://xmgmpewuevzgriqgsoct.supabase.co/functions/v1/send-push',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({recipientId:toUser.id,type:'message',actor:{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},extra:{msgText:'Shared a drop with you'}})}).catch(function(){});
     });
   });
-  T('Sent to @'+(toUser.username||toUser.display_name));SFX('send');haptic('send');
+  T('Sent to '+(toUser.display_name||toUser.username));SFX('send');haptic('send');
 }
 function sendProfileShareMsg(toUser){
   if(!profile||!toUser)return;
@@ -6205,7 +6205,7 @@ function sendProfileShareMsg(toUser){
     if(res.error){T('Send failed ('+res.error.code+')');return;}
     var el=document.querySelector('[data-msgid="'+tempId+'"]');if(el)el.dataset.msgid=res.data.id;
   });
-  T('Sent to @'+(toUser.username||toUser.display_name));SFX('send');haptic('send');
+  T('Sent to '+(toUser.display_name||toUser.username));SFX('send');haptic('send');
 }
 function openPostSharePicker(postId){_openFadePicker(function(u){sendPostShareMsg(u,postId);},'Share Drop');}
 function openProfileSharePicker(){_openFadePicker(function(u){sendProfileShareMsg(u);},'Share Profile');}
@@ -6214,7 +6214,7 @@ function _openFadePicker(onSelect,title){
   var ov=document.createElement('div');ov.id='fade-picker-ov';
   ov.style.cssText='position:fixed;inset:0;z-index:820;background:rgba(0,0,0,.45);display:flex;align-items:flex-end';
   var sheet=document.createElement('div');
-  sheet.style.cssText='background:var(--card);width:100%;border-radius:20px 20px 0 0;padding:0 0 max(28px,env(safe-area-inset-bottom));max-height:75vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94)';
+  sheet.style.cssText='background:var(--card);width:100%;border-radius:20px 20px 0 0;padding:0 0 max(28px,env(safe-area-inset-bottom));max-height:75vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .26s cubic-bezier(.25,.46,.45,.94);will-change:transform';
   var handle=document.createElement('div');handle.style.cssText='width:36px;height:3px;background:var(--border);border-radius:2px;margin:12px auto 0;flex-shrink:0';
   var hdr=document.createElement('div');hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;flex-shrink:0';
   hdr.innerHTML='<span style="font-weight:700;font-size:15px">'+E(title||'Send in Fade')+'</span><button id="fade-picker-x" style="background:var(--inp-bg);border:none;cursor:pointer;color:var(--sub);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-family:Inter,sans-serif">&#10005;</button>';
@@ -6250,7 +6250,6 @@ function _openFadePicker(onSelect,title){
   ov.onclick=function(e){if(e.target===ov)close();};
   document.getElementById('fade-picker-x').onclick=close;
   requestAnimationFrame(function(){requestAnimationFrame(function(){sheet.style.transform='translateY(0)';});});
-  setTimeout(function(){searchInp.focus();},350);
 }
 
 
@@ -7209,6 +7208,8 @@ function openProf(u){
   _renderProfBody(full, full.followers||0, full.following||0);
   document.getElementById('prof-back-btn').onclick=closeProf;
   var ps=document.getElementById('prof-screen');
+  // If coming from chat (which may be elevated to z-index 660), ensure prof-screen sits above it
+  if(_profFromChat){ps.style.zIndex='670';}
   ps.style.display='';ps.style.visibility='';ps.style.pointerEvents='';ps.classList.add('on');
   // Fetch live profile data (avatar, counts) from Supabase
   var uid=full.id;
@@ -7266,6 +7267,8 @@ function closeProf(){
     // Return to chat if we came from the chat window header
     if(_profFromChat){
       _profFromChat=false;
+      var psEl2=document.getElementById('prof-screen');
+      if(psEl2)psEl2.style.zIndex=''; // reset back to CSS default (650)
       // Chat window is still open underneath — just ensure it's visible
       var cw=document.getElementById('cw');
       if(cw&&chatUser){
