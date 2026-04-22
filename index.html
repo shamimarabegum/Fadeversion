@@ -11680,10 +11680,10 @@ function _showGuestAuthPrompt(action){
   sub.textContent='Sign in or create a free account to like, comment, follow, and message on Fade.';
   var signInBtn=document.createElement('button');
   signInBtn.className='btn btn-dark';signInBtn.textContent='Sign in';
-  signInBtn.onclick=function(){ov.remove();var authEl=document.getElementById('s-auth');if(authEl){authEl.style.display='flex';authEl.style.opacity='1';authEl.style.pointerEvents='auto';showLogin();}};
+  signInBtn.onclick=function(){ov.remove();var gOv=document.getElementById('guest-preview-ov');if(gOv)gOv.remove();var authEl=document.getElementById('s-auth');if(authEl){authEl.style.display='flex';authEl.style.opacity='1';authEl.style.pointerEvents='auto';showLogin();}};
   var signUpBtn=document.createElement('button');
   signUpBtn.className='btn btn-ghost';signUpBtn.textContent='Create account';
-  signUpBtn.onclick=function(){ov.remove();var authEl=document.getElementById('s-auth');if(authEl){authEl.style.display='flex';authEl.style.opacity='1';authEl.style.pointerEvents='auto';showSignup();}};
+  signUpBtn.onclick=function(){ov.remove();var gOv=document.getElementById('guest-preview-ov');if(gOv)gOv.remove();var authEl=document.getElementById('s-auth');if(authEl){authEl.style.display='flex';authEl.style.opacity='1';authEl.style.pointerEvents='auto';showSignup();}};
   var cancelBtn=document.createElement('button');
   cancelBtn.style.cssText='background:none;border:none;font-size:14px;color:var(--sub);cursor:pointer;font-family:Inter,sans-serif;padding:4px;text-align:center';
   cancelBtn.textContent='Maybe later';
@@ -11774,7 +11774,7 @@ function _handleDeepLink(){
   // Show a full-screen guest preview overlay
   var guestOv=document.createElement('div');
   guestOv.id='guest-preview-ov';
-  guestOv.style.cssText='position:fixed;inset:0;z-index:600;background:var(--bg);display:flex;flex-direction:column;overflow:hidden';
+  guestOv.style.cssText='position:fixed;inset:0;z-index:600;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none';
 
   // Top bar
   var topBar=document.createElement('div');
