@@ -317,12 +317,11 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .shacts{display:flex;gap:8px;align-items:center}
 .ilbl{background:var(--inp-bg);border:1.5px solid var(--inp-border);border-radius:10px;padding:9px 13px;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:13.5px;font-family:'Inter',sans-serif;font-weight:500}
 .dropbtn{background:var(--text);color:var(--card);border:none;border-radius:11px;padding:10px 22px;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;margin-left:auto}
-/* Multi-photo tray */
-.photo-tray{display:none;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.photo-tray{display:none;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;padding:8px 0 2px}
 .photo-tray::-webkit-scrollbar{display:none}
 .photo-chip{position:relative;flex-shrink:0;width:72px;height:72px}
 .photo-chip img{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block}
-.photo-chip-rm{position:absolute;top:-6px;right:-6px;background:var(--text);color:var(--card);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;z-index:1;line-height:1}
+.photo-chip-rm{position:absolute;top:-7px;right:-7px;background:#1A1A1A;color:#fff;border:2px solid var(--card);border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.18)}
 .photo-add-btn{width:72px;height:72px;border-radius:10px;border:1.5px dashed var(--border);background:var(--inp-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--sub);transition:opacity .15s}
 .photo-add-btn:active{opacity:.5}
 /* Post carousel */
@@ -4127,7 +4126,8 @@ function _wireCarousel(carousel){
   }
   // Initial counter auto-fade
   showCounter();
-  // Touch swipe
+  // Touch swipe — stopPropagation when carousel is handling the gesture
+  // so the tab-swipe IIFE on #sw never sees horizontal moves and stays blocked
   var sx=0,sy=0,tracking=false;
   carousel.addEventListener('touchstart',function(e){
     sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=false;
@@ -4135,8 +4135,13 @@ function _wireCarousel(carousel){
   carousel.addEventListener('touchmove',function(e){
     var dx=e.touches[0].clientX-sx;
     var dy=Math.abs(e.touches[0].clientY-sy);
-    if(!tracking){if(Math.abs(dx)>8&&Math.abs(dx)>dy*1.3)tracking=true;else if(dy>10)return;}
+    if(!tracking){
+      if(Math.abs(dx)>8&&Math.abs(dx)>dy*1.3){tracking=true;}
+      else if(dy>10){return;} // vertical scroll — let parent handle
+    }
     if(!tracking)return;
+    // We own this gesture — stop it reaching the #sw tab-swipe handler
+    e.stopPropagation();
     track.classList.add('no-anim');
     var base=-(cur*100);
     var pct=base+(dx/carousel.offsetWidth)*100;
@@ -4145,6 +4150,8 @@ function _wireCarousel(carousel){
   },{passive:true});
   carousel.addEventListener('touchend',function(e){
     if(!tracking)return;
+    // Also stop propagation on touchend so tab-swipe touchend never commits
+    e.stopPropagation();
     var dx=e.changedTouches[0].clientX-sx;
     track.classList.remove('no-anim');
     if(dx<-44&&cur<n-1)goTo(cur+1,true);
@@ -4152,7 +4159,10 @@ function _wireCarousel(carousel){
     else goTo(cur,true);
     tracking=false;
   },{passive:true});
-  carousel.addEventListener('touchcancel',function(){tracking=false;goTo(cur,true);},{passive:true});
+  carousel.addEventListener('touchcancel',function(){
+    if(tracking)e.stopPropagation();
+    tracking=false;goTo(cur,true);
+  },{passive:true});
 }
 
 function buildPost(p, showDelete){
@@ -12570,7 +12580,9 @@ function _buildEpCats(){
       _swTracking = false;
       /* Also block when notif panel is open — it manages its own .on state */
       var notifOpen = (function(){var n=document.getElementById('notif-panel');return n&&n.classList.contains('on');})();
-      _swEdgeBlocked = _anyPanelOpen() || notifOpen || _swTouchStartX < EDGE_ZONE;
+      /* Block if touch started on a post carousel — the carousel handles it */
+      var onCarousel = !!(e.target && e.target.closest && e.target.closest('.post-carousel'));
+      _swEdgeBlocked = _anyPanelOpen() || notifOpen || _swTouchStartX < EDGE_ZONE || onCarousel;
     }, { passive: true });
 
     sw.addEventListener('touchmove', function(e) {
