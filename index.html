@@ -6382,7 +6382,9 @@ function sendPostShareMsg(toUser,postId){
   if(!profile||!toUser)return;
   var p=posts.find(function(x){return x.id===postId;});
   if(!p){T('Post not found');return;}
-  var cardData={postId:p.id,authorName:(p.author&&(p.author.display_name||p.author.username))||'Someone',authorAvatar:(p.author&&p.author.avatar_url)||null,authorId:p.uid||null,caption:(p.text||'').slice(0,120),img:p.img||null};
+  var _scThumb=p.img||null;
+  if(_scThumb){try{var _scA=JSON.parse(_scThumb);if(Array.isArray(_scA)&&_scA.length>0)_scThumb=_scA[0];}catch(_e){}}
+  var cardData={postId:p.id,authorName:(p.author&&(p.author.display_name||p.author.username))||'Someone',authorAvatar:(p.author&&p.author.avatar_url)||null,authorId:p.uid||null,caption:(p.text||'').slice(0,120),img:_scThumb};
   var encoded='[postshare:'+JSON.stringify(cardData)+']';
   var expires=new Date(Date.now()+86400000).toISOString();
   var tempId='tmp-'+Date.now();
@@ -11821,6 +11823,28 @@ function _handleDeepLink(){
     var avContent=authorUser.avatar_url?'<img src="'+authorUser.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>'
       :'<span style="font-size:16px;font-weight:700;color:#fff">'+nl(authorName)+'</span>';
     var timeAgo=postData.ts?ago(postData.ts):'';
+
+    // Parse multi-photo: img_url may be a JSON array
+    var _gImgs=[];
+    if(postData.img){
+      try{var _gpa=JSON.parse(postData.img);if(Array.isArray(_gpa)&&_gpa.length>0)_gImgs=_gpa;}catch(_e){_gImgs=[postData.img];}
+      if(!_gImgs.length)_gImgs=[postData.img];
+    }
+
+    // Build image HTML — carousel for multi, single img for one
+    var imgHTML='';
+    if(_gImgs.length>1){
+      var slides=_gImgs.map(function(url,i){return '<div class="post-carousel-slide"><img src="'+url+'" style="width:100%;aspect-ratio:4/5;display:block;object-fit:cover" draggable="false" loading="'+(i===0?'eager':'lazy')+'"/></div>';}).join('');
+      var dots=_gImgs.map(function(_,i){return '<div class="carousel-dot'+(i===0?' active':'')+'" style="width:5px;height:5px;border-radius:50%;background:'+(i===0?'#fff':'rgba(255,255,255,.5)')+';transition:all .22s"></div>';}).join('');
+      imgHTML='<div class="post-carousel" style="position:relative;width:100%;overflow:hidden;touch-action:pan-y;-webkit-user-select:none;user-select:none">'
+        +'<div class="post-carousel-track" style="display:flex;transition:transform .28s cubic-bezier(.25,.46,.45,.94);will-change:transform">'+slides+'</div>'
+        +'<div class="carousel-counter" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.52);color:#fff;font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;pointer-events:none;z-index:2">1/'+_gImgs.length+'</div>'
+        +'<div style="position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px;pointer-events:none;z-index:2">'+dots+'</div>'
+        +'</div>';
+    } else if(_gImgs.length===1){
+      imgHTML='<img src="'+_gImgs[0]+'" style="width:100%;display:block;max-height:480px;object-fit:cover"/>';
+    }
+
     var card=document.createElement('div');
     card.style.cssText='background:var(--card);margin-bottom:1px';
     card.innerHTML=
@@ -11829,12 +11853,18 @@ function _handleDeepLink(){
         '<div><div style="font-weight:700;font-size:14.5px">'+E(authorName)+'</div><div style="font-size:11.5px;color:var(--sub)">'+timeAgo+'</div></div>'+
       '</div>'+
       (postData.text?'<div style="font-size:15px;line-height:1.75;padding:8px 16px 2px">'+E(postData.text)+'</div>':'')+
-      (postData.img?'<img src="'+postData.img+'" style="width:100%;display:block;max-height:420px;object-fit:cover"/>':'')+
+      imgHTML+
       '<div style="display:flex;gap:20px;padding:10px 16px 18px;align-items:center">'+
         '<button style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--sub);font-family:Inter,sans-serif" onclick="_showGuestAuthPrompt(\'like posts\')"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(postData.likes||0)+'</button>'+
-        '<button style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--sub);font-family:Inter,sans-serif" onclick="_showGuestAuthPrompt(\'comment\')"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(postData.commentsCount||0)+'</button>'+
+        '<button style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--sub);font-family:Inter,sans-serif" onclick="_showGuestAuthPrompt(\'comment\')"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0-9-9c0 1.68.46 3.25 1.27 4.6L3 21l4.4-1.27A8.96 8.96 0 0 0 12 21z"/></svg>'+(postData.commentsCount||0)+'</button>'+
       '</div>';
     content.appendChild(card);
+
+    // Wire carousel swipe if multi-photo
+    if(_gImgs.length>1){
+      var _gc=card.querySelector('.post-carousel');
+      if(_gc)_wireCarousel(_gc);
+    }
   }
 
   function _renderGuestProfile(userData){
@@ -11851,8 +11881,8 @@ function _handleDeepLink(){
         '</div>'+
       '</div>'+
       '<div style="display:flex;gap:8px">'+
-        '<button class="btn btn-dark" style="flex:1" onclick="_showGuestAuthPrompt(\'follow users\')">Follow</button>'+
-        '<button class="btn btn-ghost" style="flex:1" onclick="_showGuestAuthPrompt(\'send messages\')">Message</button>'+
+        '<button style="background:var(--text);color:var(--card);border:none;border-radius:11px;padding:10px 22px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer" onclick="_showGuestAuthPrompt(\'follow users\')">Follow</button>'+
+        '<button style="background:transparent;color:var(--text);border:1.5px solid var(--border);border-radius:11px;padding:10px 22px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer" onclick="_showGuestAuthPrompt(\'send messages\')">Message</button>'+
       '</div>';
     content.appendChild(profCard);
 
