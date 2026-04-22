@@ -2205,8 +2205,7 @@ function stripStoryPrefix(c){
   }
   if(c.startsWith('[postshare:')){
     try{
-      var psEnd=c.indexOf(']',11);
-      var psJson=c.slice(11,psEnd>0?psEnd+1:c.length);
+      var psJson=c.slice(11);
       if(psJson.endsWith(']'))psJson=psJson.slice(0,-1);
       var parsed=JSON.parse(psJson);
       var ptype=parsed.type||'post';
@@ -4391,6 +4390,9 @@ function sharePost(postId){
   var url=window.location.origin+'?post='+postId;
   var textPreview=(p.text?p.text.slice(0,60)+'…':'📸 Photo drop');
   var authorName=(p.author&&(p.author.display_name||p.author.username))||'Someone';
+  // Extract first image for thumbnail preview (p.img may be JSON array)
+  var _previewImg=p.img||null;
+  if(_previewImg){try{var _pi=JSON.parse(_previewImg);if(Array.isArray(_pi)&&_pi.length>0)_previewImg=_pi[0];}catch(_e){}}
 
   // Build a share sheet similar to profile share
   var ex=document.getElementById('post-share-ov');if(ex)ex.remove();
@@ -4406,7 +4408,7 @@ function sharePost(postId){
   // Post preview
   var prev=document.createElement('div');
   prev.style.cssText='display:flex;align-items:center;gap:12px;background:var(--inp-bg);border-radius:14px;padding:12px 14px;margin:0 16px 16px';
-  prev.innerHTML='<div style="width:42px;height:42px;border-radius:10px;overflow:hidden;background:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center">'+(p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/>':'<svg width="18" height="18" fill="none" stroke="var(--sub)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0C18 9.5 12 3 12 3z"/></svg>')+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+E(authorName)+'\'s drop</div><div style="font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">'+E(textPreview)+'</div></div>';
+  prev.innerHTML='<div style="width:42px;height:42px;border-radius:10px;overflow:hidden;background:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center">'+(_previewImg?'<img src="'+_previewImg+'" style="width:100%;height:100%;object-fit:cover"/>':'<svg width="18" height="18" fill="none" stroke="var(--sub)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0C18 9.5 12 3 12 3z"/></svg>')+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+E(authorName)+'\'s drop</div><div style="font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">'+E(textPreview)+'</div></div>';
 
   // Share options grid
   var grid=document.createElement('div');
@@ -5620,10 +5622,11 @@ function openChat(u){
           try{storyPreviewParsed=JSON.parse(jsonPart);}catch(e){}
           displayText=nlIdx>0?rawContent.slice(nlIdx+1):'';
         } else if(rawContent.startsWith('[postshare:')){
-          var psEnd=rawContent.indexOf(']',11);
-          var psJson=rawContent.slice(11,psEnd>0?psEnd+1:rawContent.length);
+          var psJson=rawContent.slice(11);
           if(psJson.endsWith(']'))psJson=psJson.slice(0,-1);
           try{postShareParsed=JSON.parse(psJson);}catch(e){}
+          // If img is still a JSON array, extract first image
+          if(postShareParsed&&postShareParsed.img){try{var _psi=JSON.parse(postShareParsed.img);if(Array.isArray(_psi)&&_psi.length>0)postShareParsed.img=_psi[0];}catch(_e){}}
           displayText='';
         }
         var m={
@@ -5740,10 +5743,11 @@ function subscribeToChat(partnerId){
         try{storyPreview2=JSON.parse(jsonPart2);}catch(e){}
         displayText2=nlIdx2>0?rawContent2.slice(nlIdx2+1):'';
       } else if(rawContent2.startsWith('[postshare:')){
-        var psEnd2=rawContent2.indexOf(']',11);
-        var psJson2=rawContent2.slice(11,psEnd2>0?psEnd2+1:rawContent2.length);
+        var psJson2=rawContent2.slice(11);
         if(psJson2.endsWith(']'))psJson2=psJson2.slice(0,-1);
         try{postShare2=JSON.parse(psJson2);}catch(e){}
+        // If img is still a JSON array, extract first image
+        if(postShare2&&postShare2.img){try{var _psi2=JSON.parse(postShare2.img);if(Array.isArray(_psi2)&&_psi2.length>0)postShare2.img=_psi2[0];}catch(_e2){}}
         displayText2='';
       }
       var m={
@@ -6384,7 +6388,10 @@ function sendPostShareMsg(toUser,postId){
   if(!profile||!toUser)return;
   var p=posts.find(function(x){return x.id===postId;});
   if(!p){T('Post not found');return;}
-  var cardData={postId:p.id,authorName:(p.author&&(p.author.display_name||p.author.username))||'Someone',authorAvatar:(p.author&&p.author.avatar_url)||null,authorId:p.uid||null,caption:(p.text||'').slice(0,120),img:p.img||null};
+  // Extract first image URL — p.img may be a JSON array for multi-photo posts
+  var _cardImg=p.img||null;
+  if(_cardImg){try{var _ci=JSON.parse(_cardImg);if(Array.isArray(_ci)&&_ci.length>0)_cardImg=_ci[0];}catch(_e){}}
+  var cardData={postId:p.id,authorName:(p.author&&(p.author.display_name||p.author.username))||'Someone',authorAvatar:(p.author&&p.author.avatar_url)||null,authorId:p.uid||null,caption:(p.text||'').slice(0,120),img:_cardImg};
   var encoded='[postshare:'+JSON.stringify(cardData)+']';
   var expires=new Date(Date.now()+86400000).toISOString();
   var tempId='tmp-'+Date.now();
@@ -11653,6 +11660,11 @@ function _handleDeepLink(){
     var avContent=authorUser.avatar_url?'<img src="'+authorUser.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>'
       :'<span style="font-size:16px;font-weight:700;color:#fff">'+nl(authorName)+'</span>';
     var timeAgo=postData.ts?ago(postData.ts):'';
+    // Resolve image: may be a JSON array (multi-photo post) or plain URL
+    var _imgSrc=null;
+    if(postData.img){
+      try{var _pa=JSON.parse(postData.img);if(Array.isArray(_pa)&&_pa.length>0)_imgSrc=_pa[0];else _imgSrc=postData.img;}catch(_e){_imgSrc=postData.img;}
+    }
     var card=document.createElement('div');
     card.style.cssText='background:var(--card);margin-bottom:1px';
     card.innerHTML=
@@ -11661,10 +11673,10 @@ function _handleDeepLink(){
         '<div><div style="font-weight:700;font-size:14.5px">'+E(authorName)+'</div><div style="font-size:11.5px;color:var(--sub)">'+timeAgo+'</div></div>'+
       '</div>'+
       (postData.text?'<div style="font-size:15px;line-height:1.75;padding:8px 16px 2px">'+E(postData.text)+'</div>':'')+
-      (postData.img?'<img src="'+postData.img+'" style="width:100%;display:block;max-height:420px;object-fit:cover"/>':'')+
+      (_imgSrc?'<img src="'+_imgSrc+'" style="width:100%;display:block;max-height:420px;object-fit:cover"/>':'')+
       '<div style="display:flex;gap:20px;padding:10px 16px 18px;align-items:center">'+
         '<button style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--sub);font-family:Inter,sans-serif" onclick="_showGuestAuthPrompt(\'like posts\')"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(postData.likes||0)+'</button>'+
-        '<button style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--sub);font-family:Inter,sans-serif" onclick="_showGuestAuthPrompt(\'comment\')"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(postData.commentsCount||0)+'</button>'+
+        '<button style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500;color:var(--sub);font-family:Inter,sans-serif" onclick="_showGuestAuthPrompt(\'comment\')"><svg width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-linejoin="round"/></svg>'+(postData.commentsCount||0)+'</button>'+
       '</div>';
     content.appendChild(card);
   }
@@ -11673,18 +11685,28 @@ function _handleDeepLink(){
     var dName=userData.display_name||userData.username||'User';
     var avBg=nc(dName);
     var avContent=userData.avatar_url?'<img src="'+userData.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>':'<span style="font-size:28px;font-weight:700;color:#fff">'+nl(dName)+'</span>';
+    // Build verified badge HTML for guest profile view
+    var badgeHTML='';
+    if(userData.is_verified||(userData.badge_type&&userData.badge_type!=='')){
+      var bType=userData.badge_type||'blue';
+      if(bType==='gold'){
+        badgeHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="#F5C518" style="vertical-align:middle;margin-left:3px;flex-shrink:0"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>';
+      } else {
+        badgeHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="#1D9BF0" style="vertical-align:middle;margin-left:3px;flex-shrink:0"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622C17.176 19.29 21 14.59 21 9a12.02 12.02 0 00-.382-3.016z"/></svg>';
+      }
+    }
     var profCard=document.createElement('div');
     profCard.style.cssText='background:var(--card);padding:20px 16px 16px';
     profCard.innerHTML=
       '<div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">'+
         '<div style="width:76px;height:76px;border-radius:50%;background:'+avBg+';display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:28px">'+avContent+'</div>'+
-        '<div><div style="font-weight:700;font-size:16px;margin-bottom:2px">'+E(dName)+'</div><div style="font-size:13px;color:var(--sub)">@'+E(userData.username||'')+'</div>'+
+        '<div><div style="font-weight:700;font-size:16px;margin-bottom:2px;display:flex;align-items:center;gap:3px">'+E(dName)+badgeHTML+'</div><div style="font-size:13px;color:var(--sub)">@'+E(userData.username||'')+'</div>'+
         (userData.bio?'<div style="font-size:13.5px;margin-top:8px;line-height:1.5;color:var(--text)">'+E(userData.bio)+'</div>':'')+
         '</div>'+
       '</div>'+
       '<div style="display:flex;gap:8px">'+
-        '<button class="btn btn-dark" style="flex:1" onclick="_showGuestAuthPrompt(\'follow users\')">Follow</button>'+
-        '<button class="btn btn-ghost" style="flex:1" onclick="_showGuestAuthPrompt(\'send messages\')">Message</button>'+
+        '<button style="flex:1;background:var(--text);color:var(--card);border:none;border-radius:12px;padding:11px 16px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer" onclick="_showGuestAuthPrompt(\'follow users\')">Follow</button>'+
+        '<button style="flex:1;background:transparent;color:var(--text);border:1.5px solid var(--border);border-radius:12px;padding:11px 16px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer" onclick="_showGuestAuthPrompt(\'send messages\')">Message</button>'+
       '</div>';
     content.appendChild(profCard);
 
