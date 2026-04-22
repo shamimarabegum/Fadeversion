@@ -2205,8 +2205,7 @@ function stripStoryPrefix(c){
   }
   if(c.startsWith('[postshare:')){
     try{
-      var psEnd=c.indexOf(']',11);
-      var psJson=c.slice(11,psEnd>0?psEnd+1:c.length);
+      var psJson=c.slice(11);
       if(psJson.endsWith(']'))psJson=psJson.slice(0,-1);
       var parsed=JSON.parse(psJson);
       var ptype=parsed.type||'post';
@@ -4404,7 +4403,9 @@ function sharePost(postId){
   // Post preview
   var prev=document.createElement('div');
   prev.style.cssText='display:flex;align-items:center;gap:12px;background:var(--inp-bg);border-radius:14px;padding:12px 14px;margin:0 16px 16px';
-  prev.innerHTML='<div style="width:42px;height:42px;border-radius:10px;overflow:hidden;background:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center">'+(p.img?'<img src="'+p.img+'" style="width:100%;height:100%;object-fit:cover"/>':'<svg width="18" height="18" fill="none" stroke="var(--sub)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0C18 9.5 12 3 12 3z"/></svg>')+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+E(authorName)+'\'s drop</div><div style="font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">'+E(textPreview)+'</div></div>';
+  var _ssThumb=p.img||null;
+  if(_ssThumb){try{var _ssA=JSON.parse(_ssThumb);if(Array.isArray(_ssA)&&_ssA.length>0)_ssThumb=_ssA[0];}catch(_e){}}
+  prev.innerHTML='<div style="width:42px;height:42px;border-radius:10px;overflow:hidden;background:var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center">'+(_ssThumb?'<img src="'+_ssThumb+'" style="width:100%;height:100%;object-fit:cover"/>':'<svg width="18" height="18" fill="none" stroke="var(--sub)" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 3C12 3 6 9.5 6 14a6 6 0 0 0 12 0C18 9.5 12 3 12 3z"/></svg>')+'</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+E(authorName)+'\'s drop</div><div style="font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">'+E(textPreview)+'</div></div>';
 
   // Share options grid
   var grid=document.createElement('div');
@@ -5618,8 +5619,7 @@ function openChat(u){
           try{storyPreviewParsed=JSON.parse(jsonPart);}catch(e){}
           displayText=nlIdx>0?rawContent.slice(nlIdx+1):'';
         } else if(rawContent.startsWith('[postshare:')){
-          var psEnd=rawContent.indexOf(']',11);
-          var psJson=rawContent.slice(11,psEnd>0?psEnd+1:rawContent.length);
+          var psJson=rawContent.slice(11);
           if(psJson.endsWith(']'))psJson=psJson.slice(0,-1);
           try{postShareParsed=JSON.parse(psJson);}catch(e){}
           displayText='';
@@ -5738,8 +5738,7 @@ function subscribeToChat(partnerId){
         try{storyPreview2=JSON.parse(jsonPart2);}catch(e){}
         displayText2=nlIdx2>0?rawContent2.slice(nlIdx2+1):'';
       } else if(rawContent2.startsWith('[postshare:')){
-        var psEnd2=rawContent2.indexOf(']',11);
-        var psJson2=rawContent2.slice(11,psEnd2>0?psEnd2+1:rawContent2.length);
+        var psJson2=rawContent2.slice(11);
         if(psJson2.endsWith(']'))psJson2=psJson2.slice(0,-1);
         try{postShare2=JSON.parse(psJson2);}catch(e){}
         displayText2='';
@@ -11880,9 +11879,9 @@ function _handleDeepLink(){
         (userData.bio?'<div style="font-size:13.5px;margin-top:8px;line-height:1.5;color:var(--text)">'+E(userData.bio)+'</div>':'')+
         '</div>'+
       '</div>'+
-      '<div style="display:flex;gap:8px">'+
-        '<button style="background:var(--text);color:var(--card);border:none;border-radius:11px;padding:10px 22px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer" onclick="_showGuestAuthPrompt(\'follow users\')">Follow</button>'+
-        '<button style="background:transparent;color:var(--text);border:1.5px solid var(--border);border-radius:11px;padding:10px 22px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer" onclick="_showGuestAuthPrompt(\'send messages\')">Message</button>'+
+      '<div style="display:flex;gap:8px;margin-bottom:4px">'+
+        '<button style="flex:1;background:var(--text);color:var(--card);border:none;border-radius:13px;padding:13px 16px;font-size:15px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer" onclick="_showGuestAuthPrompt(\'follow users\')">Follow</button>'+
+        '<button style="flex:1;background:transparent;color:var(--text);border:1.5px solid var(--border);border-radius:13px;padding:13px 16px;font-size:15px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer" onclick="_showGuestAuthPrompt(\'send messages\')">Message</button>'+
       '</div>';
     content.appendChild(profCard);
 
