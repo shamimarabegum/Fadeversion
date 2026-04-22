@@ -337,9 +337,9 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .post-carousel-slide img{width:100%;aspect-ratio:4/5;display:block;object-fit:cover;-webkit-touch-callout:none;pointer-events:none}
 .carousel-counter{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.52);color:#fff;font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;pointer-events:none;z-index:2;transition:opacity .4s ease;letter-spacing:.2px}
 .carousel-counter.fade-out{opacity:0}
-.carousel-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:6px;pointer-events:none;z-index:2}
-.carousel-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.5);transition:all .22s ease;flex-shrink:0}
-.carousel-dot.active{background:#fff;width:10px;height:10px}
+.carousel-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px;pointer-events:none;z-index:2}
+.carousel-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.5);transition:all .22s ease;flex-shrink:0}
+.carousel-dot.active{background:#fff;width:7px;height:7px}
 
 /* EDIT PROFILE */
 #ep-bg{display:none;position:fixed;inset:0;z-index:150;align-items:flex-end}
@@ -9603,9 +9603,8 @@ function closeFollowSheet(){
 // ── KEYBOARD AVOID ────────────────────────────────────────────────────────────
 (function(){
   var authScroll=document.querySelector('#s-auth > div');
-  function adjustAuth(){if(!window.visualViewport)return;var vv=window.visualViewport;var visH=vv.height;var fullH=window.innerHeight;var kbH=Math.max(0,fullH-visH-vv.offsetTop);if(authScroll){authScroll.style.height=(fullH-kbH)+'px';authScroll.style.maxHeight=(fullH-kbH)+'px';}var active=document.activeElement;if(active&&active.closest&&active.closest('#s-auth')){setTimeout(function(){active.scrollIntoView({behavior:'smooth',block:'center'});},60);}}
+  function adjustAuth(){if(!window.visualViewport)return;var vv=window.visualViewport;var visH=vv.height;var fullH=window.innerHeight;var kbH=Math.max(0,fullH-visH-vv.offsetTop);if(authScroll){authScroll.style.height=(fullH-kbH)+'px';authScroll.style.maxHeight=(fullH-kbH)+'px';}}
   if(window.visualViewport){window.visualViewport.addEventListener('resize',adjustAuth,{passive:true});window.visualViewport.addEventListener('scroll',adjustAuth,{passive:true});}
-  document.addEventListener('focusin',function(e){var el=e.target;if(!el||!el.closest('#s-auth'))return;var tag=el.tagName;if(tag!=='INPUT'&&tag!=='TEXTAREA'&&tag!=='SELECT')return;setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'center'});},320);});
 })();
 (function(){if(!window.visualViewport)return;window.visualViewport.addEventListener('resize',function(){if(typeof _epOpen!=='undefined'&&_epOpen)return;var kbH=Math.max(0,window.innerHeight-window.visualViewport.height);var cw=document.getElementById('cw'),foot=cw&&cw.querySelector('.chatfoot'),msgs=document.getElementById('msgs');if(cw&&cw.classList.contains('on')&&foot){foot.style.marginBottom=kbH>0?kbH+'px':'0';if(kbH>0&&msgs)msgs.scrollTop=msgs.scrollHeight;}},{passive:true});})();
 
@@ -11834,7 +11833,7 @@ function _handleDeepLink(){
     var imgHTML='';
     if(_gImgs.length>1){
       var slides=_gImgs.map(function(url,i){return '<div class="post-carousel-slide"><img src="'+url+'" style="width:100%;aspect-ratio:4/5;display:block;object-fit:cover" draggable="false" loading="'+(i===0?'eager':'lazy')+'"/></div>';}).join('');
-      var dots=_gImgs.map(function(_,i){return '<div class="carousel-dot'+(i===0?' active':'')+'" style="width:'+(i===0?'10px':'7px')+';height:'+(i===0?'10px':'7px')+';border-radius:50%;background:'+(i===0?'#fff':'rgba(255,255,255,.5)')+';transition:all .22s"></div>';}).join('');
+      var dots=_gImgs.map(function(_,i){return '<div class="carousel-dot'+(i===0?' active':'')+'"></div>';}).join('');
       imgHTML='<div class="post-carousel" style="position:relative;width:100%;overflow:hidden;touch-action:pan-y;-webkit-user-select:none;user-select:none">'
         +'<div class="post-carousel-track" style="display:flex;transition:transform .28s cubic-bezier(.25,.46,.45,.94);will-change:transform">'+slides+'</div>'
         +'<div class="carousel-counter" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.52);color:#fff;font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;pointer-events:none;z-index:2">1/'+_gImgs.length+'</div>'
