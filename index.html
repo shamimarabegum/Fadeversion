@@ -2680,10 +2680,13 @@ function signIn(){
   var pw    = document.getElementById('si-pw').value;
   if(!email || !email.includes('@')) return T('Enter a valid email');
   if(!pw) return T('Enter your password');
+  var btn = document.querySelector('#form-in .btn-dark');
+  if(btn){ btn.textContent = 'Signing in…'; btn.disabled = true; }
+  function resetBtn(){ if(btn){ btn.textContent = 'Sign in'; btn.disabled = false; } }
   _sb.auth.signInWithPassword({ email: email, password: pw }).then(function(res){
-    if(res.error) return T(res.error.message || 'Sign in failed');
-    // onAuthStateChange handles the rest
-  });
+    if(res.error){ resetBtn(); return T(res.error.message || 'Sign in failed'); }
+    // onAuthStateChange handles the rest — keep button disabled until screen switches
+  }).catch(function(err){ resetBtn(); T(err.message || 'Sign in failed'); });
 }
 
 function trySignup(){
