@@ -320,8 +320,12 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .photo-tray{display:none;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;padding:8px 0 2px}
 .photo-tray::-webkit-scrollbar{display:none}
 .photo-chip{position:relative;flex-shrink:0;width:72px;height:72px}
-.photo-chip img{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block}
+.photo-chip img{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block;cursor:pointer}
 .photo-chip-rm{position:absolute;top:-7px;right:-7px;background:#1A1A1A;color:#fff;border:2px solid var(--card);border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+#photo-preview-ov{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);align-items:center;justify-content:center}
+#photo-preview-ov.on{display:flex}
+#photo-preview-ov img{max-width:100%;max-height:100%;object-fit:contain;-webkit-touch-callout:none;pointer-events:none}
+#photo-preview-ov button{position:absolute;top:max(18px,env(safe-area-inset-top,18px));right:18px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .photo-add-btn{width:72px;height:72px;border-radius:10px;border:1.5px dashed var(--border);background:var(--inp-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--sub);transition:opacity .15s}
 .photo-add-btn:active{opacity:.5}
 /* Post carousel */
@@ -2680,13 +2684,10 @@ function signIn(){
   var pw    = document.getElementById('si-pw').value;
   if(!email || !email.includes('@')) return T('Enter a valid email');
   if(!pw) return T('Enter your password');
-  var btn = document.querySelector('#form-in .btn-dark');
-  if(btn){ btn.textContent = 'Signing in…'; btn.disabled = true; }
-  function resetBtn(){ if(btn){ btn.textContent = 'Sign in'; btn.disabled = false; } }
   _sb.auth.signInWithPassword({ email: email, password: pw }).then(function(res){
-    if(res.error){ resetBtn(); return T(res.error.message || 'Sign in failed'); }
-    // onAuthStateChange handles the rest — keep button disabled until screen switches
-  }).catch(function(err){ resetBtn(); T(err.message || 'Sign in failed'); });
+    if(res.error) return T(res.error.message || 'Sign in failed');
+    // onAuthStateChange handles the rest
+  });
 }
 
 function trySignup(){
@@ -4449,13 +4450,20 @@ function pickCI(e){
   if(!files.length)return;
   var remaining=5-cFiles.length;
   if(remaining<=0){T('Max 5 photos');return;}
-  files.slice(0,remaining).forEach(function(f){cFiles.push(f);});
+  // Filter out files already selected (same name + size)
+  var existing=cFiles.map(function(f){return f.name+'|'+f.size;});
+  var newFiles=files.filter(function(f){return existing.indexOf(f.name+'|'+f.size)<0;});
+  if(!newFiles.length){T('Already selected');return;}
+  newFiles.slice(0,remaining).forEach(function(f){cFiles.push(f);});
   renderPhotoTray();
 }
 function rmCI(idx){
   cFiles.splice(idx,1);
   renderPhotoTray();
 }
+function openPhotoPreview(src){var ov=document.getElementById('photo-preview-ov');var img=document.getElementById('photo-preview-img');img.src=src;ov.classList.add('on');ov.onclick=function(e){if(e.target===ov)closePhotoPreview();};}
+function closePhotoPreview(){var ov=document.getElementById('photo-preview-ov');ov.classList.remove('on');document.getElementById('photo-preview-img').src='';}
+
 function renderPhotoTray(){
   var tray=document.getElementById('c-photo-tray');
   var lbl=document.getElementById('c-photo-lbl');
@@ -4469,10 +4477,17 @@ function renderPhotoTray(){
   tray.style.display='flex';
   cFiles.forEach(function(f,i){
     var chip=document.createElement('div');chip.className='photo-chip';
-    var img=document.createElement('img');img.src=URL.createObjectURL(f);img.style.borderRadius='10px';
+    var objUrl=URL.createObjectURL(f);
+    var img=document.createElement('img');img.src=objUrl;img.style.borderRadius='10px';
+    // tap image → fullscreen preview
+    img.addEventListener('click',function(e){e.stopPropagation();openPhotoPreview(objUrl);});
+    // checkmark badge showing slot number
+    var badge=document.createElement('div');
+    badge.style.cssText='position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);background:#1A1A1A;color:#fff;border:2px solid var(--card);border-radius:999px;min-width:18px;height:18px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;padding:0 4px;pointer-events:none';
+    badge.textContent=(i+1)+'/'+cFiles.length;
     var rm=document.createElement('button');rm.className='photo-chip-rm';rm.textContent='✕';
-    (function(idx){rm.onclick=function(ev){ev.preventDefault();rmCI(idx);};})(i);
-    chip.appendChild(img);chip.appendChild(rm);
+    (function(idx){rm.onclick=function(ev){ev.preventDefault();ev.stopPropagation();rmCI(idx);};})(i);
+    chip.appendChild(img);chip.appendChild(rm);chip.appendChild(badge);
     tray.appendChild(chip);
   });
   if(cFiles.length<5){
@@ -5004,7 +5019,28 @@ function svRiBlur(){
   if(ri&&ri.value.trim())return;
   if(svPaused)svHoldEnd();
 }
-function svProfTap(){var g=svGroups[svGI];if(g&&g.user.id!=='demo'){closeSV();openProf(g.user);}}
+function svProfTap(){
+  var g=svGroups[svGI];
+  if(!g||g.user.id==='demo')return;
+  var u=g.user;
+  var ctx=_svReturnCtx; // save before closeSV clears it
+  // Close SV silently without triggering tab switch
+  clearTimeout(svTmr);svPaused=false;svBarDone=0;svViewsOpen=false;
+  var sv=document.getElementById('sv');
+  sv.style.opacity='0';
+  _svReturnCtx=null;
+  setTimeout(function(){sv.style.display='none';},220);
+  // Now open profile — context flags ensure correct back behaviour
+  if(ctx==='talk'){
+    _profFromChat=false;
+    openProf(u);
+  } else if(ctx==='chat'){
+    _profFromChat=true;
+    openProf(u);
+  } else {
+    openProf(u);
+  }
+}
 function renderSVFrame(animate){
   var g=svGroups[svGI];if(!g||!g.items||!g.items.length){closeSV();return;}
   var item=g.items[svII];if(!item){closeSV();return;}
@@ -6290,11 +6326,13 @@ function buildPostShareCard(p,isMine){
       var svOpen=sv&&sv.classList.contains('on');
       var ps=document.getElementById('prof-screen');
       if(svOpen){
-        // Opened from the post overlay — lift prof-screen above it
+        // Opened from the post overlay — lift prof-screen above it, keep scroll-view alive underneath
         ps.style.zIndex='670';
+        sv.style.zIndex='660';
         _profFromScrollView=true;
       } else {
         // Opened from inside the chat window — treat same as tapping chat header
+        _chatBackCtx='prof';
         _profFromChat=true;
       }
       openProf(authorUser2);
@@ -7417,7 +7455,12 @@ function closeProf(){
       var psEl=document.getElementById('prof-screen');
       psEl.style.zIndex=''; // reset back to CSS default (650)
       var svEl2=document.getElementById('scroll-view');
-      if(svEl2){svEl2.style.visibility='';svEl2.style.pointerEvents='';}
+      if(svEl2){
+        svEl2.style.zIndex='660';
+        svEl2.style.visibility='';
+        svEl2.style.pointerEvents='';
+        svEl2.classList.add('on');
+      }
       return;
     }
 
@@ -12626,5 +12669,6 @@ function _buildEpCats(){
 })();
 </script>
 
+<div id="photo-preview-ov"><img id="photo-preview-img" src=""/><button onclick="closePhotoPreview()">✕</button></div>
 </body>
 </html>
