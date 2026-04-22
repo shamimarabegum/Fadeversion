@@ -317,48 +317,25 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .shacts{display:flex;gap:8px;align-items:center}
 .ilbl{background:var(--inp-bg);border:1.5px solid var(--inp-border);border-radius:10px;padding:9px 13px;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:13.5px;font-family:'Inter',sans-serif;font-weight:500}
 .dropbtn{background:var(--text);color:var(--card);border:none;border-radius:11px;padding:10px 22px;font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;margin-left:auto}
-.pvwrap{display:none;position:relative;width:fit-content}
-.pvwrap.on{display:block}
-.pvimg{width:62px;height:62px;object-fit:cover;border-radius:9px;display:block}
-.pvrm{position:absolute;top:-6px;right:-6px;background:var(--text);color:var(--card);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center}
-/* NASHEED */
-/* NASHEED COMPOSE BAR */
-.nasheed-bar{display:none;align-items:center;gap:10px;padding:8px 0 4px;cursor:pointer;user-select:none}
-.nasheed-bar.on{display:flex}
-.nasheed-bar-ico{width:18px;height:18px;color:var(--sub);flex-shrink:0;display:flex;align-items:center}
-.nasheed-bar-txt{flex:1;min-width:0;font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nasheed-bar-txt.selected{color:var(--text);font-weight:500}
-.nasheed-bar-rm{background:none;border:none;cursor:pointer;color:var(--sub);padding:2px 4px;font-size:13px;flex-shrink:0;line-height:1;display:none}
-/* NASHEED PICKER SHEET */
-#nasheed-bg{display:none;position:fixed;inset:0;z-index:310;align-items:flex-end}
-#nasheed-bg .compose-dim{position:absolute;inset:0;background:rgba(0,0,0,.45)}
-.nasheed-sheet{position:relative;z-index:1;width:100%;background:var(--card);border-radius:22px 22px 0 0;padding:0 0 max(24px,env(safe-area-inset-bottom));max-height:80vh;display:flex;flex-direction:column;animation:slideUp .28s cubic-bezier(.25,.46,.45,.94) both}
-.nasheed-sh-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px}
-.nasheed-sh-title{font-size:15px;font-weight:700}
-.nasheed-sh-x{width:28px;height:28px;border-radius:50%;background:var(--inp-bg);border:none;cursor:pointer;color:var(--sub);font-size:14px;display:flex;align-items:center;justify-content:center}
-.nasheed-search{margin:0 16px 10px;background:var(--inp-bg);border:none;border-radius:11px;padding:10px 14px;font-size:14px;font-family:Inter,sans-serif;color:var(--text);width:calc(100% - 32px);outline:none}
-.nasheed-cats{display:flex;gap:7px;padding:0 16px 12px;overflow-x:auto;flex-shrink:0}
-.nasheed-cats::-webkit-scrollbar{display:none}
-.nasheed-cat{background:var(--inp-bg);border:none;border-radius:20px;padding:7px 14px;font-size:12.5px;font-weight:500;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap;color:var(--sub);transition:all .15s;flex-shrink:0}
-.nasheed-cat.on{background:var(--text);color:var(--card)}
-.nasheed-list{overflow-y:auto;flex:1;padding:0 6px 8px}
-.nasheed-list::-webkit-scrollbar{display:none}
-.nasheed-row{display:flex;align-items:center;gap:12px;padding:11px 10px;cursor:pointer;border-radius:12px;transition:background .12s}
-.nasheed-row:active{background:var(--inp-bg)}
-.nasheed-row-disc{width:42px;height:42px;border-radius:50%;background:var(--inp-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
-.nasheed-row-disc svg{color:var(--sub)}
-.nasheed-row-info{flex:1;min-width:0}
-.nasheed-row-title{font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nasheed-row-artist{font-size:12px;color:var(--sub);margin-top:1px}
-.nasheed-row-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.nasheed-row-check.on{background:var(--text);border-color:var(--text)}
-/* POST NASHEED — Instagram-style header label */
-.post-nasheed-meta{display:flex;align-items:center;gap:5px;margin-top:1px}
-.post-nasheed-lbl{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
-.post-nasheed-lbl svg{display:inline;vertical-align:middle;margin-right:3px;margin-top:-1px}
-/* Mute button on image (bottom-right corner, Instagram style) */
-.post-nasheed-mute{position:absolute;bottom:10px;right:10px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transition:background .15s}
-.post-nasheed-mute:active{background:rgba(0,0,0,.75)}
+/* Multi-photo tray */
+.photo-tray{display:none;gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+.photo-tray::-webkit-scrollbar{display:none}
+.photo-chip{position:relative;flex-shrink:0;width:72px;height:72px}
+.photo-chip img{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block}
+.photo-chip-rm{position:absolute;top:-6px;right:-6px;background:var(--text);color:var(--card);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;z-index:1;line-height:1}
+.photo-add-btn{width:72px;height:72px;border-radius:10px;border:1.5px dashed var(--border);background:var(--inp-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--sub);transition:opacity .15s}
+.photo-add-btn:active{opacity:.5}
+/* Post carousel */
+.post-carousel{position:relative;width:100%;overflow:hidden;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.post-carousel-track{display:flex;transition:transform .28s cubic-bezier(.25,.46,.45,.94);will-change:transform}
+.post-carousel-track.no-anim{transition:none}
+.post-carousel-slide{flex:0 0 100%;width:100%}
+.post-carousel-slide img{width:100%;aspect-ratio:4/5;display:block;object-fit:cover}
+.carousel-counter{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.52);color:#fff;font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;pointer-events:none;z-index:2;transition:opacity .4s ease;letter-spacing:.2px}
+.carousel-counter.fade-out{opacity:0}
+.carousel-dots{position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px;pointer-events:none;z-index:2}
+.carousel-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.5);transition:all .22s ease;flex-shrink:0}
+.carousel-dot.active{background:#fff;width:7px;height:7px}
 
 /* EDIT PROFILE */
 #ep-bg{display:none;position:fixed;inset:0;z-index:150;align-items:flex-end}
@@ -1554,24 +1531,8 @@ body {
     <div class="handle"></div>
     <div class="shhd"><span class="shtitle">Drop</span><button class="shx" onclick="closeCompose()">✕</button></div>
     <textarea id="c-text" class="cta" placeholder="What's fading today..."></textarea>
-    <div class="pvwrap" id="c-pv"><img id="c-pi" class="pvimg" alt=""/><button class="pvrm" onclick="rmCI()">✕</button></div>
-    <div class="nasheed-bar" id="c-nasheed-bar" onclick="openNasheedPicker()">
-      <div class="nasheed-bar-ico"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
-      <span class="nasheed-bar-txt" id="c-nasheed-title">Add sound</span>
-      <button class="nasheed-bar-rm" id="c-nasheed-rm" onclick="rmNasheed(event)">&#x2715;</button>
-    </div>
-    <div class="shacts"><label class="ilbl" for="c-file2"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Photo</label><input id="c-file2" type="file" accept="image/*" style="display:none" onchange="pickCI(event)"/><button class="dropbtn" onclick="submitPost()">Drop it</button></div>
-  </div>
-</div>
-
-<!-- NASHEED PICKER -->
-<div id="nasheed-bg" onclick="bgClose(event,'nasheed-bg')">
-  <div class="compose-dim"></div>
-  <div class="nasheed-sheet">
-    <div class="nasheed-sh-hd"><span class="nasheed-sh-title">Choose a Nasheed</span><button class="nasheed-sh-x" onclick="closeNasheedPicker()">&#x2715;</button></div>
-    <input class="nasheed-search" id="nasheed-search" placeholder="Search nasheeds..." oninput="renderNasheedList()" autocomplete="off"/>
-    <div class="nasheed-cats" id="nasheed-cats"></div>
-    <div class="nasheed-list" id="nasheed-list"></div>
+    <div class="photo-tray" id="c-photo-tray"></div>
+    <div class="shacts"><label class="ilbl" id="c-photo-lbl" for="c-file2"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Photo</label><input id="c-file2" type="file" accept="image/*" multiple style="display:none" onchange="pickCI(event)"/><button class="dropbtn" onclick="submitPost()">Drop it</button></div>
   </div>
 </div>
 
@@ -1699,7 +1660,7 @@ var profile=null,curTab='today',S_DARK=false,SND_ON=true,_AC=null,_tabScroll={};
 var _inboxChannel=null,_adminChannel=null,_notifChannel=null;
 var profPhotoUrl=null,newPid=null,_selectedGender='';
 var svGroups=[],svGI=0,svII=0,svTmr=null,svLiked={},svPaused=false,svBarStart=0,svBarDone=0,svViewsOpen=false,svViews={};
-var chatUser=null,cFile=null,cNasheedUrl=null,cNasheedTitle=null,cNasheedArtist=null,_nasheedCat='all',_nasheedAudios={};
+var chatUser=null,cFiles=[];
 var dMsgs={},posts=[],notifs=[];
 var csReply=null,csPid=null;
 var following=new Set(),CF=new Set(),blocked=new Set(),muted=new Set();
@@ -2252,7 +2213,7 @@ function stripStoryPrefix(c){
   return c;
 }
 function fadeIn(ts){var rem=Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);return rem<=0?'soon':h>0?h+'h':m+'m';}
-function bgClose(e,id){if(e.target.id===id||e.target.classList.contains('compose-dim')){if(id==='nasheed-bg'){closeNasheedPicker();}else{closeSheet(id);}}}
+function bgClose(e,id){if(e.target.id===id||e.target.classList.contains('compose-dim'))closeSheet(id);}
 function closeSheet(id){var el=document.getElementById(id);var sheet=el&&el.querySelector('.sheet');if(sheet)sheet.style.transform='translateY(100%)';setTimeout(function(){if(el)el.style.display='none';},320);}
 function grow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,88)+'px';}
 function closeM(id){document.getElementById(id).classList.remove('on');}
@@ -3658,7 +3619,9 @@ function renderNotifs(){
     if(postTypes.indexOf(n.type)>-1&&n.pid){
       var thumbPost=posts.find(function(x){return x.id===n.pid;});
       if(thumbPost&&thumbPost.img){
-        postThumb='<div style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--border)"><img src="'+thumbPost.img+'" style="width:100%;height:100%;object-fit:cover;display:block"/></div>';
+        var _ti=thumbPost.img;
+        try{var _ta=JSON.parse(_ti);if(Array.isArray(_ta)&&_ta[0])_ti=_ta[0];}catch(_e){}
+        postThumb='<div style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0;background:var(--border)"><img src="'+_ti+'" style="width:100%;height:100%;object-fit:cover;display:block"/></div>';
       }
     }
 
@@ -3992,7 +3955,7 @@ function _loadFeedPage(isFirst){
   _feedLoading=true;
   var now=new Date().toISOString();
   _sb.from('posts')
-    .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at,audience,nasheed_url,nasheed_title')
+    .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at,audience')
     .gt('expires_at', now)
     .order('created_at',{ascending:false})
     .range(_feedOffset, _feedOffset + _feedPageSize - 1)
@@ -4041,8 +4004,7 @@ function renderFeedRows(rows,likedIds,isFirst){
       text:r.text||'', img:r.img_url||null,
       likes:r.likes_count||0,
       liked:likedIds.indexOf(r.id)>-1,
-      comments:[], commentsCount:r.comments_count||0, ts:r.created_at, audience:r.audience||'everyone',
-      nasheedUrl:r.nasheed_url||null, nasheedTitle:r.nasheed_title||null
+      comments:[], commentsCount:r.comments_count||0, ts:r.created_at, audience:r.audience||'everyone'
     };
   }).filter(function(p){
     if(p.expires_at&&new Date(p.expires_at).getTime()<=Date.now())return false;
@@ -4080,7 +4042,6 @@ function renderFeedRows(rows,likedIds,isFirst){
       var el=buildPost(p,false);
       if(isCold){el.classList.add('anim-fade-up');el.style.animationDelay=(Math.min(animIdx,8)*30)+'ms';}
       animIdx++;frag.appendChild(el);
-      if(p.nasheedUrl){(function(pp){setTimeout(function(){attachNasheedAudio(pp.id,pp.nasheedUrl);},200);})(p);}
       if(p.liked){
         var h=el.querySelector('#hi-'+p.id);if(h)h.setAttribute('fill','currentColor');
         var lb=el.querySelector('#lb-'+p.id);if(lb)lb.classList.add('liked');
@@ -4105,7 +4066,6 @@ function renderFeedRows(rows,likedIds,isFirst){
       var el=buildPost(p,false);
       el.classList.add('anim-fade-up');
       f.appendChild(el);
-      if(p.nasheedUrl){(function(pp){setTimeout(function(){attachNasheedAudio(pp.id,pp.nasheedUrl);},200);})(p);}
       if(p.liked){
         var h=document.getElementById('hi-'+p.id);if(h)h.setAttribute('fill','currentColor');
         var lb=document.getElementById('lb-'+p.id);if(lb)lb.classList.add('liked');
@@ -4126,6 +4086,75 @@ function renderFeedRows(rows,likedIds,isFirst){
     _feedSentinelObs.observe(sentinel);
   }
 }
+// ── CAROUSEL HELPERS ──────────────────────────────────────────────────────────
+function _buildCarouselHTML(pid,imgs){
+  var slides=imgs.map(function(url,i){
+    return '<div class="post-carousel-slide"><img src="'+url+'" style="width:100%;aspect-ratio:4/5;display:block;object-fit:cover" loading="'+(i===0?'eager':'lazy')+'"/></div>';
+  }).join('');
+  var dots=imgs.map(function(_,i){
+    return '<div class="carousel-dot'+(i===0?' active':'')+'"></div>';
+  }).join('');
+  return '<div class="post-carousel" data-carousel-pid="'+pid+'">'
+    +'<div class="post-carousel-track">'+slides+'</div>'
+    +'<div class="carousel-counter">1/'+imgs.length+'</div>'
+    +'<div class="carousel-dots">'+dots+'</div>'
+    +'</div>';
+}
+function _wireCarousel(carousel){
+  var track=carousel.querySelector('.post-carousel-track');
+  var counter=carousel.querySelector('.carousel-counter');
+  var allDots=carousel.querySelectorAll('.carousel-dot');
+  var slides=carousel.querySelectorAll('.post-carousel-slide');
+  var n=slides.length;
+  if(!track||n<2)return;
+  var cur=0,cTimer=null;
+
+  function showCounter(){
+    if(!counter)return;
+    counter.classList.remove('fade-out');
+    clearTimeout(cTimer);
+    cTimer=setTimeout(function(){counter.classList.add('fade-out');},1800);
+  }
+  function goTo(idx,animate){
+    if(idx<0||idx>=n)return;
+    cur=idx;
+    if(!animate)track.classList.add('no-anim');
+    else track.classList.remove('no-anim');
+    track.style.transform='translateX(-'+(cur*100)+'%)';
+    if(counter)counter.textContent=(cur+1)+'/'+n;
+    allDots.forEach(function(d,i){d.classList.toggle('active',i===cur);});
+    showCounter();
+  }
+  // Initial counter auto-fade
+  showCounter();
+  // Touch swipe
+  var sx=0,sy=0,tracking=false;
+  carousel.addEventListener('touchstart',function(e){
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=false;
+  },{passive:true});
+  carousel.addEventListener('touchmove',function(e){
+    var dx=e.touches[0].clientX-sx;
+    var dy=Math.abs(e.touches[0].clientY-sy);
+    if(!tracking){if(Math.abs(dx)>8&&Math.abs(dx)>dy*1.3)tracking=true;else if(dy>10)return;}
+    if(!tracking)return;
+    track.classList.add('no-anim');
+    var base=-(cur*100);
+    var pct=base+(dx/carousel.offsetWidth)*100;
+    pct=Math.max(-((n-1)*100),Math.min(0,pct));
+    track.style.transform='translateX('+pct+'%)';
+  },{passive:true});
+  carousel.addEventListener('touchend',function(e){
+    if(!tracking)return;
+    var dx=e.changedTouches[0].clientX-sx;
+    track.classList.remove('no-anim');
+    if(dx<-44&&cur<n-1)goTo(cur+1,true);
+    else if(dx>44&&cur>0)goTo(cur-1,true);
+    else goTo(cur,true);
+    tracking=false;
+  },{passive:true});
+  carousel.addEventListener('touchcancel',function(){tracking=false;goTo(cur,true);},{passive:true});
+}
+
 function buildPost(p, showDelete){
   var el=document.createElement('div');el.className='post';el.dataset.pid=p.id;
   var a=p.author||{};
@@ -4134,21 +4163,19 @@ function buildPost(p, showDelete){
   var avName=isOwn?(profile&&profile.display_name||'You'):a.display_name;
   var avUrl=isOwn?(profPhotoUrl||null):a.avatar_url;
   var avatarClick=isOwn?"goTab('me')":'openProf('+uJ+')';
-  var nasheedMeta=p.nasheedUrl?'<div class="post-nasheed-meta"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span class="post-nasheed-lbl">'+E(p.nasheedTitle||'Nasheed')+'</span></div>':'';
-  var hdr='<div class="posthd"><div class="av" onclick=\''+avatarClick+'\'>'+avH(avUrl,avName)+'</div><div class="postmeta" onclick=\''+avatarClick+'\'><div class="postname" style="display:flex;align-items:center;gap:4px">'+E(a.display_name||'User')+badgeFor(p.uid)+'</div><div class="posttm" data-ts="'+p.ts+'">'+ago(p.ts)+' · fades in '+fadeIn(p.ts)+'</div>'+nasheedMeta+'</div><button class="post-menu-btn" onclick="openPostMenu(\''+p.id+'\',\''+p.uid+'\',event)" style="background:none;border:none;cursor:pointer;padding:6px 4px;color:var(--sub);display:flex;flex-direction:column;gap:3.5px;align-items:center;justify-content:center;flex-shrink:0;border-radius:8px;transition:opacity .15s" onmousedown="event.stopPropagation()"><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i></button></div>';
+  var hdr='<div class="posthd"><div class="av" onclick=\''+avatarClick+'\'>'+avH(avUrl,avName)+'</div><div class="postmeta" onclick=\''+avatarClick+'\'>  <div class="postname" style="display:flex;align-items:center;gap:4px">'+E(a.display_name||'User')+badgeFor(p.uid)+'</div><div class="posttm" data-ts="'+p.ts+'">'+ago(p.ts)+' · fades in '+fadeIn(p.ts)+'</div></div><button class="post-menu-btn" onclick="openPostMenu(\''+p.id+'\',\''+p.uid+'\',event)" style="background:none;border:none;cursor:pointer;padding:6px 4px;color:var(--sub);display:flex;flex-direction:column;gap:3.5px;align-items:center;justify-content:center;flex-shrink:0;border-radius:8px;transition:opacity .15s" onmousedown="event.stopPropagation()"><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i></button></div>';
   var mediaHTML='',textHTML='';
   if(p.img){
-    var muteBtn='';
-    if(p.nasheedUrl){
-      muteBtn='<button class="post-nasheed-mute" id="pnbtn-'+p.id+'" onclick="togglePostNasheed(\''+p.id+'\',event)" title="Mute/Unmute"><svg width="14" height="14" fill="white" viewBox="0 0 24 24" id="pni-'+p.id+'"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>';
+    var _imgs=null;
+    try{var _pa=JSON.parse(p.img);if(Array.isArray(_pa)&&_pa.length>0)_imgs=_pa;}catch(_e){}
+    if(_imgs&&_imgs.length>1){
+      mediaHTML=_buildCarouselHTML(p.id,_imgs);
+    } else {
+      var _si=_imgs?_imgs[0]:p.img;
+      mediaHTML='<div style="width:100%;overflow:hidden"><img src="'+_si+'" style="width:100%;aspect-ratio:4/5;display:block;object-fit:cover" loading="lazy"/></div>';
     }
-    mediaHTML='<div style="width:100%;overflow:hidden;position:relative">'+
-      '<img src="'+p.img+'" style="width:100%;aspect-ratio:4/5;display:block;object-fit:cover" loading="lazy"/>'+
-      muteBtn+
-      '</div>';
     if(p.text)textHTML='<div class="post-caption">'+E(p.text)+'</div>';
-  }
-  else if(p.text){textHTML='<div class="postbody">'+E(p.text)+'</div>';}
+  } else if(p.text){textHTML='<div class="postbody">'+E(p.text)+'</div>';}
   var _likeOwnerU=isOwn?null:(USERS.find(function(x){return x.id===p.uid;})||null);
   var _hideLikeCount=isOwn?S.hideLikes:(_likeOwnerU?!!_likeOwnerU.hide_likes:false);
   var lc=_hideLikeCount?'':'<span id="lc-'+p.id+'">'+(p.likes||0)+'</span>';
@@ -4159,6 +4186,9 @@ function buildPost(p, showDelete){
   var canCmt=isOwn||(_ownerCmtPerm==='everyone')||(_ownerCmtPerm==='followers'&&following.has(p.uid));
   var acts='<div class="postacts"><button class="actbtn'+(p.liked?' liked':'')+'" id="lb-'+p.id+'" onclick="likePost(\''+p.id+'\',this)"><svg id="hi-'+p.id+'" width="24" height="24" fill="'+(p.liked?'currentColor':'none')+'" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+lc+'</button>'+(canCmt?'<button class="actbtn" onclick="openCS(\''+p.id+'\')"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0-9-9c0 1.68.46 3.25 1.27 4.6L3 21l4.4-1.27A8.96 8.96 0 0 0 12 21z"/></svg>'+cc+'</button>':'')+'</div>';
   el.innerHTML=hdr+mediaHTML+textHTML+acts;
+  // Wire carousel if multi-photo
+  var _carouselEl=el.querySelector('.post-carousel');
+  if(_carouselEl)_wireCarousel(_carouselEl);
   // Double-tap to like
   var _lastTap=0;
   el.addEventListener('touchend',function(e){
@@ -4398,141 +4428,47 @@ function doDelPost(id){
 }
 
 // ── COMPOSE ───────────────────────────────────────────────────────────────────
-function openCompose(){var bg=document.getElementById('compose-bg');bg.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){bg.querySelector('.sheet').style.transform='translateY(0)';});});setTimeout(function(){var t=document.getElementById('c-text');if(t)t.focus();},350);}
+function openCompose(){cFiles=[];renderPhotoTray();var bg=document.getElementById('compose-bg');bg.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){bg.querySelector('.sheet').style.transform='translateY(0)';});});setTimeout(function(){var t=document.getElementById('c-text');if(t)t.focus();},350);}
 function closeCompose(){closeSheet('compose-bg');}
-// ── NASHEED LIBRARY ──────────────────────────────────────────────────────────
-// ── NASHEED LIBRARY ──────────────────────────────────────────────────────────
-var NASHEEDS=[
-  {title:'Tala Al Badru Alayna',artist:'Traditional',cat:'vocal',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/1.mp3'},
-  {title:'Ya Taiba',artist:'Mishary Rashid Alafasy',cat:'vocal',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/59.mp3'},
-  {title:'Subhanallah',artist:'Mishary Rashid Alafasy',cat:'vocal',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/112.mp3'},
-  {title:'Al-Ikhlas',artist:'Mishary Rashid Alafasy',cat:'vocal',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/114.mp3'},
-  {title:'Mawlaya',artist:'Mishary Rashid Alafasy',cat:'famous',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/2.mp3'},
-  {title:'Insha Allah',artist:'Maher Zain',cat:'famous',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/3.mp3'},
-  {title:'Number One for Me',artist:'Maher Zain',cat:'famous',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/4.mp3'},
-  {title:'Ya Nabi Salam Alayka',artist:'Maher Zain',cat:'famous',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/18.mp3'},
-  {title:'Baraka Allahu Lakuma',artist:'Maher Zain',cat:'famous',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/36.mp3'},
-  {title:'Forgive Me',artist:'Maher Zain',cat:'sad',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/55.mp3'},
-  {title:'Guide Me All the Way',artist:'Maher Zain',cat:'sad',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/67.mp3'},
-  {title:'Hold My Hand',artist:'Maher Zain',cat:'sad',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/56.mp3'},
-  {title:'For the Rest of My Life',artist:'Maher Zain',cat:'sad',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/19.mp3'},
-  {title:'Every Tear Was Dua',artist:'Ali Dawud',cat:'sad',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/93.mp3'},
-  {title:'Kun Anta',artist:'Humood Alkhudher',cat:'wedding',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/76.mp3'},
-  {title:'Tabassam',artist:'Humood Alkhudher',cat:'wedding',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/78.mp3'},
-  {title:'Mabrook',artist:'Harris J',cat:'wedding',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/89.mp3'},
-  {title:'Salam',artist:'Harris J',cat:'wedding',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/99.mp3'},
-  {title:'Assalamu Alaika',artist:'Humood Alkhudher',cat:'wedding',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/103.mp3'},
-  {title:'Surah Al-Fatiha',artist:'Mishary Rashid Alafasy',cat:'quran',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/1.mp3'},
-  {title:'Surah Al-Mulk',artist:'Mishary Rashid Alafasy',cat:'quran',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/67.mp3'},
-  {title:'Surah Ar-Rahman',artist:'Mishary Rashid Alafasy',cat:'quran',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/55.mp3'},
-  {title:'Surah Yasin',artist:'Mishary Rashid Alafasy',cat:'quran',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/36.mp3'},
-  {title:'Surah Al-Kahf',artist:'Saad Al Ghamdi',cat:'quran',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alghamdi/18.mp3'},
-  {title:'Surah Al-Waqiah',artist:'Mishary Rashid Alafasy',cat:'quran',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/56.mp3'},
-  {title:'Good Life',artist:'Humood Alkhudher',cat:'beat',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/78.mp3'},
-  {title:'Lift Me Up',artist:'Sami Yusuf',cat:'beat',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/94.mp3'},
-  {title:'Free',artist:'Sami Yusuf',cat:'beat',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/96.mp3'},
-  {title:'Noor Ala Noor',artist:'Mesut Kurtis',cat:'beat',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/24.mp3'},
-  {title:'Baba',artist:'Mesut Kurtis',cat:'beat',url:'https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/12.mp3'}
-];
-var NASHEED_CATS=[
-  {id:'all',label:'All'},
-  {id:'famous',label:'Famous'},
-  {id:'vocal',label:'Vocal Only'},
-  {id:'beat',label:'Halal Beat'},
-  {id:'quran',label:'Quran'},
-  {id:'sad',label:'Emotional'},
-  {id:'wedding',label:'Wedding & Joy'}
-];
-var _MUSIC_SVG='<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>';
-var _MUTE_SVG='<svg width="14" height="14" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v9l5-4m2.5-2.5a5 5 0 0 0 0-7"/><path d="M11 5L6 9H2v6h4l5 4"/></svg>';
-var _UNMUTE_SVG='<svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
-
-function openNasheedPicker(){
-  var bg=document.getElementById('nasheed-bg');
-  bg.style.display='flex';
-  var cc=document.getElementById('nasheed-cats');cc.innerHTML='';
-  NASHEED_CATS.forEach(function(c){
-    var btn=document.createElement('button');btn.className='nasheed-cat'+(c.id===_nasheedCat?' on':'');
-    btn.textContent=c.label;
-    btn.onclick=function(){_nasheedCat=c.id;cc.querySelectorAll('.nasheed-cat').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');renderNasheedList();};
-    cc.appendChild(btn);
+function pickCI(e){
+  var files=Array.from(e.target.files||[]);
+  e.target.value='';
+  if(!files.length)return;
+  var remaining=5-cFiles.length;
+  if(remaining<=0){T('Max 5 photos');return;}
+  files.slice(0,remaining).forEach(function(f){cFiles.push(f);});
+  renderPhotoTray();
+}
+function rmCI(idx){
+  cFiles.splice(idx,1);
+  renderPhotoTray();
+}
+function renderPhotoTray(){
+  var tray=document.getElementById('c-photo-tray');
+  var lbl=document.getElementById('c-photo-lbl');
+  if(!tray)return;
+  tray.innerHTML='';
+  if(!cFiles.length){
+    tray.style.display='none';
+    if(lbl)lbl.style.display='';
+    return;
+  }
+  tray.style.display='flex';
+  cFiles.forEach(function(f,i){
+    var chip=document.createElement('div');chip.className='photo-chip';
+    var img=document.createElement('img');img.src=URL.createObjectURL(f);img.style.borderRadius='10px';
+    var rm=document.createElement('button');rm.className='photo-chip-rm';rm.textContent='✕';
+    (function(idx){rm.onclick=function(ev){ev.preventDefault();rmCI(idx);};})(i);
+    chip.appendChild(img);chip.appendChild(rm);
+    tray.appendChild(chip);
   });
-  var si=document.getElementById('nasheed-search');if(si)si.value='';
-  renderNasheedList();
+  if(cFiles.length<5){
+    var add=document.createElement('label');add.className='photo-add-btn';add.setAttribute('for','c-file2');
+    add.innerHTML='<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+    tray.appendChild(add);
+  }
+  if(lbl)lbl.style.display='none';
 }
-function closeNasheedPicker(){
-  document.getElementById('nasheed-bg').style.display='none';
-}
-function renderNasheedList(){
-  var q=(document.getElementById('nasheed-search').value||'').toLowerCase().trim();
-  var list=document.getElementById('nasheed-list');list.innerHTML='';
-  var filtered=NASHEEDS.filter(function(n){
-    var catOk=_nasheedCat==='all'||n.cat===_nasheedCat;
-    var qOk=!q||(n.title.toLowerCase().indexOf(q)>-1||n.artist.toLowerCase().indexOf(q)>-1);
-    return catOk&&qOk;
-  });
-  if(!filtered.length){list.innerHTML='<div style="padding:28px;text-align:center;color:var(--sub);font-size:14px">No results</div>';return;}
-  filtered.forEach(function(n){
-    var row=document.createElement('div');row.className='nasheed-row';
-    var isSel=cNasheedUrl===n.url;
-    row.innerHTML='<div class="nasheed-row-disc">'+_MUSIC_SVG+'</div>'+
-      '<div class="nasheed-row-info"><div class="nasheed-row-title">'+E(n.title)+'</div><div class="nasheed-row-artist">'+E(n.artist)+'</div></div>'+
-      '<div class="nasheed-row-check'+(isSel?' on':'')+'">'+
-        (isSel?'<svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':'')+
-      '</div>';
-    row.onclick=function(){selectNasheed(n);closeNasheedPicker();};
-    list.appendChild(row);
-  });
-}
-function selectNasheed(n){
-  cNasheedUrl=n.url;cNasheedTitle=n.title;
-  var titleEl=document.getElementById('c-nasheed-title');
-  var rm=document.getElementById('c-nasheed-rm');
-  var bar=document.getElementById('c-nasheed-bar');
-  if(titleEl){titleEl.textContent=n.title+' · '+n.artist;titleEl.className='nasheed-bar-txt selected';}
-  if(rm)rm.style.display='block';
-  if(bar){var ico=bar.querySelector('.nasheed-bar-ico');if(ico)ico.style.color='var(--text)';}
-}
-function rmNasheed(e){
-  if(e)e.stopPropagation();
-  cNasheedUrl=null;cNasheedTitle=null;
-  var titleEl=document.getElementById('c-nasheed-title');
-  var rm=document.getElementById('c-nasheed-rm');
-  var bar=document.getElementById('c-nasheed-bar');
-  if(titleEl){titleEl.textContent='Add sound';titleEl.className='nasheed-bar-txt';}
-  if(rm)rm.style.display='none';
-  if(bar){var ico=bar.querySelector('.nasheed-bar-ico');if(ico)ico.style.color='';}
-}
-function togglePostNasheed(pid,e){
-  e.stopPropagation();
-  var audio=_nasheedAudios[pid];
-  var btn=document.getElementById('pnbtn-'+pid);
-  if(!audio||!btn)return;
-  if(audio.muted){audio.muted=false;btn.innerHTML=_UNMUTE_SVG;}
-  else{audio.muted=true;btn.innerHTML=_MUTE_SVG;}
-}
-function attachNasheedAudio(pid,url){
-  if(_nasheedAudios[pid])return;
-  var audio=new Audio();
-  audio.crossOrigin='anonymous';
-  audio.src=url;audio.loop=true;audio.muted=false;audio.volume=0.75;
-  var hasPlayed=false;
-  var postEl=document.querySelector('[data-pid="'+pid+'"]');
-  if(!postEl)return;
-  _nasheedAudios[pid]=audio;
-  var obs=new IntersectionObserver(function(entries){
-    if(entries[0].isIntersecting){
-      audio.play().then(function(){hasPlayed=true;}).catch(function(){});
-    } else {
-      if(hasPlayed)audio.pause();
-    }
-  },{threshold:0.5});
-  obs.observe(postEl);
-}
-
-
-function pickCI(e){var f=e.target.files[0];if(!f)return;cFile=f;document.getElementById('c-pi').src=URL.createObjectURL(f);document.getElementById('c-pv').classList.add('on');document.getElementById('c-nasheed-bar').classList.add('on');}
-function rmCI(){cFile=null;document.getElementById('c-pv').classList.remove('on');document.getElementById('c-pi').src='';document.getElementById('c-file2').value='';document.getElementById('c-nasheed-bar').classList.remove('on');rmNasheed();}
 
 // ── IMAGE COMPRESSION ─────────────────────────────────────────────────────────
 // Compresses a File/Blob to JPEG at maxDim px and quality q (0-1).
@@ -4567,48 +4503,56 @@ function compressImage(file, maxDim, quality){
 }
 
 function submitPost(){
-  var txt=document.getElementById('c-text').value.trim();if(!txt&&!cFile)return T('Add text or a photo');
+  var txt=document.getElementById('c-text').value.trim();if(!txt&&!cFiles.length)return T('Add text or a photo');
   var btn=document.querySelector('#compose-bg .dropbtn');
   if(btn){btn.textContent='Dropping…';btn.disabled=true;}
   function resetBtn(){if(btn){btn.textContent='Drop it';btn.disabled=false;}}
 
-  function doInsert(imgUrl){
+  function doInsert(imgVal){
     var expires=new Date(Date.now()+86400000).toISOString();
     _sb.from('posts').insert({
-      user_id:profile.id, text:txt||null, img_url:imgUrl||null, expires_at:expires,
-      nasheed_url:cNasheedUrl||null, nasheed_title:cNasheedTitle||null
+      user_id:profile.id, text:txt||null, img_url:imgVal||null, expires_at:expires
     }).select('*, profiles:user_id(id,username,display_name,avatar_url)').single()
     .then(function(res){
       resetBtn();
       if(res.error){T('Could not post. Try again.');return;}
       var r=res.data,au=r.profiles||{};
-      var np={id:r.id,uid:r.user_id,author:{display_name:au.display_name||au.username,username:au.username,avatar_url:au.avatar_url},text:r.text||'',img:r.img_url||null,likes:0,liked:false,comments:[],ts:r.created_at,nasheedUrl:r.nasheed_url||null,nasheedTitle:r.nasheed_title||null};
+      var np={id:r.id,uid:r.user_id,author:{display_name:au.display_name||au.username,username:au.username,avatar_url:au.avatar_url},text:r.text||'',img:imgVal||null,likes:0,liked:false,comments:[],ts:r.created_at};
       newPid=np.id;posts.unshift(np);
-      document.getElementById('c-text').value='';rmCI();rmNasheed();closeCompose();SFX('drop');haptic('success');renderFeed();if(curTab==='me')renderMe();T('Dropped');
+      document.getElementById('c-text').value='';
+      cFiles=[];renderPhotoTray();
+      closeCompose();SFX('drop');haptic('success');renderFeed();if(curTab==='me')renderMe();T('Dropped');
       setTimeout(function(){if(newPid===np.id)newPid=null;},5000);
     });
   }
 
-  if(cFile){
-    compressImage(cFile, 1280, 0.82).then(function(compressed){
-      var ext = 'jpg';
-      var path = profile.id+'/'+Date.now()+'.jpg';
-      _sb.storage.from('post-images').upload(path, compressed, {contentType:'image/jpeg', upsert:true})
-      .then(function(sr){
-        if(sr.error){
-          // fallback: read original as data URL
-          var reader = new FileReader();
-          reader.onload = function(ev){ doInsert(ev.target.result); };
-          reader.readAsDataURL(cFile);
-        } else {
-          var pub = _sb.storage.from('post-images').getPublicUrl(path);
-          doInsert(pub.data&&pub.data.publicUrl||null);
-        }
-      });
+  if(!cFiles.length){doInsert(null);return;}
+
+  // Upload all files, then store URLs (1 file = plain string, 2-5 = JSON array)
+  var uploads=cFiles.map(function(f){
+    return compressImage(f,1280,0.82).then(function(compressed){
+      var path=profile.id+'/'+Date.now()+'-'+Math.random().toString(36).slice(2)+'.jpg';
+      return _sb.storage.from('post-images').upload(path,compressed,{contentType:'image/jpeg',upsert:true})
+        .then(function(sr){
+          if(sr.error){
+            return new Promise(function(resolve){
+              var reader=new FileReader();
+              reader.onload=function(ev){resolve(ev.target.result);};
+              reader.readAsDataURL(f);
+            });
+          }
+          var pub=_sb.storage.from('post-images').getPublicUrl(path);
+          return(pub.data&&pub.data.publicUrl)||null;
+        });
     });
-  } else {
-    doInsert(null);
-  }
+  });
+
+  Promise.all(uploads).then(function(urls){
+    urls=urls.filter(Boolean);
+    if(!urls.length){resetBtn();T('Upload failed. Try again.');return;}
+    var imgVal=urls.length===1?urls[0]:JSON.stringify(urls);
+    doInsert(imgVal);
+  }).catch(function(){resetBtn();T('Upload failed. Try again.');});
 }
 
 // ── STORY STRIP ───────────────────────────────────────────────────────────────
