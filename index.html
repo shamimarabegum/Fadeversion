@@ -321,6 +321,46 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .pvwrap.on{display:block}
 .pvimg{width:62px;height:62px;object-fit:cover;border-radius:9px;display:block}
 .pvrm{position:absolute;top:-6px;right:-6px;background:var(--text);color:var(--card);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center}
+/* NASHEED */
+.nasheed-bar{display:none;align-items:center;gap:8px;background:var(--inp-bg);border:1.5px solid var(--inp-border);border-radius:12px;padding:9px 13px;cursor:pointer;transition:border-color .15s;margin-top:0;user-select:none}
+.nasheed-bar:active{opacity:.7}
+.nasheed-bar.on{display:flex}
+.nasheed-bar-ico{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#7C3AED,#A855F7);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nasheed-bar-txt{flex:1;min-width:0}
+.nasheed-bar-title{font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nasheed-bar-sub{font-size:11px;color:var(--sub)}
+.nasheed-bar-rm{background:none;border:none;cursor:pointer;color:var(--sub);padding:4px;font-size:14px;flex-shrink:0;line-height:1}
+/* Nasheed picker sheet */
+#nasheed-bg{display:none;position:fixed;inset:0;z-index:310;align-items:flex-end}
+#nasheed-bg.on{display:flex}
+#nasheed-bg .compose-dim{position:absolute;inset:0;background:rgba(0,0,0,.38)}
+.nasheed-sheet{position:relative;z-index:1;width:100%;background:var(--card);border-radius:22px 22px 0 0;padding:0 0 max(24px,env(safe-area-inset-bottom));max-height:82vh;display:flex;flex-direction:column;animation:slideUp .28s cubic-bezier(.25,.46,.45,.94) both}
+.nasheed-sh-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 0}
+.nasheed-sh-title{font-size:16px;font-weight:700}
+.nasheed-sh-x{background:none;border:none;cursor:pointer;color:var(--sub);font-size:18px;padding:4px}
+.nasheed-search{margin:12px 16px;background:var(--inp-bg);border:1.5px solid var(--inp-border);border-radius:11px;padding:10px 13px;font-size:14px;font-family:Inter,sans-serif;color:var(--text);width:calc(100% - 32px);outline:none}
+.nasheed-cats{display:flex;gap:7px;padding:0 16px 10px;overflow-x:auto;flex-shrink:0}
+.nasheed-cats::-webkit-scrollbar{display:none}
+.nasheed-cat{background:var(--inp-bg);border:1.5px solid var(--inp-border);border-radius:20px;padding:6px 13px;font-size:12.5px;font-weight:500;font-family:Inter,sans-serif;cursor:pointer;white-space:nowrap;color:var(--sub);transition:all .15s;flex-shrink:0}
+.nasheed-cat.on{background:var(--text);color:var(--card);border-color:var(--text)}
+.nasheed-list{overflow-y:auto;flex:1;padding:0 12px}
+.nasheed-list::-webkit-scrollbar{display:none}
+.nasheed-row{display:flex;align-items:center;gap:11px;padding:10px 6px;cursor:pointer;border-radius:12px;transition:background .12s}
+.nasheed-row:active{background:var(--inp-bg)}
+.nasheed-row-ico{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#7C3AED,#A855F7);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.nasheed-row-info{flex:1;min-width:0}
+.nasheed-row-title{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nasheed-row-artist{font-size:12px;color:var(--sub)}
+.nasheed-row-sel{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.nasheed-row-sel.on{background:var(--text);border-color:var(--text)}
+/* Post nasheed player bar */
+.post-nasheed{display:flex;align-items:center;gap:9px;padding:9px 12px;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);position:absolute;bottom:0;left:0;right:0}
+.post-nasheed-ico{font-size:16px;animation:nasheedSpin 3s linear infinite}
+@keyframes nasheedSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.post-nasheed-ico.paused{animation-play-state:paused}
+.post-nasheed-title{flex:1;font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.post-nasheed-btn{background:rgba(255,255,255,.18);border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;font-size:13px;transition:background .15s}
+.post-nasheed-btn:active{background:rgba(255,255,255,.35)}
 
 /* EDIT PROFILE */
 #ep-bg{display:none;position:fixed;inset:0;z-index:150;align-items:flex-end}
@@ -1517,7 +1557,23 @@ body {
     <div class="shhd"><span class="shtitle">Drop</span><button class="shx" onclick="closeCompose()">✕</button></div>
     <textarea id="c-text" class="cta" placeholder="What's fading today..."></textarea>
     <div class="pvwrap" id="c-pv"><img id="c-pi" class="pvimg" alt=""/><button class="pvrm" onclick="rmCI()">✕</button></div>
+    <div class="nasheed-bar" id="c-nasheed-bar" onclick="openNasheedPicker()">
+      <div class="nasheed-bar-ico"><svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+      <div class="nasheed-bar-txt"><div class="nasheed-bar-title" id="c-nasheed-title">Add Nasheed</div><div class="nasheed-bar-sub" id="c-nasheed-sub">Tap to browse</div></div>
+      <button class="nasheed-bar-rm" id="c-nasheed-rm" style="display:none" onclick="rmNasheed(event)">&#x2715;</button>
+    </div>
     <div class="shacts"><label class="ilbl" for="c-file2"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Photo</label><input id="c-file2" type="file" accept="image/*" style="display:none" onchange="pickCI(event)"/><button class="dropbtn" onclick="submitPost()">Drop it</button></div>
+  </div>
+</div>
+
+<!-- NASHEED PICKER -->
+<div id="nasheed-bg" onclick="bgClose(event,'nasheed-bg')">
+  <div class="compose-dim"></div>
+  <div class="nasheed-sheet">
+    <div class="nasheed-sh-hd"><span class="nasheed-sh-title">Choose a Nasheed</span><button class="nasheed-sh-x" onclick="closeNasheedPicker()">&#x2715;</button></div>
+    <input class="nasheed-search" id="nasheed-search" placeholder="Search nasheeds..." oninput="renderNasheedList()" autocomplete="off"/>
+    <div class="nasheed-cats" id="nasheed-cats"></div>
+    <div class="nasheed-list" id="nasheed-list"></div>
   </div>
 </div>
 
@@ -1645,7 +1701,7 @@ var profile=null,curTab='today',S_DARK=false,SND_ON=true,_AC=null,_tabScroll={};
 var _inboxChannel=null,_adminChannel=null,_notifChannel=null;
 var profPhotoUrl=null,newPid=null,_selectedGender='';
 var svGroups=[],svGI=0,svII=0,svTmr=null,svLiked={},svPaused=false,svBarStart=0,svBarDone=0,svViewsOpen=false,svViews={};
-var chatUser=null,cFile=null;
+var chatUser=null,cFile=null,cNasheedUrl=null,cNasheedTitle=null,_nasheedCat='all',_nasheedAudios={};
 var dMsgs={},posts=[],notifs=[];
 var csReply=null,csPid=null;
 var following=new Set(),CF=new Set(),blocked=new Set(),muted=new Set();
@@ -2198,7 +2254,7 @@ function stripStoryPrefix(c){
   return c;
 }
 function fadeIn(ts){var rem=Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);return rem<=0?'soon':h>0?h+'h':m+'m';}
-function bgClose(e,id){if(e.target.id===id||e.target.classList.contains('compose-dim'))closeSheet(id);}
+function bgClose(e,id){if(e.target.id===id||e.target.classList.contains('compose-dim')){if(id==='nasheed-bg'){closeNasheedPicker();}else{closeSheet(id);}}}
 function closeSheet(id){var el=document.getElementById(id);var sheet=el&&el.querySelector('.sheet');if(sheet)sheet.style.transform='translateY(100%)';setTimeout(function(){if(el)el.style.display='none';},320);}
 function grow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,88)+'px';}
 function closeM(id){document.getElementById(id).classList.remove('on');}
@@ -3938,7 +3994,7 @@ function _loadFeedPage(isFirst){
   _feedLoading=true;
   var now=new Date().toISOString();
   _sb.from('posts')
-    .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at,audience')
+    .select('id,user_id,text,img_url,likes_count,comments_count,expires_at,created_at,audience,nasheed_url,nasheed_title')
     .gt('expires_at', now)
     .order('created_at',{ascending:false})
     .range(_feedOffset, _feedOffset + _feedPageSize - 1)
@@ -3987,7 +4043,8 @@ function renderFeedRows(rows,likedIds,isFirst){
       text:r.text||'', img:r.img_url||null,
       likes:r.likes_count||0,
       liked:likedIds.indexOf(r.id)>-1,
-      comments:[], commentsCount:r.comments_count||0, ts:r.created_at, audience:r.audience||'everyone'
+      comments:[], commentsCount:r.comments_count||0, ts:r.created_at, audience:r.audience||'everyone',
+      nasheedUrl:r.nasheed_url||null, nasheedTitle:r.nasheed_title||null
     };
   }).filter(function(p){
     if(p.expires_at&&new Date(p.expires_at).getTime()<=Date.now())return false;
@@ -4025,6 +4082,7 @@ function renderFeedRows(rows,likedIds,isFirst){
       var el=buildPost(p,false);
       if(isCold){el.classList.add('anim-fade-up');el.style.animationDelay=(Math.min(animIdx,8)*30)+'ms';}
       animIdx++;frag.appendChild(el);
+      if(p.nasheedUrl){(function(pp){setTimeout(function(){attachNasheedAudio(pp.id,pp.nasheedUrl);},200);})(p);}
       if(p.liked){
         var h=el.querySelector('#hi-'+p.id);if(h)h.setAttribute('fill','currentColor');
         var lb=el.querySelector('#lb-'+p.id);if(lb)lb.classList.add('liked');
@@ -4049,6 +4107,7 @@ function renderFeedRows(rows,likedIds,isFirst){
       var el=buildPost(p,false);
       el.classList.add('anim-fade-up');
       f.appendChild(el);
+      if(p.nasheedUrl){(function(pp){setTimeout(function(){attachNasheedAudio(pp.id,pp.nasheedUrl);},200);})(p);}
       if(p.liked){
         var h=document.getElementById('hi-'+p.id);if(h)h.setAttribute('fill','currentColor');
         var lb=document.getElementById('lb-'+p.id);if(lb)lb.classList.add('liked');
@@ -4079,7 +4138,17 @@ function buildPost(p, showDelete){
   var avatarClick=isOwn?"goTab('me')":'openProf('+uJ+')';
   var hdr='<div class="posthd"><div class="av" onclick=\''+avatarClick+'\'>'+avH(avUrl,avName)+'</div><div class="postmeta" onclick=\''+avatarClick+'\'>  <div class="postname" style="display:flex;align-items:center;gap:4px">'+E(a.display_name||'User')+badgeFor(p.uid)+'</div><div class="posttm" data-ts="'+p.ts+'">'+ago(p.ts)+' · fades in '+fadeIn(p.ts)+'</div></div><button class="post-menu-btn" onclick="openPostMenu(\''+p.id+'\',\''+p.uid+'\',event)" style="background:none;border:none;cursor:pointer;padding:6px 4px;color:var(--sub);display:flex;flex-direction:column;gap:3.5px;align-items:center;justify-content:center;flex-shrink:0;border-radius:8px;transition:opacity .15s" onmousedown="event.stopPropagation()"><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i><i style="display:block;width:3.5px;height:3.5px;border-radius:50%;background:currentColor"></i></button></div>';
   var mediaHTML='',textHTML='';
-  if(p.img){mediaHTML='<div style="width:100%;overflow:hidden"><img src="'+p.img+'" style="width:100%;aspect-ratio:4/5;display:block;object-fit:cover" loading="lazy"/></div>';if(p.text)textHTML='<div class="post-caption">'+E(p.text)+'</div>';}
+  if(p.img){
+    var nasheedPlayer='';
+    if(p.nasheedUrl){
+      nasheedPlayer='<div class="post-nasheed" id="pnb-'+p.id+'"><span class="post-nasheed-ico" id="pni-'+p.id+'">🎵</span><span class="post-nasheed-title">'+E(p.nasheedTitle||'Nasheed')+'</span><button class="post-nasheed-btn" id="pnbtn-'+p.id+'" onclick="togglePostNasheed(\''+p.id+'\',event)" title="Mute/Unmute">🔊</button></div>';
+    }
+    mediaHTML='<div style="width:100%;overflow:hidden;position:relative">'+
+      '<img src="'+p.img+'" style="width:100%;aspect-ratio:4/5;display:block;object-fit:cover" loading="lazy"/>'+
+      nasheedPlayer+
+      '</div>';
+    if(p.text)textHTML='<div class="post-caption">'+E(p.text)+'</div>';
+  }
   else if(p.text){textHTML='<div class="postbody">'+E(p.text)+'</div>';}
   var _likeOwnerU=isOwn?null:(USERS.find(function(x){return x.id===p.uid;})||null);
   var _hideLikeCount=isOwn?S.hideLikes:(_likeOwnerU?!!_likeOwnerU.hide_likes:false);
@@ -4332,8 +4401,158 @@ function doDelPost(id){
 // ── COMPOSE ───────────────────────────────────────────────────────────────────
 function openCompose(){var bg=document.getElementById('compose-bg');bg.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){bg.querySelector('.sheet').style.transform='translateY(0)';});});setTimeout(function(){var t=document.getElementById('c-text');if(t)t.focus();},350);}
 function closeCompose(){closeSheet('compose-bg');}
-function pickCI(e){var f=e.target.files[0];if(!f)return;cFile=f;document.getElementById('c-pi').src=URL.createObjectURL(f);document.getElementById('c-pv').classList.add('on');}
-function rmCI(){cFile=null;document.getElementById('c-pv').classList.remove('on');document.getElementById('c-pi').src='';document.getElementById('c-file2').value='';}
+// ── NASHEED LIBRARY ──────────────────────────────────────────────────────────
+var NASHEEDS=[
+  // 🎙 Vocal Only (acapella / no instruments)
+  {title:'Tala Al Badru Alayna',artist:'Traditional',cat:'vocal',mood:'joy',url:'https://archive.org/download/TalaAlBadruAlaynaNasheed/Tala%20Al%20Badru%20Alayna.mp3'},
+  {title:'Ya Taiba',artist:'Mishary Rashid Alafasy',cat:'vocal',mood:'love',url:'https://archive.org/download/MisharyRashidAlafasyNasheedCollection/Ya%20Taiba.mp3'},
+  {title:'Allahu Allah',artist:'Sami Yusuf',cat:'vocal',mood:'faith',url:'https://archive.org/download/SamiYusufNasheedCollection/Allahu%20Allah.mp3'},
+  {title:'Al-Mu\'allim',artist:'Sami Yusuf',cat:'vocal',mood:'hope',url:'https://archive.org/download/SamiYusufNasheedCollection/Al-Muallim.mp3'},
+  {title:'Muhammad Nabina',artist:'Mesut Kurtis',cat:'vocal',mood:'love',url:'https://archive.org/download/MesutKurtisNasheedCollection/Muhammad%20Nabina.mp3'},
+
+  // 💫 Famous Nasheeds
+  {title:'Mawlaya',artist:'Mishary Rashid Alafasy',cat:'famous',mood:'love',url:'https://archive.org/download/MisharyRashidAlafasyNasheedCollection/Mawlaya.mp3'},
+  {title:'Insha Allah',artist:'Maher Zain',cat:'famous',mood:'hope',url:'https://archive.org/download/MaherZainNasheedCollection/Insha%20Allah.mp3'},
+  {title:'Number One for Me',artist:'Maher Zain',cat:'famous',mood:'love',url:'https://archive.org/download/MaherZainNasheedCollection/Number%20One%20for%20Me.mp3'},
+  {title:'Ramadan',artist:'Maher Zain',cat:'famous',mood:'joy',url:'https://archive.org/download/MaherZainNasheedCollection/Ramadan.mp3'},
+  {title:'Ya Nabi Salam Alayka',artist:'Maher Zain',cat:'famous',mood:'love',url:'https://archive.org/download/MaherZainNasheedCollection/Ya%20Nabi%20Salam%20Alayka.mp3'},
+  {title:'Baraka Allahu Lakuma',artist:'Maher Zain',cat:'famous',mood:'wedding',url:'https://archive.org/download/MaherZainNasheedCollection/Baraka%20Allahu%20Lakuma.mp3'},
+  {title:'Open Your Eyes',artist:'Maher Zain',cat:'famous',mood:'hope',url:'https://archive.org/download/MaherZainNasheedCollection/Open%20Your%20Eyes.mp3'},
+  {title:'Forgive Me',artist:'Maher Zain',cat:'famous',mood:'sad',url:'https://archive.org/download/MaherZainNasheedCollection/Forgive%20Me.mp3'},
+  {title:'The Chosen One',artist:'Maher Zain',cat:'famous',mood:'faith',url:'https://archive.org/download/MaherZainNasheedCollection/The%20Chosen%20One.mp3'},
+  {title:'Asalamu Alayka',artist:'Maher Zain',cat:'famous',mood:'love',url:'https://archive.org/download/MaherZainNasheedCollection/Asalamu%20Alayka.mp3'},
+
+  // 😢 Sad & Emotional
+  {title:'Guide Me All the Way',artist:'Maher Zain',cat:'sad',mood:'sad',url:'https://archive.org/download/MaherZainNasheedCollection/Guide%20Me%20All%20the%20Way.mp3'},
+  {title:'Hold My Hand',artist:'Maher Zain',cat:'sad',mood:'sad',url:'https://archive.org/download/MaherZainNasheedCollection/Hold%20My%20Hand.mp3'},
+  {title:'Without You',artist:'Maher Zain',cat:'sad',mood:'sad',url:'https://archive.org/download/MaherZainNasheedCollection/Without%20You.mp3'},
+  {title:'For the Rest of My Life',artist:'Maher Zain',cat:'sad',mood:'hope',url:'https://archive.org/download/MaherZainNasheedCollection/For%20the%20Rest%20of%20My%20Life.mp3'},
+  {title:'I Love You So',artist:'Maher Zain',cat:'sad',mood:'love',url:'https://archive.org/download/MaherZainNasheedCollection/I%20Love%20You%20So.mp3'},
+
+  // 💍 Wedding & Joy
+  {title:'Mabrook',artist:'Harris J',cat:'wedding',mood:'wedding',url:'https://archive.org/download/HarrisJNasheedCollection/Mabrook.mp3'},
+  {title:'Salam',artist:'Harris J',cat:'wedding',mood:'joy',url:'https://archive.org/download/HarrisJNasheedCollection/Salam.mp3'},
+  {title:'You Are My Life',artist:'Harris J',cat:'wedding',mood:'love',url:'https://archive.org/download/HarrisJNasheedCollection/You%20Are%20My%20Life.mp3'},
+  {title:'Assalamu Alaika',artist:'Humood Alkhudher',cat:'wedding',mood:'joy',url:'https://archive.org/download/HumoodAlkhuderNasheedCollection/Assalamu%20Alaika.mp3'},
+  {title:'Kun Anta',artist:'Humood Alkhudher',cat:'wedding',mood:'joy',url:'https://archive.org/download/HumoodAlkhuderNasheedCollection/Kun%20Anta.mp3'},
+
+  // 🌙 Quran Recitation
+  {title:'Surah Al-Fatiha',artist:'Mishary Rashid Alafasy',cat:'quran',mood:'faith',url:'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/001.mp3'},
+  {title:'Surah Al-Mulk',artist:'Mishary Rashid Alafasy',cat:'quran',mood:'faith',url:'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/067.mp3'},
+  {title:'Surah Ar-Rahman',artist:'Mishary Rashid Alafasy',cat:'quran',mood:'peace',url:'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/055.mp3'},
+  {title:'Surah Yasin',artist:'Mishary Rashid Alafasy',cat:'quran',mood:'peace',url:'https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/036.mp3'},
+  {title:'Surah Al-Kahf',artist:'Saad Al Ghamdi',cat:'quran',mood:'faith',url:'https://download.quranicaudio.com/quran/saad_al-ghaamidi/018.mp3'},
+
+  // ✨ Halal Beats / Anasheed with Beat
+  {title:'Lift Me Up',artist:'Sami Yusuf',cat:'beat',mood:'hope',url:'https://archive.org/download/SamiYusufNasheedCollection/Lift%20Me%20Up.mp3'},
+  {title:'Free',artist:'Sami Yusuf',cat:'beat',mood:'joy',url:'https://archive.org/download/SamiYusufNasheedCollection/Free.mp3'},
+  {title:'My Ummah',artist:'Sami Yusuf',cat:'beat',mood:'faith',url:'https://archive.org/download/SamiYusufNasheedCollection/My%20Ummah.mp3'},
+  {title:'We\'ll Never Forget',artist:'Sami Yusuf',cat:'beat',mood:'hope',url:'https://archive.org/download/SamiYusufNasheedCollection/Weve%20Never%20Forget.mp3'},
+  {title:'Patience',artist:'Harris J',cat:'beat',mood:'hope',url:'https://archive.org/download/HarrisJNasheedCollection/Patience.mp3'},
+  {title:'Love Who You Are',artist:'Harris J',cat:'beat',mood:'joy',url:'https://archive.org/download/HarrisJNasheedCollection/Love%20Who%20You%20Are.mp3'},
+  {title:'Good Life',artist:'Humood Alkhudher',cat:'beat',mood:'joy',url:'https://archive.org/download/HumoodAlkhuderNasheedCollection/Good%20Life.mp3'},
+  {title:'Baba',artist:'Mesut Kurtis',cat:'beat',mood:'love',url:'https://archive.org/download/MesutKurtisNasheedCollection/Baba.mp3'},
+  {title:'Tabassam',artist:'Humood Alkhudher',cat:'beat',mood:'joy',url:'https://archive.org/download/HumoodAlkhuderNasheedCollection/Tabassam.mp3'},
+  {title:'Noor Ala Noor',artist:'Mesut Kurtis',cat:'beat',mood:'faith',url:'https://archive.org/download/MesutKurtisNasheedCollection/Noor%20Ala%20Noor.mp3'}
+];
+var NASHEED_CATS=[
+  {id:'all',label:'All'},
+  {id:'famous',label:'⭐ Famous'},
+  {id:'vocal',label:'🎙 Vocal Only'},
+  {id:'beat',label:'🥁 Halal Beat'},
+  {id:'quran',label:'🌙 Quran'},
+  {id:'sad',label:'😢 Emotional'},
+  {id:'wedding',label:'💍 Wedding & Joy'}
+];
+var NASHEED_MOOD_ICONS={joy:'😊',love:'💚',faith:'✨',hope:'🌅',sad:'🥺',wedding:'💍',peace:'🕊️'};
+
+function openNasheedPicker(){
+  var bg=document.getElementById('nasheed-bg');
+  bg.style.display='flex';
+  requestAnimationFrame(function(){
+    // build cats
+    var cc=document.getElementById('nasheed-cats');cc.innerHTML='';
+    NASHEED_CATS.forEach(function(c){
+      var btn=document.createElement('button');btn.className='nasheed-cat'+(c.id===_nasheedCat?' on':'');
+      btn.textContent=c.label;
+      btn.onclick=function(){_nasheedCat=c.id;cc.querySelectorAll('.nasheed-cat').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');renderNasheedList();};
+      cc.appendChild(btn);
+    });
+    renderNasheedList();
+    var si=document.getElementById('nasheed-search');if(si)si.value='';
+  });
+}
+function closeNasheedPicker(){
+  var bg=document.getElementById('nasheed-bg');bg.style.display='none';
+}
+function renderNasheedList(){
+  var q=(document.getElementById('nasheed-search').value||'').toLowerCase().trim();
+  var list=document.getElementById('nasheed-list');list.innerHTML='';
+  var filtered=NASHEEDS.filter(function(n){
+    var catOk=_nasheedCat==='all'||n.cat===_nasheedCat;
+    var qOk=!q||(n.title.toLowerCase().indexOf(q)>-1||n.artist.toLowerCase().indexOf(q)>-1);
+    return catOk&&qOk;
+  });
+  if(!filtered.length){list.innerHTML='<div style="padding:28px 16px;text-align:center;color:var(--sub);font-size:14px">No nasheeds found</div>';return;}
+  filtered.forEach(function(n){
+    var row=document.createElement('div');row.className='nasheed-row';
+    var isSel=cNasheedUrl===n.url;
+    var moodIco=NASHEED_MOOD_ICONS[n.mood]||'🎵';
+    row.innerHTML='<div class="nasheed-row-ico">'+moodIco+'</div><div class="nasheed-row-info"><div class="nasheed-row-title">'+E(n.title)+'</div><div class="nasheed-row-artist">'+E(n.artist)+'</div></div><div class="nasheed-row-sel'+(isSel?' on':'')+'">'+( isSel?'<svg width="10" height="10" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':'')+'</div>';
+    row.onclick=function(){selectNasheed(n);closeNasheedPicker();};
+    list.appendChild(row);
+  });
+}
+function selectNasheed(n){
+  cNasheedUrl=n.url;cNasheedTitle=n.title;
+  var bar=document.getElementById('c-nasheed-bar');
+  var titleEl=document.getElementById('c-nasheed-title');
+  var subEl=document.getElementById('c-nasheed-sub');
+  var rm=document.getElementById('c-nasheed-rm');
+  if(titleEl)titleEl.textContent=n.title;
+  if(subEl)subEl.textContent=n.artist;
+  if(rm)rm.style.display='block';
+  if(bar)bar.style.borderColor='#7C3AED';
+}
+function rmNasheed(e){
+  if(e)e.stopPropagation();
+  cNasheedUrl=null;cNasheedTitle=null;
+  var titleEl=document.getElementById('c-nasheed-title');
+  var subEl=document.getElementById('c-nasheed-sub');
+  var rm=document.getElementById('c-nasheed-rm');
+  var bar=document.getElementById('c-nasheed-bar');
+  if(titleEl)titleEl.textContent='Add Nasheed';
+  if(subEl)subEl.textContent='Tap to browse';
+  if(rm)rm.style.display='none';
+  if(bar)bar.style.borderColor='';
+}
+function togglePostNasheed(pid,e){
+  e.stopPropagation();
+  var audio=_nasheedAudios[pid];
+  var btn=document.getElementById('pnbtn-'+pid);
+  var ico=document.getElementById('pni-'+pid);
+  if(!audio)return;
+  if(audio.muted){audio.muted=false;if(btn)btn.textContent='🔊';if(ico)ico.classList.remove('paused');}
+  else{audio.muted=true;if(btn)btn.textContent='🔇';if(ico)ico.classList.add('paused');}
+}
+function attachNasheedAudio(pid,url){
+  if(_nasheedAudios[pid])return;
+  var audio=new Audio();
+  audio.src=url;audio.loop=true;audio.muted=false;audio.volume=0.7;
+  audio.play().catch(function(){});
+  _nasheedAudios[pid]=audio;
+  // Auto-pause when post leaves viewport, resume when it enters
+  var img=document.querySelector('[data-pid="'+pid+'"] img');
+  if(!img)return;
+  var obs=new IntersectionObserver(function(entries){
+    if(entries[0].isIntersecting){audio.play().catch(function(){});}
+    else{audio.pause();}
+  },{threshold:0.3});
+  obs.observe(img);
+}
+
+function pickCI(e){var f=e.target.files[0];if(!f)return;cFile=f;document.getElementById('c-pi').src=URL.createObjectURL(f);document.getElementById('c-pv').classList.add('on');document.getElementById('c-nasheed-bar').classList.add('on');}
+function rmCI(){cFile=null;document.getElementById('c-pv').classList.remove('on');document.getElementById('c-pi').src='';document.getElementById('c-file2').value='';document.getElementById('c-nasheed-bar').classList.remove('on');rmNasheed();}
 
 // ── IMAGE COMPRESSION ─────────────────────────────────────────────────────────
 // Compresses a File/Blob to JPEG at maxDim px and quality q (0-1).
@@ -4376,15 +4595,16 @@ function submitPost(){
   function doInsert(imgUrl){
     var expires=new Date(Date.now()+86400000).toISOString();
     _sb.from('posts').insert({
-      user_id:profile.id, text:txt||null, img_url:imgUrl||null, expires_at:expires
+      user_id:profile.id, text:txt||null, img_url:imgUrl||null, expires_at:expires,
+      nasheed_url:cNasheedUrl||null, nasheed_title:cNasheedTitle||null
     }).select('*, profiles:user_id(id,username,display_name,avatar_url)').single()
     .then(function(res){
       resetBtn();
       if(res.error){T('Could not post. Try again.');return;}
       var r=res.data,au=r.profiles||{};
-      var np={id:r.id,uid:r.user_id,author:{display_name:au.display_name||au.username,username:au.username,avatar_url:au.avatar_url},text:r.text||'',img:r.img_url||null,likes:0,liked:false,comments:[],ts:r.created_at};
+      var np={id:r.id,uid:r.user_id,author:{display_name:au.display_name||au.username,username:au.username,avatar_url:au.avatar_url},text:r.text||'',img:r.img_url||null,likes:0,liked:false,comments:[],ts:r.created_at,nasheedUrl:r.nasheed_url||null,nasheedTitle:r.nasheed_title||null};
       newPid=np.id;posts.unshift(np);
-      document.getElementById('c-text').value='';rmCI();closeCompose();SFX('drop');haptic('success');renderFeed();if(curTab==='me')renderMe();T('Dropped');
+      document.getElementById('c-text').value='';rmCI();rmNasheed();closeCompose();SFX('drop');haptic('success');renderFeed();if(curTab==='me')renderMe();T('Dropped');
       setTimeout(function(){if(newPid===np.id)newPid=null;},5000);
     });
   }
