@@ -4928,7 +4928,7 @@ function _openDropPhotoViewer(startIdx){
   doneRow.style.cssText='display:flex;gap:8px;padding:14px 16px 0';
 
   var cancelBtn2=document.createElement('button');
-  cancelBtn2.style.cssText='padding:13px 0;border-radius:13px;border:1.5px solid var(--border);background:transparent;font-size:14px;font-weight:600;font-family:Inter,sans-serif;color:var(--text);cursor:pointer;width:72px;flex-shrink:0';
+  cancelBtn2.style.cssText='flex:1;padding:13px;border-radius:13px;border:1.5px solid var(--border);background:transparent;font-size:14px;font-weight:600;font-family:Inter,sans-serif;color:var(--text);cursor:pointer';
   cancelBtn2.textContent='Cancel';
   cancelBtn2.onclick=function(){ov.remove();};
 
@@ -4958,7 +4958,7 @@ function _openDropPhotoViewer(startIdx){
   } else {
     // Single photo: just Cancel + Apply
     var singleApply=document.createElement('button');
-    singleApply.style.cssText='padding:13px 0;border-radius:13px;border:none;background:var(--text);font-size:15px;font-weight:600;font-family:Inter,sans-serif;color:var(--card);cursor:pointer;width:72px;flex-shrink:0';
+    singleApply.style.cssText='flex:1;padding:13px;border-radius:13px;border:none;background:var(--text);font-size:15px;font-weight:600;font-family:Inter,sans-serif;color:var(--card);cursor:pointer';
     singleApply.textContent='Apply';
     singleApply.onclick=function(){
       if(cFiles[_curIdx])cFiles[_curIdx].filter=currentFilter;
