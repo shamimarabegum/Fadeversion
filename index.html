@@ -251,6 +251,18 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .chatinp{flex:1;border:none;border-radius:22px;padding:10px 16px;font-size:15px;font-family:'Inter',sans-serif;background:var(--inp-bg);color:var(--inp-text);outline:none;resize:none;max-height:86px;line-height:1.4;-webkit-user-select:text;user-select:text}
 .chatinp::placeholder{color:var(--inp-ph)}
 
+/* STORY SHARE CARD (in DM bubbles) */
+.story-share-card{width:200px;border-radius:16px;overflow:hidden;cursor:pointer;background:var(--card);border:1.5px solid var(--border);display:flex;flex-direction:column}
+.story-share-card-media{width:100%;height:110px;position:relative;background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.story-share-card-media img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.story-share-card-text-bg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:10px;position:absolute;inset:0}
+.story-share-card-hdr{display:flex;align-items:center;gap:7px;padding:9px 10px 8px;border-bottom:1px solid var(--border);background:var(--card)}
+.story-share-card-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-top:1px solid var(--border);background:var(--card)}
+.story-share-card-actions{display:flex;align-items:center;gap:6px;padding:8px 10px;border-top:1px solid var(--border);background:var(--card)}
+
+/* Talk list story share unread pill */
+.talk-story-share-badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#3897F0}
+
 /* SEARCH */
 .sbar{padding:12px 14px;background:var(--card)}
 .swrap{position:relative;display:flex;align-items:center}
@@ -2213,6 +2225,14 @@ function stripStoryPrefix(c){
       return parsed.img?'📸 Shared a drop':'📌 Shared a drop';
     }catch(e){return '📌 Shared a drop';}
   }
+  if(c.startsWith('[storyshare:')){
+    try{
+      var ssJson=c.slice(12);
+      if(ssJson.endsWith(']'))ssJson=ssJson.slice(0,-1);
+      var ssp=JSON.parse(ssJson);
+      return '📸 '+(ssp.authorName||'Someone')+'\'s Moment';
+    }catch(e){return '📸 Shared a Moment';}
+  }
   return c;
 }
 function fadeIn(ts){var rem=Math.max(0,86400000-(Date.now()-new Date(ts).getTime()));var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);return rem<=0?'soon':h>0?h+'h':m+'m';}
@@ -3802,7 +3822,7 @@ function renderNotifs(){
             var vc=svViews[svGI+'-'+svII]||[];
             acts.innerHTML='<button onclick="openViewsSheet()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:20px"><span style="color:rgba(255,255,255,.75);display:flex;align-items:center">'+IC.eye+'</span><span id="vc-count" style="color:rgba(255,255,255,.75);font-size:14px;font-weight:500">'+vc.length+'</span></button><div style="flex:1"></div><button onclick="closeSV()" style="background:rgba(255,255,255,.12);border:none;border-radius:20px;padding:9px 18px;color:#fff;font-size:13.5px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer">Done</button>';
           } else {
-            acts.innerHTML='<button class="svlbtn" onclick="svLike()"><svg id="sv-heart" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button><div class="sv-rw"><textarea id="sv-ri" class="sv-ri" rows="1" placeholder="Message…" oninput="svRiInput(this)" onkeydown="svRiKD(event)" onfocus="svRiFocus()" onblur="svRiBlur()"></textarea><button id="sv-sb" style="display:none;width:34px;height:34px;border-radius:50%;background:#fff;border:none;cursor:pointer;align-items:center;justify-content:center" onclick="svSend()"><svg width="14" height="14" fill="none" stroke="#111" stroke-width="2.4" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button></div>';
+            acts.innerHTML='<button class="svlbtn" onclick="svLike()"><svg id="sv-heart" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button><div class="sv-rw"><textarea id="sv-ri" class="sv-ri" rows="1" placeholder="Message…" oninput="svRiInput(this)" onkeydown="svRiKD(event)" onfocus="svRiFocus()" onblur="svRiBlur()"></textarea><button id="sv-sb" style="display:none;width:34px;height:34px;border-radius:50%;background:#fff;border:none;cursor:pointer;align-items:center;justify-content:center" onclick="svSend()"><svg width="14" height="14" fill="none" stroke="#111" stroke-width="2.4" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button></div><button class="svlbtn" id="sv-share-btn" onclick="svShare()" style="flex-shrink:0"><svg width="24" height="24" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>';
             updateSVHeart();
             var k=gi+'-'+svII;if(!svViews[k])svViews[k]=[];if(!svViews[k].find(function(v){return v.user.id==='demo';}))svViews[k].push({user:profile||{display_name:'You',id:'demo'},liked:false});
           }
@@ -4910,7 +4930,7 @@ function openSV(gi){
     var vc=svViews[svGI+'-0']||[];
     acts.innerHTML='<button onclick="openViewsSheet()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:20px"><span style="color:rgba(255,255,255,.75);display:flex;align-items:center">'+IC.eye+'</span><span id="vc-count" style="color:rgba(255,255,255,.75);font-size:14px;font-weight:500">'+vc.length+'</span></button><div style="flex:1"></div><button onclick="closeSV()" style="background:rgba(255,255,255,.12);border:none;border-radius:20px;padding:9px 18px;color:#fff;font-size:13.5px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer">Done</button>';
   } else {
-    acts.innerHTML='<button class="svlbtn" onclick="svLike()"><svg id="sv-heart" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button><div class="sv-rw"><textarea id="sv-ri" class="sv-ri" rows="1" placeholder="Message…" oninput="svRiInput(this)" onkeydown="svRiKD(event)" onfocus="svRiFocus()" onblur="svRiBlur()"></textarea><button id="sv-sb" style="display:none;width:34px;height:34px;border-radius:50%;background:#fff;border:none;cursor:pointer;align-items:center;justify-content:center" onclick="svSend()"><svg width="14" height="14" fill="none" stroke="#111" stroke-width="2.4" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button></div>';
+    acts.innerHTML='<button class="svlbtn" onclick="svLike()"><svg id="sv-heart" width="26" height="26" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button><div class="sv-rw"><textarea id="sv-ri" class="sv-ri" rows="1" placeholder="Message…" oninput="svRiInput(this)" onkeydown="svRiKD(event)" onfocus="svRiFocus()" onblur="svRiBlur()"></textarea><button id="sv-sb" style="display:none;width:34px;height:34px;border-radius:50%;background:#fff;border:none;cursor:pointer;align-items:center;justify-content:center" onclick="svSend()"><svg width="14" height="14" fill="none" stroke="#111" stroke-width="2.4" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg></button></div><button class="svlbtn" id="sv-share-btn" onclick="svShare()" style="flex-shrink:0"><svg width="24" height="24" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>';
     updateSVHeart();
     // Record view in Supabase
     var storyId=g.items[0]&&g.items[0].id;
@@ -5028,6 +5048,30 @@ function svSend(){
       expires_at:expires
     }).then(function(){});
   }
+}
+function svShare(){
+  // Share the currently viewed story frame to a chat
+  var g=svGroups[svGI];var item=g&&g.items[svII];var user=g&&g.user;
+  if(!g||!item||!user)return;
+  // Pause story while picker is open
+  svHoldStart();
+  var storyData={
+    storyId:item.id,
+    img:item.img||null,
+    text:item.text||'',
+    bg:item.bg||'#2C2C2C',
+    tc:item.tc||'#fff',
+    authorName:user.display_name||user.username||'Someone',
+    authorAvatar:user.avatar_url||null,
+    authorId:user.id==='demo'?(profile&&profile.id||null):user.id
+  };
+  _openFadePicker(function(toUser){
+    svHoldEnd();
+    sendStoryShareMsg(toUser,storyData);
+  },'Share Moment',function(){
+    // onCancel: resume story
+    svHoldEnd();
+  });
 }
 function svRiFocus(){
   if(!svPaused){
@@ -5611,6 +5655,7 @@ function openChat(u){
         var rawContent=r.content||'';
         var storyPreviewParsed=null;
         var postShareParsed=null;
+        var m_storyShare=null;
         var displayText=rawContent;
         if(rawContent.startsWith('[storyreply:')){
           var nlIdx=rawContent.indexOf('\n');
@@ -5622,6 +5667,11 @@ function openChat(u){
           var psJson=rawContent.slice(11);
           if(psJson.endsWith(']'))psJson=psJson.slice(0,-1);
           try{postShareParsed=JSON.parse(psJson);}catch(e){}
+          displayText='';
+        } else if(rawContent.startsWith('[storyshare:')){
+          var ssJson=rawContent.slice(12);
+          if(ssJson.endsWith(']'))ssJson=ssJson.slice(0,-1);
+          try{var ssP=JSON.parse(ssJson);m_storyShare=ssP;}catch(e){}
           displayText='';
         }
         var m={
@@ -5637,6 +5687,7 @@ function openChat(u){
           replyToSender:replyToSender,
           preview:storyPreviewParsed,
           postShare:postShareParsed,
+          storyShare:m_storyShare,
           ts:new Date(r.created_at).getTime(),
           isRead:r.is_read
         };
@@ -5730,6 +5781,7 @@ function subscribeToChat(partnerId){
       var rawContent2=r.content||r.text||'';
       var storyPreview2=null;
       var postShare2=null;
+      var storyShare2=null;
       var displayText2=rawContent2;
       if(rawContent2.startsWith('[storyreply:')){
         var nlIdx2=rawContent2.indexOf('\n');
@@ -5741,6 +5793,11 @@ function subscribeToChat(partnerId){
         var psJson2=rawContent2.slice(11);
         if(psJson2.endsWith(']'))psJson2=psJson2.slice(0,-1);
         try{postShare2=JSON.parse(psJson2);}catch(e){}
+        displayText2='';
+      } else if(rawContent2.startsWith('[storyshare:')){
+        var ssJson2=rawContent2.slice(12);
+        if(ssJson2.endsWith(']'))ssJson2=ssJson2.slice(0,-1);
+        try{storyShare2=JSON.parse(ssJson2);}catch(e){}
         displayText2='';
       }
       var m={
@@ -5755,6 +5812,7 @@ function subscribeToChat(partnerId){
         replyToSender:null,
         preview:storyPreview2,
         postShare:postShare2,
+        storyShare:storyShare2,
         ts:new Date(r.created_at).getTime(),
         isRead:r.is_read
       };
@@ -6151,6 +6209,12 @@ function appendBubble(m){
       var psc=buildPostShareCard(m.postShare,isMine);
       b.appendChild(psc);
       attachHold(b,m,wrap,bs,isMine);
+    } else if(m.storyShare){
+      // Story share card — Instagram style
+      b.style.cssText='display:inline-flex;flex-direction:column;gap:0;background:none;align-items:'+(isMine?'flex-end':'flex-start');
+      var ssc=buildStoryShareCard(m.storyShare,isMine);
+      b.appendChild(ssc);
+      attachHold(b,m,wrap,bs,isMine);
     } else if(m.preview){
       // Story reply — Instagram style: compact card above, reply bubble below, aligned to side
       b.style.cssText='display:inline-flex;flex-direction:column;gap:6px;background:none;align-items:'+(isMine?'flex-end':'flex-start');
@@ -6421,7 +6485,165 @@ function sendProfileShareMsg(toUser){
 }
 function openPostSharePicker(postId){_openFadePicker(function(u){sendPostShareMsg(u,postId);},'Share Drop');}
 function openProfileSharePicker(){_openFadePicker(function(u){sendProfileShareMsg(u);},'Share Profile');}
-function _openFadePicker(onSelect,title){
+function openStorySharePicker(storyData){_openFadePicker(function(u){sendStoryShareMsg(u,storyData);},'Share Moment');}
+
+// ── STORY SHARE CARD (in DM bubbles) ─────────────────────────────────────────
+function buildStoryShareCard(p,isMine){
+  var card=document.createElement('div');
+  card.className='story-share-card';
+
+  // Author header row
+  var hdr=document.createElement('div');
+  hdr.className='story-share-card-hdr';
+  var avDiv=document.createElement('div');
+  avDiv.style.cssText='width:22px;height:22px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:'+nc(p.authorName||'?');
+  avDiv.innerHTML=avH(p.authorAvatar||null,p.authorName||'?');
+  var lbl=document.createElement('span');
+  lbl.style.cssText='font-size:12px;color:var(--sub);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0';
+  lbl.textContent=(p.authorName||'Someone')+'\'s Moment';
+  hdr.appendChild(avDiv);
+  hdr.appendChild(lbl);
+
+  // Tap avatar/name → open profile
+  var authorUser3=p.authorId?USERS.find(function(x){return x.id===p.authorId;})||{id:p.authorId,display_name:p.authorName||'Someone',username:(p.authorName||'someone').toLowerCase(),avatar_url:p.authorAvatar||null}:null;
+  if(authorUser3){
+    hdr.style.cursor='pointer';
+    hdr.addEventListener('click',function(e){
+      e.stopPropagation();
+      _chatBackCtx='prof';_profFromChat=true;
+      openProf(authorUser3);
+    });
+  }
+  card.appendChild(hdr);
+
+  // Media / text preview
+  var media=document.createElement('div');
+  media.className='story-share-card-media';
+  if(p.img){
+    var imgEl=document.createElement('img');
+    imgEl.src=p.img;
+    imgEl.onerror=function(){this.style.display='none';};
+    media.appendChild(imgEl);
+  } else if(p.text){
+    media.style.background=p.bg||'#2C2C2C';
+    var txtBg=document.createElement('div');
+    txtBg.className='story-share-card-text-bg';
+    var txtEl=document.createElement('p');
+    txtEl.style.cssText='font-size:13px;color:'+(p.tc||'#fff')+';text-align:center;line-height:1.45;margin:0;word-break:break-word';
+    txtEl.textContent=(p.text||'').slice(0,60);
+    txtBg.appendChild(txtEl);
+    media.appendChild(txtBg);
+  } else {
+    media.innerHTML='<span style="font-size:12px;color:rgba(255,255,255,.5)">Moment</span>';
+  }
+  card.appendChild(media);
+
+  // Footer actions: Profile + Message (only for their card, not own)
+  var foot=document.createElement('div');
+  foot.className='story-share-card-actions';
+
+  // Profile button
+  if(authorUser3){
+    var profBtn=document.createElement('button');
+    profBtn.style.cssText='flex:1;background:var(--inp-bg);border:none;border-radius:10px;padding:8px 0;font-size:12px;font-weight:600;color:var(--text);font-family:Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px';
+    profBtn.innerHTML='<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile';
+    profBtn.addEventListener('click',function(e){
+      e.stopPropagation();
+      _chatBackCtx='prof';_profFromChat=true;
+      openProf(authorUser3);
+    });
+    foot.appendChild(profBtn);
+
+    // Message button — only if not their own story AND not current chat user
+    if(!isMine&&chatUser&&chatUser.id!==p.authorId&&authorUser3.id!==profile.id){
+      var msgBtn=document.createElement('button');
+      msgBtn.style.cssText='flex:1;background:var(--inp-bg);border:none;border-radius:10px;padding:8px 0;font-size:12px;font-weight:600;color:var(--text);font-family:Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px';
+      msgBtn.innerHTML='<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Message';
+      (function(au){
+        msgBtn.addEventListener('click',function(e){
+          e.stopPropagation();
+          openChat(au);
+        });
+      })(authorUser3);
+      foot.appendChild(msgBtn);
+    }
+  }
+
+  // Tap view label
+  var viewLbl=document.createElement('div');
+  viewLbl.style.cssText='font-size:11px;color:var(--sub);text-align:center;padding:0 6px;white-space:nowrap;flex-shrink:0';
+  viewLbl.textContent='View';
+  var arrSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  arrSvg.setAttribute('width','11');arrSvg.setAttribute('height','11');arrSvg.setAttribute('fill','none');arrSvg.setAttribute('stroke','var(--sub)');arrSvg.setAttribute('stroke-width','2');arrSvg.setAttribute('viewBox','0 0 24 24');
+  var arrPath=document.createElementNS('http://www.w3.org/2000/svg','path');arrPath.setAttribute('d','M5 12h14M12 5l7 7-7 7');arrSvg.appendChild(arrPath);
+  viewLbl.appendChild(document.createTextNode(' '));viewLbl.appendChild(arrSvg);
+  foot.appendChild(viewLbl);
+
+  card.appendChild(foot);
+
+  // Tap card (not footer buttons) → open story if still live
+  card.addEventListener('click',function(e){
+    if(e.target.closest('button'))return; // let buttons handle their own click
+    if(e.target.closest('[class*="story-share-card-hdr"]'))return;
+    if(!p.storyId){T('This moment has faded');return;}
+    var foundGI=-1,foundII=-1;
+    for(var i=0;i<svGroups.length;i++){
+      var fi=svGroups[i].items.findIndex(function(it){return it.id===p.storyId;});
+      if(fi>=0){foundGI=i;foundII=fi;break;}
+    }
+    if(foundGI>=0){
+      _svReturnCtx='chat';
+      svGI=foundGI;svII=foundII;
+      history.pushState({_fade:'sv'},'');
+      openSV(svGI);
+    } else {
+      T('Loading…');loadStories();
+      setTimeout(function(){
+        var gi2=-1,ii2=-1;
+        for(var i=0;i<svGroups.length;i++){
+          var fi2=svGroups[i].items.findIndex(function(it){return it.id===p.storyId;});
+          if(fi2>=0){gi2=i;ii2=fi2;break;}
+        }
+        if(gi2>=0){_svReturnCtx='chat';svGI=gi2;svII=ii2;history.pushState({_fade:'sv'},'');openSV(svGI);}
+        else{T('This moment has faded');}
+      },1400);
+    }
+  });
+
+  return card;
+}
+
+function sendStoryShareMsg(toUser,storyData){
+  if(!profile||!toUser)return;
+  var cardData={
+    storyId:storyData.storyId||null,
+    img:storyData.img||null,
+    text:storyData.text||'',
+    bg:storyData.bg||'#2C2C2C',
+    tc:storyData.tc||'#fff',
+    authorName:storyData.authorName||profile.display_name||'Someone',
+    authorAvatar:storyData.authorAvatar||(profile&&profile.avatar_url)||null,
+    authorId:storyData.authorId||profile.id
+  };
+  var encoded='[storyshare:'+JSON.stringify(cardData)+']';
+  var expires=new Date(Date.now()+86400000).toISOString();
+  var tempId='tmp-'+Date.now();
+  var m={id:tempId,sid:'demo',text:'',storyShare:cardData,ts:Date.now()};
+  if(chatUser&&chatUser.id===toUser.id){appendBubble(m);var msgs=document.getElementById('msgs');if(msgs)msgs.scrollTop=msgs.scrollHeight;}
+  var cv=convos.find(function(x){return x.user.id===toUser.id;});
+  if(cv){cv.lastMsg='📸 Shared a Moment';cv.lastSid='demo';cv.ts=Date.now();convos.sort(function(a,b){return b.ts-a.ts;});}
+  else{convos.unshift({user:toUser,lastMsg:'📸 Shared a Moment',lastSid:'demo',ts:Date.now()});}
+  _sb.from('messages').insert({sender_id:profile.id,receiver_id:toUser.id,content:encoded,is_read:false,expires_at:expires}).select('id').single().then(function(res){
+    if(res.error){T('Send failed ('+res.error.code+')');return;}
+    var el=document.querySelector('[data-msgid="'+tempId+'"]');if(el)el.dataset.msgid=res.data.id;m.id=res.data.id;
+    _sb.auth.getSession().then(function(sr){
+      var token=sr.data&&sr.data.session&&sr.data.session.access_token;if(!token)return;
+      fetch('https://xmgmpewuevzgriqgsoct.supabase.co/functions/v1/send-push',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({recipientId:toUser.id,type:'message',actor:{id:profile.id,display_name:profile.display_name,username:profile.username,avatar_url:profile.avatar_url||null},extra:{msgText:'📸 Shared a Moment with you'}})}).catch(function(){});
+    });
+  });
+  T('Sent to '+(toUser.display_name||toUser.username));SFX('send');haptic('send');
+}
+function _openFadePicker(onSelect,title,onCancel){
   var ex=document.getElementById('fade-picker-ov');if(ex)ex.remove();
   var ov=document.createElement('div');ov.id='fade-picker-ov';
   ov.style.cssText='position:fixed;inset:0;z-index:820;background:rgba(0,0,0,.45);display:flex;align-items:flex-end';
@@ -6434,7 +6656,7 @@ function _openFadePicker(onSelect,title){
   var searchInp=document.createElement('input');searchInp.type='text';searchInp.placeholder='Search people...';searchInp.className='inp';searchInp.style.cssText='width:100%;padding:11px 14px;font-size:14px;border-radius:12px';searchInp.autocomplete='off';
   searchWrap.appendChild(searchInp);
   var list=document.createElement('div');list.style.cssText='overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch';
-  function close(){sheet.style.transform='translateY(100%)';setTimeout(function(){ov.remove();},300);}
+  function close(cancelled){sheet.style.transform='translateY(100%)';setTimeout(function(){ov.remove();if(cancelled&&onCancel)onCancel();},300);}
   function renderPickerList(query){
     list.innerHTML='';query=(query||'').toLowerCase().trim();
     var seen={},candidates=[];
@@ -6451,7 +6673,7 @@ function _openFadePicker(onSelect,title){
       var inf=document.createElement('div');inf.style.cssText='flex:1;min-width:0';
       inf.innerHTML='<div style="font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+E(u.display_name||u.username)+' '+badgeFor(u.id)+'</div><div style="font-size:12.5px;color:var(--sub);margin-top:1px">@'+E(u.username||'')+'</div>';
       var sendBtn=document.createElement('button');sendBtn.style.cssText='background:var(--text);color:var(--card);border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;flex-shrink:0';sendBtn.textContent='Send';
-      (function(user){sendBtn.onclick=function(e){e.stopPropagation();close();onSelect(user);};row.onclick=function(){close();onSelect(user);};})(u);
+      (function(user){sendBtn.onclick=function(e){e.stopPropagation();close(false);onSelect(user);};row.onclick=function(){close(false);onSelect(user);};})(u);
       row.appendChild(avD);row.appendChild(inf);row.appendChild(sendBtn);list.appendChild(row);
     });
   }
@@ -6459,8 +6681,8 @@ function _openFadePicker(onSelect,title){
   searchInp.oninput=function(){renderPickerList(this.value);};
   sheet.appendChild(handle);sheet.appendChild(hdr);sheet.appendChild(searchWrap);sheet.appendChild(list);
   ov.appendChild(sheet);document.body.appendChild(ov);
-  ov.onclick=function(e){if(e.target===ov)close();};
-  document.getElementById('fade-picker-x').onclick=close;
+  ov.onclick=function(e){if(e.target===ov)close(true);};
+  document.getElementById('fade-picker-x').onclick=function(){close(true);};
   requestAnimationFrame(function(){requestAnimationFrame(function(){sheet.style.transform='translateY(0)';});});
 }
 
