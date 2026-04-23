@@ -4742,98 +4742,138 @@ function _openDropPhotoViewer(startIdx){
   var ov=document.createElement('div');ov.id='drop-filter-ov';
   ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);display:flex;flex-direction:column;justify-content:flex-end';
 
-  // ── Block all touch events from reaching the global tab-swipe handler ──
   ov.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:false});
   ov.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:false});
   ov.addEventListener('touchend',function(e){e.stopPropagation();},{passive:false});
 
   // Preview area
   var preview=document.createElement('div');
-  preview.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden;touch-action:pan-y';
+  preview.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden;touch-action:none';
 
-  // Swipe container — holds the image and slides
-  var swipeWrap=document.createElement('div');
-  swipeWrap.style.cssText='position:relative;max-width:100%;max-height:100%;display:flex;align-items:center;justify-content:center';
+  // Frame clips the image — fixed 4:5 aspect ratio
+  var frame=document.createElement('div');
+  frame.style.cssText='position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:16px;background:#000;touch-action:none';
 
   var previewImg=document.createElement('img');
-  previewImg.style.cssText='max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;-webkit-touch-callout:none;user-select:none;display:block;transition:transform .22s cubic-bezier(.25,.46,.45,.94),opacity .18s ease';
+  previewImg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;-webkit-touch-callout:none;user-select:none;display:block;transform-origin:center center;will-change:transform';
+  previewImg.draggable=false;
 
-  swipeWrap.appendChild(previewImg);
-  preview.appendChild(swipeWrap);
+  frame.appendChild(previewImg);
+  preview.appendChild(frame);
 
-  // ── Swipe to navigate photos ──────────────────────────────────────────
-  var _swX=0,_swY=0,_swTracking=false,_swDx=0;
-  var SWIPE_THRESHOLD=44;
-  var VELOCITY_THRESHOLD=0.3;
-  var _swT=0;
+  // ── Pinch-zoom + drag state ───────────────────────────────────────────
+  var _scale=1,_tx=0,_ty=0;
+  var _pinching=false,_dragging=false;
+  var _initDist=0,_initScale=1,_initTx=0,_initTy=0;
+  var _dragStartX=0,_dragStartY=0;
 
-  function goToPhoto(newIdx, dir){
-    // dir: -1 = going left (prev), 1 = going right (next)
+  function getTouchDist(t){var dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy);}
+
+  function clamp(){
+    var fw=frame.offsetWidth,fh=frame.offsetHeight;
+    var mx=Math.max(0,(fw*_scale-fw)/2);
+    var my=Math.max(0,(fh*_scale-fh)/2);
+    _tx=Math.max(-mx,Math.min(mx,_tx));
+    _ty=Math.max(-my,Math.min(my,_ty));
+  }
+
+  function applyXform(anim){
+    previewImg.style.transition=anim?'transform .15s ease':'none';
+    previewImg.style.transform='translate('+_tx+'px,'+_ty+'px) scale('+_scale+')';
+  }
+
+  frame.addEventListener('touchstart',function(e){
+    if(e.touches.length===2){
+      _pinching=true;_dragging=false;
+      _initDist=getTouchDist(e.touches);
+      _initScale=_scale;_initTx=_tx;_initTy=_ty;
+      e.preventDefault();
+    } else if(e.touches.length===1&&_scale>1.02){
+      _dragging=true;_pinching=false;
+      _dragStartX=e.touches[0].clientX-_tx;
+      _dragStartY=e.touches[0].clientY-_ty;
+      e.preventDefault();
+    }
+  },{passive:false});
+
+  frame.addEventListener('touchmove',function(e){
+    if(_pinching&&e.touches.length===2){
+      var d=getTouchDist(e.touches);
+      _scale=Math.min(4,Math.max(1,_initScale*(d/_initDist)));
+      clamp();applyXform(false);
+      e.preventDefault();
+    } else if(_dragging&&e.touches.length===1){
+      _tx=e.touches[0].clientX-_dragStartX;
+      _ty=e.touches[0].clientY-_dragStartY;
+      clamp();applyXform(false);
+      e.preventDefault();
+    }
+  },{passive:false});
+
+  frame.addEventListener('touchend',function(e){
+    if(_pinching){
+      _pinching=false;
+      if(_scale<1.05){_scale=1;_tx=0;_ty=0;}
+      clamp();applyXform(true);
+    }
+    if(e.touches.length===0)_dragging=false;
+  },{passive:true});
+
+  // Double-tap to reset zoom
+  var _lastTap=0;
+  frame.addEventListener('touchend',function(e){
+    if(e.touches.length>0)return;
+    var now=Date.now();
+    if(now-_lastTap<280){_scale=1;_tx=0;_ty=0;applyXform(true);}
+    _lastTap=now;
+  },{passive:true});
+
+  // ── Swipe to navigate (only when not zoomed) ──────────────────────────
+  var _swX=0,_swY=0,_swTracking=false,_swDx=0,_swT=0;
+  var SWIPE_THRESHOLD=44,VELOCITY_THRESHOLD=0.3;
+
+  function goToPhoto(newIdx,dir){
     if(newIdx<0||newIdx>=cFiles.length)return;
-    var outX=dir*(-100);
     previewImg.style.transition='transform .2s cubic-bezier(.25,.46,.45,.94),opacity .18s ease';
-    previewImg.style.transform='translateX('+outX+'%)';
+    previewImg.style.transform='translateX('+(dir*-100)+'%) scale(1)';
     previewImg.style.opacity='0';
     setTimeout(function(){
-      _curIdx=newIdx;
+      _curIdx=newIdx;_scale=1;_tx=0;_ty=0;
       previewImg.style.transition='none';
-      previewImg.style.transform='translateX('+(dir*100)+'%)';
+      previewImg.style.transform='translateX('+(dir*100)+'%) scale(1)';
       previewImg.style.opacity='0';
       refreshPreview();
       requestAnimationFrame(function(){requestAnimationFrame(function(){
         previewImg.style.transition='transform .22s cubic-bezier(.25,.46,.45,.94),opacity .18s ease';
-        previewImg.style.transform='translateX(0)';
+        previewImg.style.transform='translateX(0) scale(1)';
         previewImg.style.opacity='1';
       });});
     },180);
   }
 
   preview.addEventListener('touchstart',function(e){
-    _swX=e.touches[0].clientX;
-    _swY=e.touches[0].clientY;
-    _swT=Date.now();
-    _swTracking=false;
-    _swDx=0;
+    if(_scale>1.02||_pinching||_dragging)return;
+    _swX=e.touches[0].clientX;_swY=e.touches[0].clientY;
+    _swT=Date.now();_swTracking=false;_swDx=0;
   },{passive:true});
 
   preview.addEventListener('touchmove',function(e){
-    var dx=e.touches[0].clientX-_swX;
-    var dy=e.touches[0].clientY-_swY;
-    if(!_swTracking&&Math.abs(dx)>6&&Math.abs(dx)>Math.abs(dy)*1.2){
-      _swTracking=true;
-    }
-    if(_swTracking){
-      _swDx=dx;
-      // Live drag feel — shift image slightly
-      previewImg.style.transition='none';
-      previewImg.style.transform='translateX('+(dx*0.35)+'px)';
-    }
+    if(_scale>1.02||_pinching||_dragging)return;
+    var dx=e.touches[0].clientX-_swX,dy=e.touches[0].clientY-_swY;
+    if(!_swTracking&&Math.abs(dx)>6&&Math.abs(dx)>Math.abs(dy)*1.2)_swTracking=true;
+    if(_swTracking){_swDx=dx;previewImg.style.transition='none';previewImg.style.transform='translateX('+(dx*0.35)+'px) scale(1)';}
   },{passive:true});
 
-  preview.addEventListener('touchend',function(e){
-    if(!_swTracking){
-      // Reset any micro-shift
-      previewImg.style.transition='transform .15s ease';
-      previewImg.style.transform='translateX(0)';
-      return;
-    }
-    var dt=Math.max(Date.now()-_swT,1);
-    var velocity=Math.abs(_swDx)/dt;
+  preview.addEventListener('touchend',function(){
+    if(_scale>1.02||_pinching)return;
+    if(!_swTracking){previewImg.style.transition='transform .15s ease';previewImg.style.transform='translateX(0) scale(1)';return;}
+    var dt=Math.max(Date.now()-_swT,1),velocity=Math.abs(_swDx)/dt;
     var committed=Math.abs(_swDx)>=SWIPE_THRESHOLD||velocity>=VELOCITY_THRESHOLD;
     if(committed){
-      if(_swDx<0&&_curIdx<cFiles.length-1){
-        goToPhoto(_curIdx+1,1);
-      } else if(_swDx>0&&_curIdx>0){
-        goToPhoto(_curIdx-1,-1);
-      } else {
-        // Snap back
-        previewImg.style.transition='transform .2s cubic-bezier(.34,1.3,.64,1)';
-        previewImg.style.transform='translateX(0)';
-      }
-    } else {
-      previewImg.style.transition='transform .2s cubic-bezier(.34,1.3,.64,1)';
-      previewImg.style.transform='translateX(0)';
-    }
+      if(_swDx<0&&_curIdx<cFiles.length-1)goToPhoto(_curIdx+1,1);
+      else if(_swDx>0&&_curIdx>0)goToPhoto(_curIdx-1,-1);
+      else{previewImg.style.transition='transform .2s cubic-bezier(.34,1.3,.64,1)';previewImg.style.transform='translateX(0) scale(1)';}
+    } else {previewImg.style.transition='transform .2s cubic-bezier(.34,1.3,.64,1)';previewImg.style.transform='translateX(0) scale(1)';}
     _swTracking=false;_swDx=0;
   },{passive:true});
 
@@ -4863,7 +4903,7 @@ function _openDropPhotoViewer(startIdx){
     var dotWrap=document.getElementById('dfov-dots');
     if(dotWrap){
       dotWrap.querySelectorAll('span').forEach(function(d,di){
-        d.style.background=di===_curIdx?'var(--text)':'var(--border)';
+        d.style.background=di===_curIdx?'#fff':'rgba(255,255,255,.4)';
         d.style.width=di===_curIdx?'16px':'6px';
       });
     }
@@ -4876,10 +4916,10 @@ function _openDropPhotoViewer(startIdx){
     dotWrap.style.cssText='position:absolute;bottom:10px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:5px;pointer-events:none;z-index:2';
     cFiles.forEach(function(_,di){
       var d=document.createElement('span');
-      d.style.cssText='display:block;height:6px;border-radius:3px;transition:width .2s ease,background .2s ease;background:'+(di===_curIdx?'var(--text)':'var(--border)')+';width:'+(di===_curIdx?'16px':'6px');
+      d.style.cssText='display:block;height:6px;border-radius:3px;transition:width .2s ease,background .2s ease;background:'+(di===_curIdx?'#fff':'rgba(255,255,255,.4)')+';width:'+(di===_curIdx?'16px':'6px');
       dotWrap.appendChild(d);
     });
-    preview.appendChild(dotWrap);
+    frame.appendChild(dotWrap);
   }
 
   // Sheet
@@ -4930,7 +4970,7 @@ function _openDropPhotoViewer(startIdx){
   doneRow.style.cssText='display:flex;gap:8px;padding:14px 16px 0';
 
   var cancelBtn2=document.createElement('button');
-  cancelBtn2.style.cssText='padding:13px 0;border-radius:13px;border:1.5px solid var(--border);background:transparent;font-size:14px;font-weight:600;font-family:Inter,sans-serif;color:var(--text);cursor:pointer;width:72px;flex-shrink:0';
+  cancelBtn2.style.cssText='flex:1;padding:13px;border-radius:13px;border:1.5px solid var(--border);background:transparent;font-size:14px;font-weight:600;font-family:Inter,sans-serif;color:var(--text);cursor:pointer';
   cancelBtn2.textContent='Cancel';
   cancelBtn2.onclick=function(){ov.remove();};
 
@@ -5335,15 +5375,15 @@ function scPhoto(e){
 }
 var _scActiveFilter='none';
 var _scFilters=[
-  {id:'none',  label:'Original', css:'none'},
-  {id:'bright',label:'Bright',   css:'brightness(1.2) saturate(1.1)'},
-  {id:'warm',  label:'Warm',     css:'sepia(0.35) saturate(1.3) brightness(1.05)'},
-  {id:'cool',  label:'Cool',     css:'hue-rotate(20deg) saturate(1.2) brightness(1.05)'},
-  {id:'fade',  label:'Fade',     css:'brightness(1.1) saturate(0.7) contrast(0.9)'},
-  {id:'vivid', label:'Vivid',    css:'saturate(1.8) contrast(1.1)'},
-  {id:'mono',  label:'B&W',      css:'grayscale(1) contrast(1.1)'},
-  {id:'drama', label:'Drama',    css:'contrast(1.3) saturate(1.2) brightness(0.95)'},
-  {id:'fadeplus', label:'Fade+', css:'contrast(1.12) saturate(0.85) brightness(1.04) sepia(0.18) hue-rotate(-8deg)'},
+  {id:'none',    label:'Original', css:'none'},
+  {id:'fadeplus',label:'Fade+',    css:'brightness(1.08) contrast(1.15) saturate(0.9) sepia(0.1)'},
+  {id:'bright',  label:'Bright',   css:'brightness(1.2) saturate(1.1)'},
+  {id:'warm',    label:'Warm',     css:'sepia(0.35) saturate(1.3) brightness(1.05)'},
+  {id:'cool',    label:'Cool',     css:'hue-rotate(20deg) saturate(1.2) brightness(1.05)'},
+  {id:'fade',    label:'Fade',     css:'brightness(1.1) saturate(0.7) contrast(0.9)'},
+  {id:'vivid',   label:'Vivid',    css:'saturate(1.8) contrast(1.1)'},
+  {id:'mono',    label:'B&W',      css:'grayscale(1) contrast(1.1)'},
+  {id:'drama',   label:'Drama',    css:'contrast(1.3) saturate(1.2) brightness(0.95)'},
 ];
 function _scBuildFilterStrip(){
   var existing=document.getElementById('sc-filter-strip');
