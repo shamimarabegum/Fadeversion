@@ -4740,7 +4740,7 @@ function _openDropPhotoViewer(startIdx){
   var _curIdx=startIdx;
   var ex=document.getElementById('drop-filter-ov');if(ex)ex.remove();
   var ov=document.createElement('div');ov.id='drop-filter-ov';
-  ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.55);display:flex;flex-direction:column;justify-content:flex-end';
+  ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);display:flex;flex-direction:column;justify-content:flex-end';
 
   ov.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:false});
   ov.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:false});
@@ -4748,7 +4748,7 @@ function _openDropPhotoViewer(startIdx){
 
   // ── Photo frame: fixed 4:5, clips image, no gap ───────────────────────
   var frame=document.createElement('div');
-  frame.style.cssText='width:100%;aspect-ratio:4/5;overflow:hidden;background:#000;position:relative;touch-action:none;flex-shrink:0';
+  frame.style.cssText='width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:0;background:#000;position:relative;touch-action:none;flex-shrink:0';
 
   // Image fills frame — transform-based pinch+pan (Instagram-style)
   var previewImg=document.createElement('img');
