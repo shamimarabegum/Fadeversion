@@ -4851,17 +4851,17 @@ function _openDropPhotoViewer(startIdx){
 
   // The image sits inside the frame — contain by default (shows full photo), cover in crop mode
   var previewImg=document.createElement('img');
-  previewImg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;-webkit-touch-callout:none;user-select:none;display:block;transform-origin:center center;will-change:transform;';
+  previewImg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;-webkit-touch-callout:none;user-select:none;display:block;transform-origin:center center;will-change:transform;';
   previewImg.draggable=false;
 
   frame.appendChild(previewImg);
   preview.appendChild(frame);
 
-  // ── Pencil crop button ────────────────────────────────────────────────
+  // ── Pencil / Done button — sits in preview (above frame) so never clipped ──
   var pencilBtn=document.createElement('button');
-  pencilBtn.style.cssText='position:absolute;top:10px;right:10px;z-index:10;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.52);border:1.5px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s';
+  pencilBtn.style.cssText='position:absolute;top:26px;right:26px;z-index:20;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.52);border:1.5px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s';
   pencilBtn.innerHTML='<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-  frame.appendChild(pencilBtn);
+  preview.appendChild(pencilBtn);
 
   // ── Instagram-style crop overlay ─────────────────────────────────────
   var _cropMode=false;
@@ -4897,7 +4897,7 @@ function _openDropPhotoViewer(startIdx){
     previewImg.style.objectFit='cover';
     applyImgTransform(false);
     // Switch pencil icon to "Done" pill
-    pencilBtn.style.cssText='position:absolute;top:10px;right:10px;z-index:10;padding:0 14px;height:32px;border-radius:999px;background:rgba(255,255,255,.94);border:none;color:#111;font-size:13px;font-weight:700;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s';
+    pencilBtn.style.cssText='position:absolute;top:26px;right:26px;z-index:20;padding:0 16px;height:34px;border-radius:999px;background:rgba(255,255,255,.95);border:none;color:#111;font-size:13px;font-weight:700;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;width:auto';
     pencilBtn.innerHTML='Done';
     if(sheet)sheet.style.opacity='0.35';
     frame.style.cursor='move';
@@ -4908,14 +4908,10 @@ function _openDropPhotoViewer(startIdx){
     clampCrop();
     applyImgTransform(true);
     saveCropState(_curIdx, _cropTx, _cropTy, _cropScale);
-    // If user set a crop (scale > 1 or offset), keep cover to show the cropped result
-    // If they reset back to default, revert to contain (full photo)
-    if(_cropScale<=1&&_cropTx===0&&_cropTy===0){
-      previewImg.style.objectFit='contain';
-      previewImg.style.transform='none';
-    }
+    // Always cover — no black bars
+    previewImg.style.objectFit='cover';
     // Restore pencil icon
-    pencilBtn.style.cssText='position:absolute;top:10px;right:10px;z-index:10;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.52);border:1.5px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .15s';
+    pencilBtn.style.cssText='position:absolute;top:26px;right:26px;z-index:20;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.52);border:1.5px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s';
     pencilBtn.innerHTML='<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
     if(sheet)sheet.style.opacity='';
     frame.style.cursor='';
@@ -5041,12 +5037,11 @@ function _openDropPhotoViewer(startIdx){
     currentCss=(_scFilters.find(function(fl){return fl.id===currentFilter;})||{css:'none'}).css;
     // Apply CSS filter immediately
     previewImg.style.filter=currentCss;
-    // Restore crop state for this photo
+    // Always cover — restore saved crop transform
+    previewImg.style.objectFit='cover';
     var cs=getCropState(_curIdx);
     _cropTx=cs.tx; _cropTy=cs.ty; _cropScale=cs.scale||1;
-    var hasCrop=_cropScale>1||_cropTx!==0||_cropTy!==0;
-    previewImg.style.objectFit=hasCrop?'cover':'contain';
-    previewImg.style.transform=hasCrop?'translate('+_cropTx+'px,'+_cropTy+'px) scale('+_cropScale+')':'none';
+    previewImg.style.transform=(_cropScale>1||_cropTx!==0||_cropTy!==0)?'translate('+_cropTx+'px,'+_cropTy+'px) scale('+_cropScale+')':'none';
     // Sync strip thumbnails + selection
     if(_stripEl){
       _stripEl.querySelectorAll('div[data-fid]').forEach(function(x){
