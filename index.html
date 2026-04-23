@@ -161,26 +161,27 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #sc-canvas-img.on{display:block}
-#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:28px;line-height:1.4;outline:none;cursor:move;word-break:break-word;-webkit-user-select:text;user-select:text;max-width:80%;touch-action:none;padding:8px 12px;border-radius:8px;min-width:60px}
-#sc-text-ov.active-edit{cursor:text}
-#sc-text-ov:empty::before{content:attr(data-placeholder);opacity:.4;pointer-events:none;cursor:text}
-/* Right panel */
-#sc-right-panel{position:absolute;right:14px;top:50%;transform:translateY(-50%);z-index:25;display:flex;flex-direction:column;align-items:center;gap:14px}
-.sc-rpbtn{background:rgba(0,0,0,.5);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.18);transition:transform .15s,opacity .15s}
+#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:28px;line-height:1.4;outline:none;cursor:text;word-break:break-word;-webkit-user-select:text;user-select:text;max-width:76%;touch-action:none;padding:8px 14px;border-radius:10px;min-width:60px}
+#sc-text-ov.draggable{cursor:move}
+#sc-text-ov:empty::before{content:attr(data-placeholder);opacity:.38;pointer-events:none;cursor:text}
+/* Top-right panel */
+#sc-top{position:absolute;top:0;left:0;right:0;z-index:26;display:flex;align-items:flex-start;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 14px 0}
+.sc-tbtn{background:rgba(0,0,0,.5);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.14)}
+#sc-right-panel{display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:2px}
+.sc-rpbtn{background:rgba(0,0,0,.5);border:1.5px solid rgba(255,255,255,.18);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .15s,opacity .15s;flex-shrink:0}
 .sc-rpbtn:active{transform:scale(.88);opacity:.7}
-#sc-color-dots{display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:2px}
-.sc-cdot{width:26px;height:26px;border-radius:50%;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .15s;border:2.5px solid rgba(255,255,255,.35)}
-.sc-cdot.sel{transform:scale(1.3);border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
-#sc-top{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:flex-start;padding:max(16px,env(safe-area-inset-top)) 16px 12px}
-.sc-tbtn{background:rgba(0,0,0,.45);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+/* Single cycling color dot */
+#sc-color-cycle{width:34px;height:34px;border-radius:50%;cursor:pointer;border:2.5px solid rgba(255,255,255,.7);box-shadow:0 0 0 1.5px rgba(0,0,0,.3);transition:background .2s,transform .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0}
+#sc-color-cycle:active{transform:scale(.88)}
+/* Bg color button (text-only mode) */
+#sc-bg-cycle{width:34px;height:34px;border-radius:50%;cursor:pointer;border:2.5px solid rgba(255,255,255,.5);box-shadow:0 0 0 1.5px rgba(0,0,0,.3);transition:background .2s,transform .15s cubic-bezier(.34,1.56,.64,1);display:none;flex-shrink:0;position:relative}
+#sc-bg-cycle:active{transform:scale(.88)}
+#sc-bg-cycle::after{content:'BG';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;font-family:'Inter',sans-serif;color:rgba(255,255,255,.85);letter-spacing:.3px}
 #sc-bar{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:10px 16px max(22px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;background:linear-gradient(transparent,rgba(0,0,0,.68))}
 .sc-fonts{display:none;flex-direction:row;gap:8px;overflow-x:auto}
 .sc-fonts.on{display:flex}
 .sc-fc{background:rgba(255,255,255,.12);border-radius:20px;padding:7px 16px;color:#fff;white-space:nowrap;font-size:13px;cursor:pointer}
 .sc-fc.sel{background:rgba(255,255,255,.92);color:#111}
-.sc-swatches{display:flex;gap:12px;align-items:center;justify-content:center;padding:4px 0}
-.sc-sw{width:30px;height:30px;border-radius:50%;cursor:pointer;transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
-.sc-sw.sel{transform:scale(1.35)}
 .sc-acts{display:flex;align-items:center;gap:10px}
 .sc-pb{background:rgba(255,255,255,.15);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
 .sc-share{background:rgba(255,255,255,.92);color:#111;border:none;border-radius:24px;height:40px;padding:0 22px;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-left:auto}
@@ -448,9 +449,8 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .photo-tray{display:none;gap:8px;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;padding:10px 4px 10px}
 .photo-tray::-webkit-scrollbar{display:none}
 .photo-chip{position:relative;flex-shrink:0;width:72px;height:72px}
-.photo-chip img{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block;cursor:pointer}
-.photo-chip-edit-hint{position:absolute;bottom:0;left:0;right:0;border-radius:0 0 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.52));display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;pointer-events:none;z-index:2;height:36px}
-.photo-chip-edit-hint svg{opacity:.9}
+.photo-chip img{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block;cursor:pointer;border:2px solid transparent;transition:border-color .15s}
+.photo-chip img:active{border-color:rgba(255,255,255,.5)}
 .photo-chip-rm{position:absolute;top:-7px;right:-7px;background:#1A1A1A;color:#fff;border:2px solid var(--card);border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.18)}
 #photo-preview-ov{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.93);align-items:center;justify-content:center;flex-direction:column}
 #photo-preview-ov.on{display:flex}
@@ -1480,16 +1480,19 @@ body {
 
 <!-- STORY CREATOR -->
 <div id="story-creator">
-  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov" contenteditable="true" data-placeholder="What's your moment…" style="display:none" spellcheck="false"></div></div>
-  <div id="sc-top"><button class="sc-tbtn" onclick="closeCreator()">✕</button></div>
-  <div id="sc-right-panel">
-    <button class="sc-rpbtn" onclick="scFontToggle()" id="sc-t-btn" title="Font style">
-      <svg width="17" height="17" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-    </button>
-    <button class="sc-rpbtn sc-addtext-btn" id="sc-addtext-btn" onclick="scActivateText()" title="Add text">
-      <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9"/><path d="M14 2h6v6"/><line x1="20" y1="2" x2="12" y2="10"/></svg>
-    </button>
-    <div id="sc-color-dots"></div>
+  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov" contenteditable="true" data-placeholder="What's your moment…" spellcheck="false"></div></div>
+  <div id="sc-top">
+    <button class="sc-tbtn" onclick="closeCreator()">✕</button>
+    <div id="sc-right-panel">
+      <button class="sc-rpbtn" onclick="scFontToggle()" title="Font style">
+        <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+      </button>
+      <button class="sc-rpbtn" id="sc-addtext-btn" onclick="scActivateText()" title="Add text">
+        <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M17 10H3"/><path d="M21 6H3"/><path d="M21 14H3"/><path d="M17 18H3"/></svg>
+      </button>
+      <div id="sc-color-cycle" onclick="scCycleColor()" title="Text color"></div>
+      <div id="sc-bg-cycle" onclick="scCycleBg()" title="Background color"></div>
+    </div>
   </div>
   <div id="sc-bar">
     <div class="sc-fonts" id="sc-fonts"></div>
@@ -4714,20 +4717,17 @@ function renderPhotoTray(){
     // Filter badge if not original
     if(cf.filter&&cf.filter!=='none'){
       var fb=document.createElement('div');
-      fb.style.cssText='position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.62);border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;color:#fff;pointer-events:none;z-index:3;backdrop-filter:blur(4px);white-space:nowrap';
+      fb.style.cssText='position:absolute;top:4px;left:4px;background:rgba(0,0,0,.65);border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;color:#fff;pointer-events:none;z-index:3;backdrop-filter:blur(4px);white-space:nowrap';
       fb.textContent=(_scFilters.find(function(fl){return fl.id===cf.filter;})||{label:'?'}).label;
       chip.appendChild(fb);
     }
-    // Order badge
+    // Order badge (z-index 4, above filter badge)
     var badge=document.createElement('div');
-    badge.style.cssText='position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--card);border:2px solid var(--card);border-radius:999px;min-width:18px;height:18px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:2;padding:0 3px;pointer-events:none';
+    badge.style.cssText='position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--card);border:2px solid var(--card);border-radius:999px;min-width:18px;height:18px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:4;padding:0 3px;pointer-events:none';
     badge.textContent=(i+1)+(cFiles.length>1?'/'+cFiles.length:'');
     var rm=document.createElement('button');rm.className='photo-chip-rm';rm.textContent='✕';
     (function(idx3){rm.onclick=function(ev){ev.preventDefault();ev.stopPropagation();rmCI(idx3);};})(i);
-    // Tap-to-filter hint
-    var hint=document.createElement('div');hint.className='photo-chip-edit-hint';
-    hint.innerHTML='<svg width="13" height="13" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-    chip.appendChild(img);chip.appendChild(rm);chip.appendChild(badge);chip.appendChild(hint);
+    chip.appendChild(img);chip.appendChild(rm);chip.appendChild(badge);
     tray.appendChild(chip);
   });
   if(cFiles.length<5){
@@ -4997,16 +4997,22 @@ function renderStrip(){
 // ── STORY CREATOR ─────────────────────────────────────────────────────────────
 function openCreator(){
   scBg='#2C2C2C';scFontOpen=false;scFI=0;scAudience=S.storyAudience||'followers';
+  _scColorIdx=0;_scBgIdx=0;
   var c=document.getElementById('sc-canvas');c.style.background=scBg;
   var img=document.getElementById('sc-canvas-img');img.src='';img.classList.remove('on');
-  var ov=document.getElementById('sc-text-ov');ov.textContent='';ov.style.color='#fff';ov.style.display='';ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';applyFont();
+  var ov=document.getElementById('sc-text-ov');
+  ov.textContent='';ov.style.color=SC_TEXT_COLORS[0];ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';
+  ov.classList.remove('draggable');
+  applyFont();
+  // Show bg-cycle only when no photo
+  var bgBtn=document.getElementById('sc-bg-cycle');if(bgBtn)bgBtn.style.display='';
   document.getElementById('sc-file').value='';document.getElementById('sc-fonts').classList.remove('on');
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();_scActiveFilter='none';
-  buildSwatches();buildFChips();buildColorDots();
+  buildSwatches();buildFChips();_scInitColorCycle();
   var cr=document.getElementById('story-creator');cr.style.display='flex';
   history.pushState({_fade:'story-creator'},'');
   requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';});});
-  // No auto-focus — let user tap Add Text or just type for text-only
+  setTimeout(function(){ov.focus();},350);
 }
 function closeCreator(){
   var cr=document.getElementById('story-creator');cr.style.opacity='0';
@@ -5016,47 +5022,61 @@ function closeCreator(){
 }
 function applyFont(){var f=SC_FONTS[scFI],ov=document.getElementById('sc-text-ov');ov.style.fontFamily=f.ff;ov.style.fontStyle=f.fs;ov.style.fontWeight=f.fw;}
 function buildSwatches(){
-  // Swatches replaced by color dots in right panel — no-op for back-compat
+  // No-op — bg color now via sc-bg-cycle button
 }
-var _scTextColor='#FFFFFF';
-function buildColorDots(){
-  var container=document.getElementById('sc-color-dots');if(!container)return;
-  container.innerHTML='';
-  _scTextColor=SC_SW[0];
-  SC_SW.forEach(function(c,i){
-    var d=document.createElement('div');d.className='sc-cdot'+(i===0?' sel':'');d.style.background=c;
-    d.onclick=function(){
-      _scTextColor=c;
-      var ov=document.getElementById('sc-text-ov');ov.style.color=c;
-      container.querySelectorAll('.sc-cdot').forEach(function(x){x.classList.remove('sel');});
-      d.classList.add('sel');
-    };
-    container.appendChild(d);
-  });
+// ── COLOR CYCLE (text color) ──────────────────────────────────────────────────
+var _scColorIdx=0,_scBgIdx=0;
+// Text colors
+var SC_TEXT_COLORS=['#FFFFFF','#F9E74B','#FF6B6B','#4ECDC4','#A855F7','#FF9F1C','#06D6A0','#FF6FAB','#60A5FA','#000000'];
+// Background colors (text-only post)
+var SC_BG_COLORS=['#2C2C2C','#1A1A2E','#4A1942','#14213D','#1B4332','#7B2D00','#4A2040','#0D1B2A','#F5F5F0','#111111'];
+function _scInitColorCycle(){
+  var dot=document.getElementById('sc-color-cycle');
+  if(dot){dot.style.background=SC_TEXT_COLORS[0];}
+  var bgBtn=document.getElementById('sc-bg-cycle');
+  if(bgBtn){bgBtn.style.background=SC_BG_COLORS[0];}
+  var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=SC_TEXT_COLORS[0];
+  _scColorIdx=0;_scBgIdx=0;
 }
+function scCycleColor(){
+  _scColorIdx=(_scColorIdx+1)%SC_TEXT_COLORS.length;
+  var c=SC_TEXT_COLORS[_scColorIdx];
+  var dot=document.getElementById('sc-color-cycle');if(dot)dot.style.background=c;
+  var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=c;
+}
+function scCycleBg(){
+  _scBgIdx=(_scBgIdx+1)%SC_BG_COLORS.length;
+  var c=SC_BG_COLORS[_scBgIdx];scBg=c;
+  var bgBtn=document.getElementById('sc-bg-cycle');if(bgBtn)bgBtn.style.background=c;
+  var canvas=document.getElementById('sc-canvas');if(canvas)canvas.style.background=c;
+}
+// ── scActivateText ────────────────────────────────────────────────────────────
 function scActivateText(){
   var ov=document.getElementById('sc-text-ov');
-  ov.style.display='';
-  ov.classList.add('active-edit');
-  setTimeout(function(){ov.focus();// place cursor
-    var range=document.createRange();range.selectNodeContents(ov);range.collapse(false);var sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+  ov.classList.remove('draggable');
+  setTimeout(function(){
+    ov.focus();
+    var range=document.createRange();range.selectNodeContents(ov);range.collapse(false);
+    var sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(range);}
   },50);
 }
-// Draggable text overlay
+// ── DRAGGABLE TEXT (only after done editing — double-tap or tap-outside exits edit) ──
 (function(){
   var dragging=false,startX,startY,origLeft,origTop;
   function getEl(){return document.getElementById('sc-text-ov');}
-  function onDown(e){
-    var el=getEl();if(!el||el.style.display==='none')return;
-    // Only drag if not in edit mode
-    if(el.classList.contains('active-edit'))return;
+  function isEditMode(el){return!el.classList.contains('draggable');}
+  function startDrag(e){
+    var el=getEl();if(!el||isEditMode(el))return;
+    if(!el.textContent.trim())return;// nothing to drag
     dragging=true;
     var touch=e.touches?e.touches[0]:e;
     startX=touch.clientX;startY=touch.clientY;
     var rect=el.getBoundingClientRect();
-    var canvas=document.getElementById('sc-canvas').getBoundingClientRect();
-    origLeft=rect.left-canvas.left+rect.width/2;
-    origTop=rect.top-canvas.top+rect.height/2;
+    var canvas=document.getElementById('sc-canvas');
+    if(!canvas)return;
+    var cr=canvas.getBoundingClientRect();
+    origLeft=rect.left-cr.left+rect.width/2;
+    origTop=rect.top-cr.top+rect.height/2;
     el.style.transform='none';el.style.left=origLeft+'px';el.style.top=origTop+'px';
     e.preventDefault();
   }
@@ -5064,33 +5084,40 @@ function scActivateText(){
     if(!dragging)return;
     var el=getEl();if(!el)return;
     var touch=e.touches?e.touches[0]:e;
-    var dx=touch.clientX-startX,dy=touch.clientY-startY;
-    el.style.left=(origLeft+dx)+'px';el.style.top=(origTop+dy)+'px';
+    el.style.left=(origLeft+(touch.clientX-startX))+'px';
+    el.style.top=(origTop+(touch.clientY-startY))+'px';
     e.preventDefault();
   }
   function onUp(){dragging=false;}
-  var lastTap=0;
+  // Touch: touchstart on text element starts drag only if draggable mode
   document.addEventListener('touchstart',function(e){
-    var el=getEl();if(!el||el.style.display==='none')return;
-    if(e.target===el){
-      var now=Date.now();
-      if(now-lastTap<300){// double-tap → edit mode
-        el.classList.add('active-edit');
-        setTimeout(function(){el.focus();},30);
-        e.preventDefault();
-        return;
-      }
-      lastTap=now;
-      if(!el.classList.contains('active-edit'))onDown(e);
-    }
+    var el=getEl();if(!el)return;
+    if(e.target===el&&el.classList.contains('draggable'))startDrag(e);
   },{passive:false});
   document.addEventListener('touchmove',function(e){if(dragging)onMove(e);},{passive:false});
   document.addEventListener('touchend',onUp);
-  // Click outside text to exit edit mode (delegation)
+  // Tap outside text while editing → exit edit, enter draggable mode
+  document.addEventListener('touchstart',function(e){
+    var el=getEl();if(!el||isEditMode(el))return;// already draggable, skip
+    // isEditMode returns true when NOT draggable (i.e. editing)
+    // We want: if editing and tap outside el → blur and go draggable
+  },{passive:true});
   document.addEventListener('click',function(e){
     var el=getEl();if(!el)return;
-    var canvas=document.getElementById('sc-canvas');
-    if(canvas&&canvas.contains(e.target)&&e.target!==el&&el.classList.contains('active-edit')){el.classList.remove('active-edit');el.blur();}
+    var cr=document.getElementById('story-creator');
+    if(!cr||cr.style.display==='none')return;
+    // If currently in edit mode (not draggable) and click is outside el
+    if(!el.classList.contains('draggable')&&e.target!==el&&el.textContent.trim()){
+      el.blur();el.classList.add('draggable');
+    }
+  });
+  // blur event on text → enter draggable mode
+  document.addEventListener('focusout',function(e){
+    var el=getEl();if(!el||e.target!==el)return;
+    var cr=document.getElementById('story-creator');
+    if(cr&&cr.style.display!=='none'&&el.textContent.trim()){
+      el.classList.add('draggable');
+    }
   });
 })();
 function buildFChips(){
@@ -5105,9 +5132,8 @@ function scPhoto(e){
   img.src=url;img.classList.add('on');
   img.style.filter='none';
   _scActiveFilter='none';
-  // Hide text overlay until user taps Add Text
-  var ov=document.getElementById('sc-text-ov');
-  if(!ov.textContent.trim()){ov.style.display='none';}
+  // Hide bg-cycle (bg color only for text posts)
+  var bgBtn=document.getElementById('sc-bg-cycle');if(bgBtn)bgBtn.style.display='none';
   _scBuildFilterStrip();
 }
 var _scActiveFilter='none';
@@ -5201,7 +5227,7 @@ function scShare(){
   var pUrl=document.getElementById('sc-canvas-img');var photoUrl=(pUrl.src&&pUrl.classList.contains('on'))?pUrl.src:null;
   if(!txt&&!photoUrl)return T('Add text or a photo first');
   var filterCss=_scActiveFilter&&_scActiveFilter!=='none'?(_scFilters.find(function(f){return f.id===_scActiveFilter;})||{css:'none'}).css:'none';
-  var tc=ovEl.style.color||'#fff';
+  var tc=SC_TEXT_COLORS[_scColorIdx]||'#fff';
   SFX('drop');closeCreator();goTab('today');T('Posting moment…');
   function doInsert(imgUrl){
     _sb.from('stories').insert({user_id:profile.id,text:txt||null,img_url:imgUrl||null,bg:scBg,tc:tc,fi:scFI,audience:scAudience,img_filter:filterCss!=='none'?filterCss:null})
