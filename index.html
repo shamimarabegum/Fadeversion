@@ -161,7 +161,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #sc-canvas-img.on{display:block}
-#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:28px;line-height:1.4;outline:none;cursor:text;word-break:break-word;-webkit-user-select:text;user-select:text;max-width:76%;touch-action:none;padding:8px 14px;border-radius:10px;min-width:60px}
+#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:20px;line-height:1.35;outline:none;cursor:text;word-break:break-word;-webkit-user-select:text;user-select:text;max-width:82%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px}
 #sc-text-ov.draggable{cursor:move}
 #sc-text-ov:empty::before{content:attr(data-placeholder);opacity:.38;pointer-events:none;cursor:text}
 /* Top-right panel */
@@ -1488,7 +1488,7 @@ body {
         <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
       </button>
       <button class="sc-rpbtn" id="sc-addtext-btn" onclick="scActivateText()" title="Add text">
-        <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M17 10H3"/><path d="M21 6H3"/><path d="M21 14H3"/><path d="M17 18H3"/></svg>
+        <svg width="17" height="17" fill="none" viewBox="0 0 24 24"><text x="2" y="18" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#fff">A</text><line x1="2" y1="22" x2="22" y2="22" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
       </button>
       <div id="sc-color-cycle" onclick="scCycleColor()" title="Text color"></div>
       <div id="sc-bg-cycle" onclick="scCycleBg()" title="Background color"></div>
@@ -4710,24 +4710,21 @@ function renderPhotoTray(){
     var img=document.createElement('img');
     img.src=objUrl;
     img.style.cssText='border-radius:10px;width:100%;height:100%;object-fit:cover;filter:'+(cf.filter&&cf.filter!=='none'?(_scFilters.find(function(fl){return fl.id===cf.filter;})||{css:'none'}).css:'none');
-    // Tap thumbnail → filter picker for this photo
-    (function(idx2,url,chipEl,imgEl){
-      img.addEventListener('click',function(e){e.stopPropagation();_openDropFilterPicker(idx2,url,imgEl);});
-    })(i,objUrl,chip,img);
-    // Filter badge if not original
-    if(cf.filter&&cf.filter!=='none'){
-      var fb=document.createElement('div');
-      fb.style.cssText='position:absolute;top:4px;left:4px;background:rgba(0,0,0,.65);border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;color:#fff;pointer-events:none;z-index:3;backdrop-filter:blur(4px);white-space:nowrap';
-      fb.textContent=(_scFilters.find(function(fl){return fl.id===cf.filter;})||{label:'?'}).label;
-      chip.appendChild(fb);
-    }
-    // Order badge (z-index 4, above filter badge)
+    // Tap thumbnail → open full-screen photo viewer with nav
+    (function(idx2){
+      img.addEventListener('click',function(e){e.stopPropagation();_openDropPhotoViewer(idx2);});
+    })(i);
+    // Edit icon bottom-left — screenshot 5 style pencil icon
+    var editIco=document.createElement('div');
+    editIco.style.cssText='position:absolute;bottom:4px;left:4px;width:18px;height:18px;background:rgba(0,0,0,.55);border-radius:4px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:3;backdrop-filter:blur(4px)';
+    editIco.innerHTML='<svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+    // Order badge bottom-center (z-index 4)
     var badge=document.createElement('div');
     badge.style.cssText='position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--card);border:2px solid var(--card);border-radius:999px;min-width:18px;height:18px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:4;padding:0 3px;pointer-events:none';
     badge.textContent=(i+1)+(cFiles.length>1?'/'+cFiles.length:'');
     var rm=document.createElement('button');rm.className='photo-chip-rm';rm.textContent='✕';
     (function(idx3){rm.onclick=function(ev){ev.preventDefault();ev.stopPropagation();rmCI(idx3);};})(i);
-    chip.appendChild(img);chip.appendChild(rm);chip.appendChild(badge);
+    chip.appendChild(img);chip.appendChild(editIco);chip.appendChild(rm);chip.appendChild(badge);
     tray.appendChild(chip);
   });
   if(cFiles.length<5){
@@ -4736,6 +4733,118 @@ function renderPhotoTray(){
     tray.appendChild(add);
   }
   if(lbl)lbl.style.display='none';
+}
+
+// Full-screen photo viewer with left/right nav and filter picker
+function _openDropPhotoViewer(startIdx){
+  var ex=document.getElementById('drop-photo-viewer');if(ex)ex.remove();
+  var ov=document.createElement('div');ov.id='drop-photo-viewer';
+  ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.93);display:flex;flex-direction:column';
+
+  var _curIdx=startIdx;
+
+  // Top bar: close
+  var topBar=document.createElement('div');
+  topBar.style.cssText='display:flex;align-items:center;justify-content:flex-end;padding:max(18px,env(safe-area-inset-top)) 18px 10px;flex-shrink:0';
+  var closeBtn=document.createElement('button');
+  closeBtn.style.cssText='background:rgba(30,30,30,.7);border:1.5px solid rgba(255,255,255,.18);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(10px)';
+  closeBtn.innerHTML='<svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  closeBtn.onclick=function(){ov.remove();};
+  topBar.appendChild(closeBtn);
+
+  // Image area
+  var imgArea=document.createElement('div');
+  imgArea.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:0 52px';
+
+  var previewImg=document.createElement('img');
+  previewImg.style.cssText='max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;pointer-events:none;-webkit-touch-callout:none';
+
+  // Nav arrows
+  var leftArr=document.createElement('button');
+  leftArr.style.cssText='position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(30,30,30,.65);border:1.5px solid rgba(255,255,255,.18);color:#fff;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:opacity .15s';
+  leftArr.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>';
+
+  var rightArr=document.createElement('button');
+  rightArr.style.cssText='position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(30,30,30,.65);border:1.5px solid rgba(255,255,255,.18);color:#fff;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:opacity .15s';
+  rightArr.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
+
+  function refreshView(){
+    var cf=cFiles[_curIdx];if(!cf)return;
+    var f=cf.file||cf;
+    var objUrl=URL.createObjectURL(f);
+    previewImg.src=objUrl;
+    var filterCss=cf.filter&&cf.filter!=='none'?(_scFilters.find(function(fl){return fl.id===cf.filter;})||{css:'none'}).css:'none';
+    previewImg.style.filter=filterCss;
+    // Nav visibility
+    leftArr.style.display=(_curIdx>0)?'flex':'none';
+    rightArr.style.display=(_curIdx<cFiles.length-1)?'flex':'none';
+    // Update filter strip selection
+    var strip=document.getElementById('dvf-strip');
+    if(strip){
+      strip.querySelectorAll('div[data-fid]').forEach(function(x){
+        var isSel=x.dataset.fid===(cf.filter||'none');
+        x.querySelector('div').style.borderColor=isSel?'#fff':'rgba(255,255,255,.25)';
+        x.querySelector('span').style.fontWeight=isSel?'700':'400';
+        x.querySelector('span').style.color=isSel?'#fff':'rgba(255,255,255,.5)';
+      });
+    }
+  }
+
+  leftArr.onclick=function(){if(_curIdx>0){_curIdx--;refreshView();}};
+  rightArr.onclick=function(){if(_curIdx<cFiles.length-1){_curIdx++;refreshView();}};
+
+  imgArea.appendChild(previewImg);
+  imgArea.appendChild(leftArr);
+  imgArea.appendChild(rightArr);
+
+  // Filter strip at bottom
+  var filterArea=document.createElement('div');
+  filterArea.style.cssText='flex-shrink:0;padding:10px 0 max(20px,env(safe-area-inset-bottom));background:rgba(0,0,0,.75)';
+
+  var strip=document.createElement('div');
+  strip.id='dvf-strip';
+  strip.style.cssText='display:flex;gap:10px;overflow-x:auto;padding:4px 16px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch';
+  strip.innerHTML='<style>#dvf-strip::-webkit-scrollbar{display:none}</style>';
+
+  _scFilters.forEach(function(fl){
+    var item=document.createElement('div');
+    item.style.cssText='display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0;padding:2px';
+    var cf0=cFiles[_curIdx];var curFlt=cf0&&cf0.filter||'none';
+    var isSel=curFlt===fl.id;
+    var thumb=document.createElement('div');
+    thumb.style.cssText='width:56px;height:56px;border-radius:10px;overflow:hidden;border:2px solid '+(isSel?'#fff':'rgba(255,255,255,.25)')+';transition:border-color .15s';
+    // Use first photo as filter preview src
+    var previewFile=cFiles[0]&&(cFiles[0].file||cFiles[0]);
+    var ti=document.createElement('img');ti.src=previewFile?URL.createObjectURL(previewFile):'';
+    ti.style.cssText='width:100%;height:100%;object-fit:cover;filter:'+fl.css;
+    ti.setAttribute('draggable','false');
+    thumb.appendChild(ti);
+    var lbl2=document.createElement('span');
+    lbl2.style.cssText='font-size:10px;font-weight:'+(isSel?'700':'400')+';color:'+(isSel?'#fff':'rgba(255,255,255,.5)')+';letter-spacing:.2px';
+    // No label text — user sees selected state by border only
+    item.appendChild(thumb);item.appendChild(lbl2);
+    item.dataset.fid=fl.id;
+    item.onclick=function(){
+      // Apply this filter to current photo AND all others
+      cFiles.forEach(function(c){if(c)c.filter=fl.id;});
+      // Update preview
+      previewImg.style.filter=fl.css;
+      // Update strip selection
+      strip.querySelectorAll('div[data-fid]').forEach(function(x){
+        var iA=x.dataset.fid===fl.id;
+        x.querySelector('div').style.borderColor=iA?'#fff':'rgba(255,255,255,.25)';
+        x.querySelector('span').style.fontWeight=iA?'700':'400';
+        x.querySelector('span').style.color=iA?'#fff':'rgba(255,255,255,.5)';
+      });
+    };
+    strip.appendChild(item);
+  });
+
+  filterArea.appendChild(strip);
+
+  ov.appendChild(topBar);ov.appendChild(imgArea);ov.appendChild(filterArea);
+  document.body.appendChild(ov);
+  refreshView();
 }
 
 function _openDropFilterPicker(idx,imgUrl,imgEl){
@@ -5002,8 +5111,11 @@ function openCreator(){
   var img=document.getElementById('sc-canvas-img');img.src='';img.classList.remove('on');
   var ov=document.getElementById('sc-text-ov');
   ov.textContent='';ov.style.color=SC_TEXT_COLORS[0];ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';
+  ov.style.display='';// restore visibility
   ov.classList.remove('draggable');
   applyFont();
+  // Show color dot and bg-cycle for text mode
+  var colorDot=document.getElementById('sc-color-cycle');if(colorDot)colorDot.style.display='';
   // Show bg-cycle only when no photo
   var bgBtn=document.getElementById('sc-bg-cycle');if(bgBtn)bgBtn.style.display='';
   document.getElementById('sc-file').value='';document.getElementById('sc-fonts').classList.remove('on');
@@ -5012,7 +5124,7 @@ function openCreator(){
   var cr=document.getElementById('story-creator');cr.style.display='flex';
   history.pushState({_fade:'story-creator'},'');
   requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';});});
-  setTimeout(function(){ov.focus();},350);
+  // No auto-focus — user taps text icon to enter text mode
 }
 function closeCreator(){
   var cr=document.getElementById('story-creator');cr.style.opacity='0';
@@ -5053,7 +5165,10 @@ function scCycleBg(){
 // ── scActivateText ────────────────────────────────────────────────────────────
 function scActivateText(){
   var ov=document.getElementById('sc-text-ov');
+  ov.style.display='';// show in case photo mode hid it
   ov.classList.remove('draggable');
+  // Show color dot (needed in text mode)
+  var colorDot=document.getElementById('sc-color-cycle');if(colorDot)colorDot.style.display='';
   setTimeout(function(){
     ov.focus();
     var range=document.createRange();range.selectNodeContents(ov);range.collapse(false);
@@ -5124,7 +5239,15 @@ function buildFChips(){
   var row=document.getElementById('sc-fonts');row.innerHTML='';
   SC_FONTS.forEach(function(f,i){var chip=document.createElement('div');chip.className='sc-fc'+(i===scFI?' sel':'');chip.style.fontFamily=f.ff;chip.style.fontStyle=f.fs;chip.style.fontWeight=f.fw;chip.textContent=f.l;chip.onclick=function(){scFI=i;applyFont();row.querySelectorAll('.sc-fc').forEach(function(c,j){c.classList.toggle('sel',j===i);});};row.appendChild(chip);});
 }
-function scFontToggle(){scFontOpen=!scFontOpen;document.getElementById('sc-fonts').classList.toggle('on',scFontOpen);}
+function scFontToggle(){
+  scFontOpen=!scFontOpen;
+  document.getElementById('sc-fonts').classList.toggle('on',scFontOpen);
+  if(scFontOpen){
+    // Entering text mode — make sure overlay is visible
+    var ov=document.getElementById('sc-text-ov');if(ov)ov.style.display='';
+    var colorDot=document.getElementById('sc-color-cycle');if(colorDot)colorDot.style.display='';
+  }
+}
 function scPhoto(e){
   var f=e.target.files[0];if(!f)return;
   var url=URL.createObjectURL(f);
@@ -5132,6 +5255,13 @@ function scPhoto(e){
   img.src=url;img.classList.add('on');
   img.style.filter='none';
   _scActiveFilter='none';
+  // Hide text overlay while photo is shown
+  var ov=document.getElementById('sc-text-ov');if(ov)ov.style.display='none';
+  // Hide font strip and reset its open state
+  scFontOpen=false;
+  var fonts=document.getElementById('sc-fonts');if(fonts)fonts.classList.remove('on');
+  // Hide the color dot and bg dot (not needed for photo mode)
+  var colorDot=document.getElementById('sc-color-cycle');if(colorDot)colorDot.style.display='none';
   // Hide bg-cycle (bg color only for text posts)
   var bgBtn=document.getElementById('sc-bg-cycle');if(bgBtn)bgBtn.style.display='none';
   _scBuildFilterStrip();
