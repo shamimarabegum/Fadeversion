@@ -161,10 +161,18 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #sc-canvas-img.on{display:block}
-#sc-text-ov{position:relative;z-index:2;width:88%;text-align:center;font-size:28px;line-height:1.5;outline:none;cursor:text;min-height:60px;word-break:break-word;-webkit-user-select:text;user-select:text}
-#sc-text-ov:empty::before{content:attr(data-placeholder);opacity:.35;pointer-events:none}
-#sc-top{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 16px 12px}
-.sc-tbtn{background:rgba(0,0,0,.45);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
+#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:28px;line-height:1.4;outline:none;cursor:move;word-break:break-word;-webkit-user-select:text;user-select:text;max-width:80%;touch-action:none;padding:8px 12px;border-radius:8px;min-width:60px}
+#sc-text-ov.active-edit{cursor:text}
+#sc-text-ov:empty::before{content:attr(data-placeholder);opacity:.4;pointer-events:none;cursor:text}
+/* Right panel */
+#sc-right-panel{position:absolute;right:14px;top:50%;transform:translateY(-50%);z-index:25;display:flex;flex-direction:column;align-items:center;gap:14px}
+.sc-rpbtn{background:rgba(0,0,0,.5);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.18);transition:transform .15s,opacity .15s}
+.sc-rpbtn:active{transform:scale(.88);opacity:.7}
+#sc-color-dots{display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:2px}
+.sc-cdot{width:26px;height:26px;border-radius:50%;cursor:pointer;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .15s;border:2.5px solid rgba(255,255,255,.35)}
+.sc-cdot.sel{transform:scale(1.3);border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+#sc-top{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:flex-start;padding:max(16px,env(safe-area-inset-top)) 16px 12px}
+.sc-tbtn{background:rgba(0,0,0,.45);border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 #sc-bar{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:10px 16px max(22px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;background:linear-gradient(transparent,rgba(0,0,0,.68))}
 .sc-fonts{display:none;flex-direction:row;gap:8px;overflow-x:auto}
 .sc-fonts.on{display:flex}
@@ -441,6 +449,8 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .photo-tray::-webkit-scrollbar{display:none}
 .photo-chip{position:relative;flex-shrink:0;width:72px;height:72px}
 .photo-chip img{width:72px;height:72px;object-fit:cover;border-radius:10px;display:block;cursor:pointer}
+.photo-chip-edit-hint{position:absolute;bottom:0;left:0;right:0;border-radius:0 0 10px 10px;background:linear-gradient(transparent,rgba(0,0,0,.52));display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;pointer-events:none;z-index:2;height:36px}
+.photo-chip-edit-hint svg{opacity:.9}
 .photo-chip-rm{position:absolute;top:-7px;right:-7px;background:#1A1A1A;color:#fff;border:2px solid var(--card);border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.18)}
 #photo-preview-ov{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.93);align-items:center;justify-content:center;flex-direction:column}
 #photo-preview-ov.on{display:flex}
@@ -1470,11 +1480,19 @@ body {
 
 <!-- STORY CREATOR -->
 <div id="story-creator">
-  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov" contenteditable="true" data-placeholder="What's your moment…"></div></div>
-  <div id="sc-top"><button class="sc-tbtn" onclick="closeCreator()">✕</button><button class="sc-tbtn" onclick="scFontToggle()"><svg width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></button></div>
+  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov" contenteditable="true" data-placeholder="What's your moment…" style="display:none" spellcheck="false"></div></div>
+  <div id="sc-top"><button class="sc-tbtn" onclick="closeCreator()">✕</button></div>
+  <div id="sc-right-panel">
+    <button class="sc-rpbtn" onclick="scFontToggle()" id="sc-t-btn" title="Font style">
+      <svg width="17" height="17" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+    </button>
+    <button class="sc-rpbtn sc-addtext-btn" id="sc-addtext-btn" onclick="scActivateText()" title="Add text">
+      <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9"/><path d="M14 2h6v6"/><line x1="20" y1="2" x2="12" y2="10"/></svg>
+    </button>
+    <div id="sc-color-dots"></div>
+  </div>
   <div id="sc-bar">
     <div class="sc-fonts" id="sc-fonts"></div>
-    <div class="sc-swatches" id="sc-swatches"></div>
     <div class="sc-acts"><label class="sc-pb" for="sc-file"><svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></label><input id="sc-file" type="file" accept="image/*" style="display:none" onchange="scPhoto(event)"/><button class="sc-share" onclick="scShare()">Add Moment</button></div>
   </div>
 </div>
@@ -2297,7 +2315,7 @@ function loadVerificationState(){
   }).catch(function(e){ console.error('loadVerificationState error:',e); });
 }
 
-var SC_SW=['#2C2C2C','#4A4A4A','#8B6914','#2D5A3D','#1A3D5C','#5C2D5C'];
+var SC_SW=['#FFFFFF','#F9E74B','#FF6B6B','#4ECDC4','#A855F7','#FF9F1C','#06D6A0','#FF6FAB'];
 var SC_FONTS=[
   {l:'Sans',ff:'Inter,sans-serif',fs:'normal',fw:'400'},
   {l:'Italic',ff:'Playfair Display,serif',fs:'italic',fw:'400'},
@@ -4696,7 +4714,7 @@ function renderPhotoTray(){
     // Filter badge if not original
     if(cf.filter&&cf.filter!=='none'){
       var fb=document.createElement('div');
-      fb.style.cssText='position:absolute;top:4px;left:4px;background:rgba(0,0,0,.55);border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700;color:#fff;pointer-events:none;z-index:3;backdrop-filter:blur(4px)';
+      fb.style.cssText='position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.62);border-radius:6px;padding:2px 7px;font-size:9px;font-weight:700;color:#fff;pointer-events:none;z-index:3;backdrop-filter:blur(4px);white-space:nowrap';
       fb.textContent=(_scFilters.find(function(fl){return fl.id===cf.filter;})||{label:'?'}).label;
       chip.appendChild(fb);
     }
@@ -4706,7 +4724,10 @@ function renderPhotoTray(){
     badge.textContent=(i+1)+(cFiles.length>1?'/'+cFiles.length:'');
     var rm=document.createElement('button');rm.className='photo-chip-rm';rm.textContent='✕';
     (function(idx3){rm.onclick=function(ev){ev.preventDefault();ev.stopPropagation();rmCI(idx3);};})(i);
-    chip.appendChild(img);chip.appendChild(rm);chip.appendChild(badge);
+    // Tap-to-filter hint
+    var hint=document.createElement('div');hint.className='photo-chip-edit-hint';
+    hint.innerHTML='<svg width="13" height="13" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+    chip.appendChild(img);chip.appendChild(rm);chip.appendChild(badge);chip.appendChild(hint);
     tray.appendChild(chip);
   });
   if(cFiles.length<5){
@@ -4978,14 +4999,14 @@ function openCreator(){
   scBg='#2C2C2C';scFontOpen=false;scFI=0;scAudience=S.storyAudience||'followers';
   var c=document.getElementById('sc-canvas');c.style.background=scBg;
   var img=document.getElementById('sc-canvas-img');img.src='';img.classList.remove('on');
-  var ov=document.getElementById('sc-text-ov');ov.textContent='';ov.style.color='#fff';applyFont();
+  var ov=document.getElementById('sc-text-ov');ov.textContent='';ov.style.color='#fff';ov.style.display='';ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';applyFont();
   document.getElementById('sc-file').value='';document.getElementById('sc-fonts').classList.remove('on');
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();_scActiveFilter='none';
-  buildSwatches();buildFChips();
+  buildSwatches();buildFChips();buildColorDots();
   var cr=document.getElementById('story-creator');cr.style.display='flex';
   history.pushState({_fade:'story-creator'},'');
   requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';});});
-  setTimeout(function(){ov.focus();},350);
+  // No auto-focus — let user tap Add Text or just type for text-only
 }
 function closeCreator(){
   var cr=document.getElementById('story-creator');cr.style.opacity='0';
@@ -4995,9 +5016,83 @@ function closeCreator(){
 }
 function applyFont(){var f=SC_FONTS[scFI],ov=document.getElementById('sc-text-ov');ov.style.fontFamily=f.ff;ov.style.fontStyle=f.fs;ov.style.fontWeight=f.fw;}
 function buildSwatches(){
-  var row=document.getElementById('sc-swatches');row.innerHTML='';
-  SC_SW.forEach(function(c){var d=document.createElement('div');d.className='sc-sw'+(c===scBg?' sel':'');d.style.background=c;d.onclick=function(){scBg=c;var rv=parseInt(c.slice(1,3),16),gv=parseInt(c.slice(3,5),16),bv=parseInt(c.slice(5,7),16);var cl=(rv*299+gv*587+bv*114)/1000<128?'#fff':'#111';document.getElementById('sc-canvas').style.background=c;document.getElementById('sc-text-ov').style.color=cl;row.querySelectorAll('.sc-sw').forEach(function(x){x.classList.remove('sel');});d.classList.add('sel');};row.appendChild(d);});
+  // Swatches replaced by color dots in right panel — no-op for back-compat
 }
+var _scTextColor='#FFFFFF';
+function buildColorDots(){
+  var container=document.getElementById('sc-color-dots');if(!container)return;
+  container.innerHTML='';
+  _scTextColor=SC_SW[0];
+  SC_SW.forEach(function(c,i){
+    var d=document.createElement('div');d.className='sc-cdot'+(i===0?' sel':'');d.style.background=c;
+    d.onclick=function(){
+      _scTextColor=c;
+      var ov=document.getElementById('sc-text-ov');ov.style.color=c;
+      container.querySelectorAll('.sc-cdot').forEach(function(x){x.classList.remove('sel');});
+      d.classList.add('sel');
+    };
+    container.appendChild(d);
+  });
+}
+function scActivateText(){
+  var ov=document.getElementById('sc-text-ov');
+  ov.style.display='';
+  ov.classList.add('active-edit');
+  setTimeout(function(){ov.focus();// place cursor
+    var range=document.createRange();range.selectNodeContents(ov);range.collapse(false);var sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
+  },50);
+}
+// Draggable text overlay
+(function(){
+  var dragging=false,startX,startY,origLeft,origTop;
+  function getEl(){return document.getElementById('sc-text-ov');}
+  function onDown(e){
+    var el=getEl();if(!el||el.style.display==='none')return;
+    // Only drag if not in edit mode
+    if(el.classList.contains('active-edit'))return;
+    dragging=true;
+    var touch=e.touches?e.touches[0]:e;
+    startX=touch.clientX;startY=touch.clientY;
+    var rect=el.getBoundingClientRect();
+    var canvas=document.getElementById('sc-canvas').getBoundingClientRect();
+    origLeft=rect.left-canvas.left+rect.width/2;
+    origTop=rect.top-canvas.top+rect.height/2;
+    el.style.transform='none';el.style.left=origLeft+'px';el.style.top=origTop+'px';
+    e.preventDefault();
+  }
+  function onMove(e){
+    if(!dragging)return;
+    var el=getEl();if(!el)return;
+    var touch=e.touches?e.touches[0]:e;
+    var dx=touch.clientX-startX,dy=touch.clientY-startY;
+    el.style.left=(origLeft+dx)+'px';el.style.top=(origTop+dy)+'px';
+    e.preventDefault();
+  }
+  function onUp(){dragging=false;}
+  var lastTap=0;
+  document.addEventListener('touchstart',function(e){
+    var el=getEl();if(!el||el.style.display==='none')return;
+    if(e.target===el){
+      var now=Date.now();
+      if(now-lastTap<300){// double-tap → edit mode
+        el.classList.add('active-edit');
+        setTimeout(function(){el.focus();},30);
+        e.preventDefault();
+        return;
+      }
+      lastTap=now;
+      if(!el.classList.contains('active-edit'))onDown(e);
+    }
+  },{passive:false});
+  document.addEventListener('touchmove',function(e){if(dragging)onMove(e);},{passive:false});
+  document.addEventListener('touchend',onUp);
+  // Click outside text to exit edit mode (delegation)
+  document.addEventListener('click',function(e){
+    var el=getEl();if(!el)return;
+    var canvas=document.getElementById('sc-canvas');
+    if(canvas&&canvas.contains(e.target)&&e.target!==el&&el.classList.contains('active-edit')){el.classList.remove('active-edit');el.blur();}
+  });
+})();
 function buildFChips(){
   var row=document.getElementById('sc-fonts');row.innerHTML='';
   SC_FONTS.forEach(function(f,i){var chip=document.createElement('div');chip.className='sc-fc'+(i===scFI?' sel':'');chip.style.fontFamily=f.ff;chip.style.fontStyle=f.fs;chip.style.fontWeight=f.fw;chip.textContent=f.l;chip.onclick=function(){scFI=i;applyFont();row.querySelectorAll('.sc-fc').forEach(function(c,j){c.classList.toggle('sel',j===i);});};row.appendChild(chip);});
@@ -5010,6 +5105,9 @@ function scPhoto(e){
   img.src=url;img.classList.add('on');
   img.style.filter='none';
   _scActiveFilter='none';
+  // Hide text overlay until user taps Add Text
+  var ov=document.getElementById('sc-text-ov');
+  if(!ov.textContent.trim()){ov.style.display='none';}
   _scBuildFilterStrip();
 }
 var _scActiveFilter='none';
@@ -5098,21 +5196,23 @@ function closeAudSheet(){
   setTimeout(function(){if(bg)bg.style.display='none';},320);
 }
 function scShare(){
-  var txt=document.getElementById('sc-text-ov').textContent.trim();
+  var ovEl=document.getElementById('sc-text-ov');
+  var txt=ovEl.textContent.trim();
   var pUrl=document.getElementById('sc-canvas-img');var photoUrl=(pUrl.src&&pUrl.classList.contains('on'))?pUrl.src:null;
   if(!txt&&!photoUrl)return T('Add text or a photo first');
   var filterCss=_scActiveFilter&&_scActiveFilter!=='none'?(_scFilters.find(function(f){return f.id===_scActiveFilter;})||{css:'none'}).css:'none';
+  var tc=ovEl.style.color||'#fff';
   SFX('drop');closeCreator();goTab('today');T('Posting moment…');
   function doInsert(imgUrl){
-    _sb.from('stories').insert({user_id:profile.id,text:txt||null,img_url:imgUrl||null,bg:scBg,tc:'#fff',fi:scFI,audience:scAudience,img_filter:filterCss!=='none'?filterCss:null})
+    _sb.from('stories').insert({user_id:profile.id,text:txt||null,img_url:imgUrl||null,bg:scBg,tc:tc,fi:scFI,audience:scAudience,img_filter:filterCss!=='none'?filterCss:null})
       .select('id,created_at').then(function(r){
         if(r.error){
-          _addStoryLocal({id:'st'+Date.now(),text:txt,img:imgUrl,ts:new Date().toISOString(),bg:scBg,tc:'#fff',fi:scFI,imgFilter:filterCss});
+          _addStoryLocal({id:'st'+Date.now(),text:txt,img:imgUrl,ts:new Date().toISOString(),bg:scBg,tc:tc,fi:scFI,imgFilter:filterCss});
           T('Moment added (local only — set up stories table to share)');
           return;
         }
         var row=r.data&&r.data[0];
-        _addStoryLocal({id:row.id,text:txt,img:imgUrl,ts:row.created_at,bg:scBg,tc:'#fff',fi:scFI,imgFilter:filterCss});
+        _addStoryLocal({id:row.id,text:txt,img:imgUrl,ts:row.created_at,bg:scBg,tc:tc,fi:scFI,imgFilter:filterCss});
         T('Moment added');
       });
   }
