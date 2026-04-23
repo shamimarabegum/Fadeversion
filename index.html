@@ -4749,14 +4749,14 @@ function _openDropPhotoViewer(startIdx){
 
   // Preview area
   var preview=document.createElement('div');
-  preview.style.cssText='width:100%;padding:16px 16px 0;box-sizing:border-box;position:relative;touch-action:pan-y';
+  preview.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden;touch-action:pan-y';
 
   // Swipe container — holds the image and slides
   var swipeWrap=document.createElement('div');
-  swipeWrap.style.cssText='position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:16px;background:#000';
+  swipeWrap.style.cssText='position:relative;max-width:100%;max-height:100%;display:flex;align-items:center;justify-content:center';
 
   var previewImg=document.createElement('img');
-  previewImg.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:16px;-webkit-touch-callout:none;user-select:none;display:block;transition:transform .22s cubic-bezier(.25,.46,.45,.94),opacity .18s ease';
+  previewImg.style.cssText='max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;-webkit-touch-callout:none;user-select:none;display:block;transition:transform .22s cubic-bezier(.25,.46,.45,.94),opacity .18s ease';
 
   swipeWrap.appendChild(previewImg);
   preview.appendChild(swipeWrap);
@@ -4844,17 +4844,19 @@ function _openDropPhotoViewer(startIdx){
   function refreshPreview(){
     var cf=cFiles[_curIdx];if(!cf)return;
     var f=cf.file||cf;
-    previewImg.src=URL.createObjectURL(f);
+    var newUrl=URL.createObjectURL(f);
+    previewImg.src=newUrl;
     currentFilter=cf.filter||'none';
     currentCss=(_scFilters.find(function(fl){return fl.id===currentFilter;})||{css:'none'}).css;
     previewImg.style.filter=currentCss;
-    // Sync strip
+    // Sync strip — update both thumbnail src and selection highlight
     if(_stripEl){
       _stripEl.querySelectorAll('div[data-fid]').forEach(function(x){
         var iA=x.dataset.fid===currentFilter;
         x.querySelector('div').style.borderColor=iA?'var(--text)':'var(--border)';
         x.querySelector('span').style.fontWeight=iA?'700':'400';
         x.querySelector('span').style.color=iA?'var(--text)':'var(--sub)';
+        var ti=x.querySelector('img');if(ti)ti.src=newUrl;
       });
     }
     // Update dot indicator
@@ -4928,7 +4930,7 @@ function _openDropPhotoViewer(startIdx){
   doneRow.style.cssText='display:flex;gap:8px;padding:14px 16px 0';
 
   var cancelBtn2=document.createElement('button');
-  cancelBtn2.style.cssText='flex:1;padding:13px;border-radius:13px;border:1.5px solid var(--border);background:transparent;font-size:14px;font-weight:600;font-family:Inter,sans-serif;color:var(--text);cursor:pointer';
+  cancelBtn2.style.cssText='padding:13px 0;border-radius:13px;border:1.5px solid var(--border);background:transparent;font-size:14px;font-weight:600;font-family:Inter,sans-serif;color:var(--text);cursor:pointer;width:72px;flex-shrink:0';
   cancelBtn2.textContent='Cancel';
   cancelBtn2.onclick=function(){ov.remove();};
 
@@ -5341,6 +5343,7 @@ var _scFilters=[
   {id:'vivid', label:'Vivid',    css:'saturate(1.8) contrast(1.1)'},
   {id:'mono',  label:'B&W',      css:'grayscale(1) contrast(1.1)'},
   {id:'drama', label:'Drama',    css:'contrast(1.3) saturate(1.2) brightness(0.95)'},
+  {id:'fadeplus', label:'Fade+', css:'contrast(1.12) saturate(0.85) brightness(1.04) sepia(0.18) hue-rotate(-8deg)'},
 ];
 function _scBuildFilterStrip(){
   var existing=document.getElementById('sc-filter-strip');
