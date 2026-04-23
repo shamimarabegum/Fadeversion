@@ -4740,7 +4740,7 @@ function _openDropPhotoViewer(startIdx){
   var _curIdx=startIdx;
   var ex=document.getElementById('drop-filter-ov');if(ex)ex.remove();
   var ov=document.createElement('div');ov.id='drop-filter-ov';
-  ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);display:flex;flex-direction:column;justify-content:flex-end';
+  ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);display:flex;flex-direction:column;justify-content:flex-end;margin:0;padding:0';
 
   ov.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:false});
   ov.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:false});
@@ -4748,61 +4748,123 @@ function _openDropPhotoViewer(startIdx){
 
   // ── Photo frame: fixed 4:5, clips image, no gap ───────────────────────
   var frame=document.createElement('div');
-  frame.style.cssText='width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:0;background:#000;position:relative;touch-action:none;flex-shrink:0';
+  frame.style.cssText='width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:0;background:#000;position:relative;touch-action:none;flex-shrink:0;margin:0;padding:0;align-self:stretch';
 
-  // Image fills frame — drag moves object-position to reposition
+  // Image fills frame — transform-based pinch+pan (Instagram-style)
   var previewImg=document.createElement('img');
-  previewImg.style.cssText='width:100%;height:100%;object-fit:cover;object-position:center center;-webkit-touch-callout:none;user-select:none;display:block;transition:opacity .18s ease';
+  previewImg.style.cssText='width:100%;height:100%;object-fit:cover;-webkit-touch-callout:none;user-select:none;display:block;will-change:transform;transform-origin:center center;transition:opacity .18s ease';
   previewImg.draggable=false;
   frame.appendChild(previewImg);
 
-  // ── Drag to reposition (object-position) ─────────────────────────────
-  // We track cumulative offset as percentages
-  var _posX=50,_posY=50; // center default
-  var _dragActive=false,_dragStartX=0,_dragStartY=0,_dragBasePx=0,_dragBasePy=0;
-  var DRAG_SENSITIVITY=0.12; // lower = slower, more precise
+  // ── Instagram-quality pinch-zoom + drag ──────────────────────────────
+  var _sc=1, _tx=0, _ty=0;          // current scale + translate
+  var _minSc=1, _maxSc=4;
+  var _gesture=null; // 'pinch' | 'pan' | null
+  // pinch state
+  var _p0=null; // {dist, sc, tx, ty, midX, midY}
+  // pan state
+  var _pan0=null; // {x, y, tx, ty}
+
+  function _applyTx(animate){
+    previewImg.style.transition=animate?'transform .22s cubic-bezier(.25,.46,.45,.94),opacity .18s ease':'opacity .18s ease';
+    previewImg.style.transform='scale('+_sc+') translate('+(_tx/_sc)+'px,'+(_ty/_sc)+'px)';
+  }
+  function _resetTx(animate){_sc=1;_tx=0;_ty=0;_applyTx(animate);}
+  function _clampTx(){
+    if(_sc<=1){_tx=0;_ty=0;return;}
+    var hw=frame.clientWidth*(_sc-1)/2;
+    var hh=frame.clientHeight*(_sc-1)/2;
+    _tx=Math.max(-hw,Math.min(hw,_tx));
+    _ty=Math.max(-hh,Math.min(hh,_ty));
+  }
+  function _getTouchDist(t1,t2){
+    var dx=t1.clientX-t2.clientX,dy=t1.clientY-t2.clientY;
+    return Math.sqrt(dx*dx+dy*dy);
+  }
+
+  var _activeTouches={};
 
   frame.addEventListener('touchstart',function(e){
-    if(e.touches.length===1){
-      _dragActive=true;
-      _dragStartX=e.touches[0].clientX;
-      _dragStartY=e.touches[0].clientY;
-      _dragBasePx=_posX;
-      _dragBasePy=_posY;
-      e.preventDefault();
+    for(var i=0;i<e.changedTouches.length;i++){
+      var t=e.changedTouches[i];
+      _activeTouches[t.identifier]={clientX:t.clientX,clientY:t.clientY};
     }
+    var ids=Object.keys(_activeTouches);
+    if(ids.length===2){
+      _gesture='pinch';
+      var t1=_activeTouches[ids[0]],t2=_activeTouches[ids[1]];
+      _p0={dist:_getTouchDist(t1,t2),sc:_sc,tx:_tx,ty:_ty,
+           midX:(t1.clientX+t2.clientX)/2-(frame.getBoundingClientRect().left+frame.clientWidth/2),
+           midY:(t1.clientY+t2.clientY)/2-(frame.getBoundingClientRect().top+frame.clientHeight/2)};
+      _pan0=null;
+    } else if(ids.length===1){
+      _gesture='pan';
+      var t0=e.changedTouches[0];
+      _pan0={x:t0.clientX,y:t0.clientY,tx:_tx,ty:_ty};
+      _p0=null;
+    }
+    e.preventDefault();
   },{passive:false});
 
   frame.addEventListener('touchmove',function(e){
-    if(!_dragActive||e.touches.length!==1)return;
-    var dx=e.touches[0].clientX-_dragStartX;
-    var dy=e.touches[0].clientY-_dragStartY;
-    // Invert: drag right moves image right (shows more left side)
-    _posX=Math.max(0,Math.min(100,_dragBasePx - dx*DRAG_SENSITIVITY));
-    _posY=Math.max(0,Math.min(100,_dragBasePy - dy*DRAG_SENSITIVITY));
-    previewImg.style.objectPosition=_posX+'% '+_posY+'%';
+    for(var i=0;i<e.changedTouches.length;i++){
+      var t=e.changedTouches[i];
+      _activeTouches[t.identifier]={clientX:t.clientX,clientY:t.clientY};
+    }
+    var ids=Object.keys(_activeTouches);
+    if(ids.length===2&&_p0){
+      _gesture='pinch';
+      var t1=_activeTouches[ids[0]],t2=_activeTouches[ids[1]];
+      var newDist=_getTouchDist(t1,t2);
+      var ratio=newDist/_p0.dist;
+      _sc=Math.max(_minSc,Math.min(_maxSc,_p0.sc*ratio));
+      // Pan toward pinch midpoint
+      _tx=_p0.tx+(_p0.midX*(_sc/_p0.sc-1));
+      _ty=_p0.ty+(_p0.midY*(_sc/_p0.sc-1));
+      _clampTx();
+      _applyTx(false);
+    } else if(ids.length===1&&_pan0){
+      var tm=e.changedTouches[0];
+      _tx=_pan0.tx+(tm.clientX-_pan0.x);
+      _ty=_pan0.ty+(tm.clientY-_pan0.y);
+      _clampTx();
+      _applyTx(false);
+    }
     e.preventDefault();
   },{passive:false});
 
   frame.addEventListener('touchend',function(e){
-    if(e.touches.length===0) _dragActive=false;
+    for(var i=0;i<e.changedTouches.length;i++){
+      delete _activeTouches[e.changedTouches[i].identifier];
+    }
+    var ids=Object.keys(_activeTouches);
+    if(ids.length<2){_p0=null;}
+    if(ids.length===1&&_gesture==='pinch'){
+      // Transition from pinch back to pan
+      var rem=_activeTouches[ids[0]];
+      _pan0={x:rem.clientX,y:rem.clientY,tx:_tx,ty:_ty};
+      _gesture='pan';
+    }
+    if(ids.length===0){
+      _gesture=null;_pan0=null;
+      // Snap back if zoomed below minimum
+      if(_sc<1.05){_resetTx(true);}
+      else{_clampTx();_applyTx(false);}
+    }
   },{passive:true});
 
   // Double-tap to reset position to center
   var _lastTap=0;
   frame.addEventListener('touchend',function(e){
-    if(e.touches.length>0||_dragActive)return;
+    if(Object.keys(_activeTouches).length>0)return;
     var now=Date.now();
     if(now-_lastTap<280){
-      _posX=50;_posY=50;
-      previewImg.style.transition='object-position .3s ease';
-      previewImg.style.objectPosition='50% 50%';
-      setTimeout(function(){previewImg.style.transition='opacity .18s ease';},300);
+      _resetTx(true);
     }
     _lastTap=now;
   },{passive:true});
 
-  // ── Swipe left/right to switch photos (only if not dragging) ─────────
+  // ── Swipe left/right to switch photos (only if not mid-pinch) ─────────
   var _swX=0,_swY=0,_swTracking=false,_swDx=0,_swT=0;
   var SWIPE_THRESHOLD=44,VELOCITY_THRESHOLD=0.3;
   var _swImg=document.createElement('img'); // ghost for swipe animation
@@ -4816,7 +4878,7 @@ function _openDropPhotoViewer(startIdx){
     previewImg.style.transform='translateX('+(dir*-100)+'%)';
     previewImg.style.opacity='0';
     setTimeout(function(){
-      _curIdx=newIdx;_posX=50;_posY=50;
+      _curIdx=newIdx;_sc=1;_tx=0;_ty=0;
       previewImg.style.transition='none';
       previewImg.style.transform='translateX('+(dir*100)+'%)';
       previewImg.style.opacity='0';
@@ -4830,29 +4892,27 @@ function _openDropPhotoViewer(startIdx){
     },180);
   }
 
-  // Swipe listeners on frame (only activate when not mid-drag)
+  // Swipe listeners on frame (only activate when not mid-pinch)
   frame.addEventListener('touchstart',function(e){
     if(e.touches.length!==1)return;
     _swX=e.touches[0].clientX;_swY=e.touches[0].clientY;
     _swT=Date.now();_swTracking=false;_swDx=0;
-    _dragStartX=e.touches[0].clientX;_dragStartY=e.touches[0].clientY;
-    _dragBasePx=_posX;_dragBasePy=_posY;_dragActive=true;
-  },{passive:false});
+  },{passive:true});
 
   frame.addEventListener('touchmove',function(e){
-    if(e.touches.length!==1)return;
+    if(e.touches.length!==1||_gesture==='pinch')return;
     var dx=e.touches[0].clientX-_swX;
     var dy=e.touches[0].clientY-_swY;
     // Decide: horizontal swipe (photo nav) or vertical/ambiguous (reposition)
     if(!_swTracking&&Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)*1.8&&cFiles.length>1){
-      _swTracking=true;_dragActive=false;
+      _swTracking=true;
     }
     if(_swTracking){
       _swDx=dx;
       previewImg.style.transition='none';
-      previewImg.style.transform='translateX('+(dx*0.3)+'px)';
+      previewImg.style.transform='scale('+_sc+') translate('+(dx*0.3/_sc)+'px,'+(_ty/_sc)+'px)';
     }
-  },{passive:false});
+  },{passive:true});
 
   frame.addEventListener('touchend',function(e){
     if(e.touches.length>0)return;
@@ -4863,14 +4923,12 @@ function _openDropPhotoViewer(startIdx){
       if(committed){
         if(_swDx<0&&_curIdx<cFiles.length-1)goToPhoto(_curIdx+1,1);
         else if(_swDx>0&&_curIdx>0)goToPhoto(_curIdx-1,-1);
-        else{previewImg.style.transition='transform .2s cubic-bezier(.34,1.3,.64,1)';previewImg.style.transform='translateX(0)';}
+        else{_applyTx(true);}
       } else {
-        previewImg.style.transition='transform .2s cubic-bezier(.34,1.3,.64,1)';
-        previewImg.style.transform='translateX(0)';
+        _applyTx(true);
       }
       _swDx=0;
     }
-    _dragActive=false;
   },{passive:true});
 
   // ── Filter state ──────────────────────────────────────────────────────
@@ -4881,13 +4939,14 @@ function _openDropPhotoViewer(startIdx){
     var f=cf.file||cf;
     var newUrl=URL.createObjectURL(f);
     previewImg.src=newUrl;
-    previewImg.style.objectPosition='50% 50%';
+    _sc=1;_tx=0;_ty=0;
+    previewImg.style.transform='scale(1) translate(0px,0px)';
     currentFilter=cf.filter||'none';
     currentCss=(_scFilters.find(function(fl){return fl.id===currentFilter;})||{css:'none'}).css;
     previewImg.style.filter=currentCss;
     if(_stripEl){
       _stripEl.querySelectorAll('div[data-fid]').forEach(function(x){
-        var iA=x.dataset.fid===currentFilter;
+        var iA=x.dataset.fid===currentFilter && currentFilter!=='none';
         x.querySelector('div').style.borderColor=iA?'var(--text)':'var(--border)';
         x.querySelector('span').style.fontWeight=iA?'700':'400';
         x.querySelector('span').style.color=iA?'var(--text)':'var(--sub)';
@@ -4947,10 +5006,13 @@ function _openDropPhotoViewer(startIdx){
     item.appendChild(thumb);item.appendChild(lbl2);
     item.dataset.fid=fl.id;
     item.onclick=function(){
-      currentFilter=fl.id;currentCss=fl.css;
-      previewImg.style.filter=fl.css;
+      // Toggle: tap active filter again to remove it
+      var newFilter = (currentFilter === fl.id) ? 'none' : fl.id;
+      var newCss = newFilter === 'none' ? 'none' : fl.css;
+      currentFilter=newFilter; currentCss=newCss;
+      previewImg.style.filter=newCss;
       strip.querySelectorAll('div[data-fid]').forEach(function(x){
-        var iA=x.dataset.fid===fl.id;
+        var iA=x.dataset.fid===currentFilter && currentFilter!=='none';
         x.querySelector('div').style.borderColor=iA?'var(--text)':'var(--border)';
         x.querySelector('span').style.fontWeight=iA?'700':'400';
         x.querySelector('span').style.color=iA?'var(--text)':'var(--sub)';
