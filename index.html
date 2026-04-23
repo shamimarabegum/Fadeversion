@@ -4860,6 +4860,23 @@ function _openDropPhotoViewer(startIdx){
   var _initTx=0, _initTy=0;
   var _dragStartX=0, _dragStartY=0;
   var MIN_SCALE=0.4, MAX_SCALE=4;
+  // Calculate min scale so user can zoom out to see the full uncropped photo
+  function calcMinScale(){
+    if(!previewImg.naturalWidth||!previewImg.naturalHeight)return 1;
+    var fw=frame.offsetWidth, fh=frame.offsetHeight;
+    var imgRatio=previewImg.naturalWidth/previewImg.naturalHeight;
+    var frameRatio=fw/fh;
+    // object-fit:cover means the image fills the frame — scale needed to show full image
+    if(imgRatio>frameRatio){
+      // image wider than frame — zoom out horizontally
+      MIN_SCALE=frameRatio/imgRatio;
+    } else {
+      // image taller than frame — zoom out vertically
+      MIN_SCALE=imgRatio/frameRatio;
+    }
+    MIN_SCALE=Math.max(0.25,Math.min(1,MIN_SCALE));
+  }
+  previewImg.addEventListener('load',function(){calcMinScale();},{ once:false });
 
   function applyTransform(animate){
     if(animate){
@@ -4897,7 +4914,8 @@ function _openDropPhotoViewer(startIdx){
       _initMidY=mid.y-rect.top-rect.height/2;
       _initTx=_tx; _initTy=_ty;
       e.preventDefault();
-    } else if(e.touches.length===1){
+    } else if(e.touches.length===1&&_scale>1){
+      // Only drag-pan when zoomed in
       _dragActive=true; _pinchActive=false;
       _dragStartX=e.touches[0].clientX - _tx;
       _dragStartY=e.touches[0].clientY - _ty;
@@ -4974,28 +4992,30 @@ function _openDropPhotoViewer(startIdx){
   }
 
   preview.addEventListener('touchstart',function(e){
-    if(_scale>1||_pinchActive||_dragActive)return;
+    if(_pinchActive||_dragActive)return;
+    if(_scale>1)return;
     _swX=e.touches[0].clientX; _swY=e.touches[0].clientY;
     _swT=Date.now(); _swTracking=false; _swDx=0;
   },{passive:true});
 
   preview.addEventListener('touchmove',function(e){
-    if(_scale>1||_pinchActive||_dragActive)return;
+    if(_pinchActive||_dragActive)return;
+    if(_scale>1)return;
     var dx=e.touches[0].clientX-_swX, dy=e.touches[0].clientY-_swY;
     if(!_swTracking&&Math.abs(dx)>6&&Math.abs(dx)>Math.abs(dy)*1.2) _swTracking=true;
-    if(_swTracking){ _swDx=dx; previewImg.style.transition='none'; previewImg.style.transform='translateX('+(dx*0.35)+'px) scale(1)'; }
+    if(_swTracking){ _swDx=dx; previewImg.style.transition='none'; previewImg.style.transform='translate('+_tx+'px,'+_ty+'px) translateX('+(dx*0.35)+'px) scale(1)'; }
   },{passive:true});
 
   preview.addEventListener('touchend',function(){
-    if(_scale>1||_pinchActive)return;
-    if(!_swTracking){ previewImg.style.transition='transform .15s ease'; previewImg.style.transform='translateX(0) scale(1)'; return; }
+    if(_pinchActive||_dragActive)return;
+    if(!_swTracking){ return; }
     var dt=Math.max(Date.now()-_swT,1), velocity=Math.abs(_swDx)/dt;
     var committed=Math.abs(_swDx)>=SWIPE_THRESHOLD||velocity>=VELOCITY_THRESHOLD;
     if(committed){
       if(_swDx<0&&_curIdx<cFiles.length-1) goToPhoto(_curIdx+1,1);
       else if(_swDx>0&&_curIdx>0) goToPhoto(_curIdx-1,-1);
-      else { previewImg.style.transition='transform .2s cubic-bezier(.34,1.3,.64,1)'; previewImg.style.transform='translateX(0) scale(1)'; }
-    } else { previewImg.style.transition='transform .2s cubic-bezier(.34,1.3,.64,1)'; previewImg.style.transform='translateX(0) scale(1)'; }
+      else { applyTransform(true); }
+    } else { applyTransform(true); }
     _swTracking=false; _swDx=0;
   },{passive:true});
 
@@ -5070,7 +5090,7 @@ function _openDropPhotoViewer(startIdx){
     thumb.style.cssText='width:62px;height:62px;border-radius:11px;overflow:hidden;border:2.5px solid '+(isSel?'var(--text)':'var(--border)')+';transition:border-color .15s';
     var ti=document.createElement('img');ti.src=initImgUrl;
     ti.style.cssText='width:100%;height:100%;object-fit:cover;filter:'+fl.css;
-    var lbl2=document.createElement('span');
+    thumb.appendChild(ti);
     lbl2.style.cssText='font-size:11px;font-weight:'+(isSel?'700':'400')+';color:'+(isSel?'var(--text)':'var(--sub)')+';letter-spacing:.2px';
     lbl2.textContent=fl.label;
     item.appendChild(thumb);item.appendChild(lbl2);
