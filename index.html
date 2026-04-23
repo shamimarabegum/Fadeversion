@@ -4737,152 +4737,92 @@ function renderPhotoTray(){
 
 // Full-screen photo viewer with left/right nav and filter picker
 function _openDropPhotoViewer(startIdx){
-  var ex=document.getElementById('drop-photo-viewer');if(ex)ex.remove();
-  var ov=document.createElement('div');ov.id='drop-photo-viewer';
-  ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.93);display:flex;flex-direction:column';
-
+  // Opens the original filter-picker sheet, but tracks current photo index
+  // so < > arrows let you switch photos without closing
   var _curIdx=startIdx;
+  var ex=document.getElementById('drop-filter-ov');if(ex)ex.remove();
+  var ov=document.createElement('div');ov.id='drop-filter-ov';
+  ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);display:flex;flex-direction:column;justify-content:flex-end';
 
-  // Top bar: close
-  var topBar=document.createElement('div');
-  topBar.style.cssText='display:flex;align-items:center;justify-content:flex-end;padding:max(18px,env(safe-area-inset-top)) 18px 10px;flex-shrink:0';
-  var closeBtn=document.createElement('button');
-  closeBtn.style.cssText='background:rgba(30,30,30,.7);border:1.5px solid rgba(255,255,255,.18);color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(10px)';
-  closeBtn.innerHTML='<svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-  closeBtn.onclick=function(){ov.remove();};
-  topBar.appendChild(closeBtn);
-
-  // Image area
-  var imgArea=document.createElement('div');
-  imgArea.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;padding:0 52px';
+  // Preview area — same as original
+  var preview=document.createElement('div');
+  preview.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;padding:24px;position:relative';
 
   var previewImg=document.createElement('img');
-  previewImg.style.cssText='max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;pointer-events:none;-webkit-touch-callout:none';
+  previewImg.style.cssText='max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;-webkit-touch-callout:none;pointer-events:none';
 
-  // Nav arrows
+  // Subtle nav arrows — inside preview, transparent, minimalist
   var leftArr=document.createElement('button');
-  leftArr.style.cssText='position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(30,30,30,.65);border:1.5px solid rgba(255,255,255,.18);color:#fff;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:opacity .15s';
-  leftArr.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>';
+  leftArr.style.cssText='position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.12);border:none;color:rgba(255,255,255,.85);width:32px;height:32px;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:opacity .15s;padding:0';
+  leftArr.innerHTML='<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>';
 
   var rightArr=document.createElement('button');
-  rightArr.style.cssText='position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(30,30,30,.65);border:1.5px solid rgba(255,255,255,.18);color:#fff;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);transition:opacity .15s';
-  rightArr.innerHTML='<svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
+  rightArr.style.cssText='position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.12);border:none;color:rgba(255,255,255,.85);width:32px;height:32px;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:opacity .15s;padding:0';
+  rightArr.innerHTML='<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
 
-  function refreshView(){
+  var currentFilter='none';
+  var currentCss='none';
+  var _stripEl=null; // reference set after strip is built
+
+  function refreshPreview(){
     var cf=cFiles[_curIdx];if(!cf)return;
     var f=cf.file||cf;
     var objUrl=URL.createObjectURL(f);
     previewImg.src=objUrl;
-    var filterCss=cf.filter&&cf.filter!=='none'?(_scFilters.find(function(fl){return fl.id===cf.filter;})||{css:'none'}).css:'none';
-    previewImg.style.filter=filterCss;
-    // Nav visibility
+    currentFilter=cf.filter||'none';
+    currentCss=(_scFilters.find(function(fl){return fl.id===currentFilter;})||{css:'none'}).css;
+    previewImg.style.filter=currentCss;
     leftArr.style.display=(_curIdx>0)?'flex':'none';
     rightArr.style.display=(_curIdx<cFiles.length-1)?'flex':'none';
-    // Update filter strip selection
-    var strip=document.getElementById('dvf-strip');
-    if(strip){
-      strip.querySelectorAll('div[data-fid]').forEach(function(x){
-        var isSel=x.dataset.fid===(cf.filter||'none');
-        x.querySelector('div').style.borderColor=isSel?'#fff':'rgba(255,255,255,.25)';
-        x.querySelector('span').style.fontWeight=isSel?'700':'400';
-        x.querySelector('span').style.color=isSel?'#fff':'rgba(255,255,255,.5)';
+    // Sync strip highlight to new photo's current filter
+    if(_stripEl){
+      _stripEl.querySelectorAll('div[data-fid]').forEach(function(x){
+        var iA=x.dataset.fid===currentFilter;
+        x.querySelector('div').style.borderColor=iA?'var(--text)':'var(--border)';
+        x.querySelector('span').style.fontWeight=iA?'700':'400';
+        x.querySelector('span').style.color=iA?'var(--text)':'var(--sub)';
       });
     }
   }
 
-  leftArr.onclick=function(){if(_curIdx>0){_curIdx--;refreshView();}};
-  rightArr.onclick=function(){if(_curIdx<cFiles.length-1){_curIdx++;refreshView();}};
+  leftArr.onclick=function(e){e.stopPropagation();if(_curIdx>0){_curIdx--;refreshPreview();}};
+  rightArr.onclick=function(e){e.stopPropagation();if(_curIdx<cFiles.length-1){_curIdx++;refreshPreview();}};
 
-  imgArea.appendChild(previewImg);
-  imgArea.appendChild(leftArr);
-  imgArea.appendChild(rightArr);
-
-  // Filter strip at bottom
-  var filterArea=document.createElement('div');
-  filterArea.style.cssText='flex-shrink:0;padding:10px 0 max(20px,env(safe-area-inset-bottom));background:rgba(0,0,0,.75)';
-
-  var strip=document.createElement('div');
-  strip.id='dvf-strip';
-  strip.style.cssText='display:flex;gap:10px;overflow-x:auto;padding:4px 16px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch';
-  strip.innerHTML='<style>#dvf-strip::-webkit-scrollbar{display:none}</style>';
-
-  _scFilters.forEach(function(fl){
-    var item=document.createElement('div');
-    item.style.cssText='display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0;padding:2px';
-    var cf0=cFiles[_curIdx];var curFlt=cf0&&cf0.filter||'none';
-    var isSel=curFlt===fl.id;
-    var thumb=document.createElement('div');
-    thumb.style.cssText='width:56px;height:56px;border-radius:10px;overflow:hidden;border:2px solid '+(isSel?'#fff':'rgba(255,255,255,.25)')+';transition:border-color .15s';
-    // Use first photo as filter preview src
-    var previewFile=cFiles[0]&&(cFiles[0].file||cFiles[0]);
-    var ti=document.createElement('img');ti.src=previewFile?URL.createObjectURL(previewFile):'';
-    ti.style.cssText='width:100%;height:100%;object-fit:cover;filter:'+fl.css;
-    ti.setAttribute('draggable','false');
-    thumb.appendChild(ti);
-    var lbl2=document.createElement('span');
-    lbl2.style.cssText='font-size:10px;font-weight:'+(isSel?'700':'400')+';color:'+(isSel?'#fff':'rgba(255,255,255,.5)')+';letter-spacing:.2px';
-    // No label text — user sees selected state by border only
-    item.appendChild(thumb);item.appendChild(lbl2);
-    item.dataset.fid=fl.id;
-    item.onclick=function(){
-      // Apply this filter to current photo AND all others
-      cFiles.forEach(function(c){if(c)c.filter=fl.id;});
-      // Update preview
-      previewImg.style.filter=fl.css;
-      // Update strip selection
-      strip.querySelectorAll('div[data-fid]').forEach(function(x){
-        var iA=x.dataset.fid===fl.id;
-        x.querySelector('div').style.borderColor=iA?'#fff':'rgba(255,255,255,.25)';
-        x.querySelector('span').style.fontWeight=iA?'700':'400';
-        x.querySelector('span').style.color=iA?'#fff':'rgba(255,255,255,.5)';
-      });
-    };
-    strip.appendChild(item);
-  });
-
-  filterArea.appendChild(strip);
-
-  ov.appendChild(topBar);ov.appendChild(imgArea);ov.appendChild(filterArea);
-  document.body.appendChild(ov);
-  refreshView();
-}
-
-function _openDropFilterPicker(idx,imgUrl,imgEl){
-  // Bottom sheet with filter thumbnails for a specific photo
-  var ex=document.getElementById('drop-filter-ov');if(ex)ex.remove();
-  var ov=document.createElement('div');ov.id='drop-filter-ov';
-  ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);display:flex;flex-direction:column;justify-content:flex-end';
-  // Preview area
-  var preview=document.createElement('div');
-  preview.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;padding:24px';
-  var previewImg=document.createElement('img');
-  previewImg.src=imgUrl;
-  previewImg.style.cssText='max-width:100%;max-height:100%;border-radius:14px;object-fit:contain;filter:none';
-  var currentFilter=cFiles[idx]&&cFiles[idx].filter||'none';
-  var currentCss=(_scFilters.find(function(fl){return fl.id===currentFilter;})||{css:'none'}).css;
-  previewImg.style.filter=currentCss;
   preview.appendChild(previewImg);
-  // Sheet
+  preview.appendChild(leftArr);
+  preview.appendChild(rightArr);
+
+  // Sheet — identical to original
   var sheet=document.createElement('div');
   sheet.style.cssText='background:var(--card);border-radius:20px 20px 0 0;padding:16px 0 max(24px,env(safe-area-inset-bottom))';
   var handle=document.createElement('div');handle.style.cssText='width:34px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 14px';
-  // Filter strip
+
   var strip=document.createElement('div');
   strip.style.cssText='display:flex;gap:10px;overflow-x:auto;padding:0 16px;scrollbar-width:none;-webkit-overflow-scrolling:touch';
-  strip.innerHTML='<style>#drop-filter-ov div::-webkit-scrollbar{display:none}</style>';
+  strip.innerHTML='<style>#drop-filter-ov .dfs::-webkit-scrollbar{display:none}</style>';
+  strip.classList.add('dfs');
+  _stripEl=strip;
+
+  // Init current filter from starting photo
+  var initCf=cFiles[_curIdx];
+  currentFilter=initCf&&initCf.filter||'none';
+  currentCss=(_scFilters.find(function(fl){return fl.id===currentFilter;})||{css:'none'}).css;
+  var initImgUrl=initCf?(function(){var f2=initCf.file||initCf;return URL.createObjectURL(f2);})():'';
+
   _scFilters.forEach(function(fl){
     var item=document.createElement('div');
     item.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;padding:4px 2px';
     var thumb=document.createElement('div');
     var isSel=currentFilter===fl.id;
     thumb.style.cssText='width:62px;height:62px;border-radius:11px;overflow:hidden;border:2.5px solid '+(isSel?'var(--text)':'var(--border)')+';transition:border-color .15s';
-    var ti=document.createElement('img');ti.src=imgUrl;
+    var ti=document.createElement('img');ti.src=initImgUrl;
     ti.style.cssText='width:100%;height:100%;object-fit:cover;filter:'+fl.css;
     thumb.appendChild(ti);
     var lbl2=document.createElement('span');
     lbl2.style.cssText='font-size:11px;font-weight:'+(isSel?'700':'400')+';color:'+(isSel?'var(--text)':'var(--sub)')+';letter-spacing:.2px';
     lbl2.textContent=fl.label;
     item.appendChild(thumb);item.appendChild(lbl2);
+    item.dataset.fid=fl.id;
     item.onclick=function(){
       currentFilter=fl.id;currentCss=fl.css;
       previewImg.style.filter=fl.css;
@@ -4893,10 +4833,10 @@ function _openDropFilterPicker(idx,imgUrl,imgEl){
         x.querySelector('span').style.color=iA?'var(--text)':'var(--sub)';
       });
     };
-    item.dataset.fid=fl.id;
     strip.appendChild(item);
   });
-  // Done button
+
+  // Cancel / Apply buttons — identical to original
   var doneRow=document.createElement('div');
   doneRow.style.cssText='display:flex;gap:10px;padding:14px 16px 0';
   var cancelBtn2=document.createElement('button');
@@ -4907,7 +4847,8 @@ function _openDropFilterPicker(idx,imgUrl,imgEl){
   doneBtn.style.cssText='flex:1;padding:13px;border-radius:13px;border:none;background:var(--text);font-size:15px;font-weight:600;font-family:Inter,sans-serif;color:var(--card);cursor:pointer';
   doneBtn.textContent='Apply';
   doneBtn.onclick=function(){
-    if(cFiles[idx]){cFiles[idx].filter=currentFilter;}
+    // Apply selected filter to ALL photos
+    cFiles.forEach(function(c){if(c)c.filter=currentFilter;});
     ov.remove();
     renderPhotoTray();
   };
@@ -4916,6 +4857,11 @@ function _openDropFilterPicker(idx,imgUrl,imgEl){
   ov.appendChild(preview);ov.appendChild(sheet);
   ov.onclick=function(e){if(e.target===ov)ov.remove();};
   document.body.appendChild(ov);
+  refreshPreview();
+}
+
+function _openDropFilterPicker(idx,imgUrl,imgEl){
+  _openDropPhotoViewer(idx);
 }
 
 // ── IMAGE COMPRESSION ─────────────────────────────────────────────────────────
