@@ -1478,7 +1478,7 @@ body {
 <div id="story-creator">
   <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov" contenteditable="true" spellcheck="false"></div></div>
   <div id="sc-top">
-    <button class="sc-tbtn" onclick="closeCreator()">✕</button>
+    <div></div>
     <div id="sc-right-panel">
       <button class="sc-rpbtn" onclick="scFontToggle()" title="Font style">
         <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
@@ -1497,13 +1497,23 @@ body {
     <div class="sc-acts">
       <label class="sc-pb" for="sc-file"><svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></label>
       <input id="sc-file" type="file" accept="image/*" style="display:none" onchange="scPhoto(event)"/>
-      <button class="sc-pb" onclick="scOpenStickers()" style="border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/><path d="M18 2l4 4-6.5 6.5-4 .5.5-4Z"/></svg></button>
+      <button class="sc-pb" onclick="scOpenStickers()" style="border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="2"/><circle cx="9" cy="10" r="1.2" fill="#fff"/><circle cx="15" cy="10" r="1.2" fill="#fff"/><path d="M8 14.5c1.5 2 6.5 2 8 0" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg></button>
       <button class="sc-share" onclick="scShare()">Add Moment</button>
     </div>
   </div>
 </div>
 
-<!-- AUDIENCE PICKER SHEET -->
+<!-- STORY CREATOR DISCARD DIALOG -->
+<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:flex-end">
+  <div id="sc-discard-dim" style="position:absolute;inset:0;background:rgba(0,0,0,.6);animation:dimIn .2s ease"></div>
+  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;background:#1C1C1E;width:100%;border-radius:22px 22px 0 0;padding:24px 20px max(28px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.25,.46,.45,.94)">
+    <div style="width:34px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 20px"></div>
+    <div style="font-size:18px;font-weight:700;color:#fff;text-align:center;margin-bottom:8px">Discard moment?</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:24px;line-height:1.5">Your photo and edits will not be saved.</div>
+    <button onclick="scConfirmDiscard()" style="width:100%;padding:15px;border-radius:14px;border:none;background:#E8352A;color:#fff;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:10px;transition:opacity .12s">Discard</button>
+    <button onclick="scKeepEditing()" style="width:100%;padding:15px;border-radius:14px;border:1.5px solid rgba(255,255,255,.15);background:transparent;color:#fff;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s">Keep Editing</button>
+  </div>
+</div>
 <div id="aud-bg" onclick="closeAudSheet()" style="display:none;position:fixed;inset:0;z-index:500;align-items:flex-end">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);animation:dimIn .25s ease"></div>
   <div id="aud-sheet" onclick="event.stopPropagation()" style="position:relative;background:var(--card);width:100%;border-radius:20px 20px 0 0;padding-bottom:max(22px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94)">
@@ -5485,6 +5495,11 @@ function openCreator(){
   scBg='#2C2C2C';scFontOpen=false;scFI=0;scAudience=S.storyAudience||'followers';
   _scColorIdx=0;_scBgIdx=0;_scIsPhoto=false;_scIsTyping=false;
   var c=document.getElementById('sc-canvas');c.style.background=scBg;
+  // ── Clear all stickers from previous session ──
+  c.querySelectorAll('._sc-sticker').forEach(function(s){s.remove();});
+  var ex=document.getElementById('sc-sticker-sheet');if(ex)ex.remove();
+  var dz=document.getElementById('sc-delete-zone');if(dz)dz.remove();
+  _scDeleteZone=null;_scDeleteActive=false;
   var img=document.getElementById('sc-canvas-img');img.src='';img.classList.remove('on');
   var ov=document.getElementById('sc-text-ov');
   ov.textContent='';ov.style.color=SC_TEXT_COLORS[0];
@@ -5537,11 +5552,60 @@ function scCycleColor(){
   }
 }
 function scCycleBg(){ scCycleColor(); } // alias — bg-cycle button calls same fn
-function closeCreator(){
+// Check if creator has any real content worth saving
+function _scHasContent(){
+  var img=document.getElementById('sc-canvas-img');
+  if(img&&img.classList.contains('on')&&img.src)return true;
+  var ov=document.getElementById('sc-text-ov');
+  if(ov&&ov.textContent.trim())return true;
+  var canvas=document.getElementById('sc-canvas');
+  if(canvas&&canvas.querySelector('._sc-sticker'))return true;
+  return false;
+}
+// Show discard dialog (used by ✕ button + swipe-back)
+function _scTryClose(){
+  if(_scHasContent()){
+    _scShowDiscardDialog();
+  } else {
+    _scDoClose();
+  }
+}
+function _scShowDiscardDialog(){
+  var bg=document.getElementById('sc-discard-bg');
+  if(!bg)return;
+  bg.style.display='flex';
+  requestAnimationFrame(function(){
+    var sheet=document.getElementById('sc-discard-sheet');
+    if(sheet) sheet.style.transform='translateY(0)';
+    // Push extra history so swipe-back lands on our dialog, not leaves
+    history.pushState({_fade:'sc-discard'},'');
+  });
+}
+function _scHideDiscardDialog(){
+  var sheet=document.getElementById('sc-discard-sheet');
+  if(sheet) sheet.style.transform='translateY(100%)';
+  setTimeout(function(){
+    var bg=document.getElementById('sc-discard-bg');
+    if(bg) bg.style.display='none';
+  },300);
+}
+function scKeepEditing(){
+  _scHideDiscardDialog();
+  // Restore the history entry so swipe-back works again
+  history.pushState({_fade:'story-creator'},'');
+}
+function scConfirmDiscard(){
+  _scHideDiscardDialog();
+  setTimeout(_scDoClose, 80);
+}
+function _scDoClose(){
   var cr=document.getElementById('story-creator');cr.style.opacity='0';
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();
   _scActiveFilter='none';
   setTimeout(function(){cr.style.display='none';},250);
+}
+function closeCreator(){
+  _scTryClose();
 }
 function applyFont(){var f=SC_FONTS[scFI],ov=document.getElementById('sc-text-ov');ov.style.fontFamily=f.ff;ov.style.fontStyle=f.fs;ov.style.fontWeight=f.fw;}
 function buildSwatches(){
@@ -14515,6 +14579,14 @@ function _buildEpCats(){
   window.addEventListener('popstate', function(e) {
     var state = e.state;
 
+    // Story creator discard dialog: back from dialog → hide it, keep editing
+    if (state && state._fade === 'sc-discard') {
+      _scHideDiscardDialog();
+      // Push story-creator state back so next swipe triggers creator flow
+      history.pushState({_fade:'story-creator'},'');
+      return;
+    }
+
     // Story viewer: native swipe-back closes it and returns to talk/chat
     var svEl = document.getElementById('sv');
     if (svEl && svEl.style.display === 'flex') {
@@ -14522,10 +14594,11 @@ function _buildEpCats(){
       return;
     }
 
-    // Story creator: native swipe-back closes it
+    // Story creator: native swipe-back → show discard dialog if content exists
     var scEl = document.getElementById('story-creator');
     if (scEl && scEl.style.display === 'flex') {
-      if (typeof window.closeCreator === 'function') window.closeCreator();
+      if (typeof window._scTryClose === 'function') window._scTryClose();
+      else if (typeof window.closeCreator === 'function') window.closeCreator();
       return;
     }
 
