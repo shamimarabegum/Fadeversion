@@ -4849,13 +4849,14 @@ function _updateTrayThumb(i){
     imgEl.style.filter=filterCss;
     return;
   }
-  // Re-render thumb with crop applied
+  // Re-render thumb with crop applied at full DPR for sharpness
+  var dpr=window.devicePixelRatio||1;
   var img2=new Image();
   var objUrl2=URL.createObjectURL(f);
   img2.onload=function(){
     URL.revokeObjectURL(objUrl2);
     var iw=img2.naturalWidth, ih=img2.naturalHeight;
-    var outW=72, outH=72;
+    var outW=Math.round(72*dpr), outH=Math.round(72*dpr);
     var canvas=document.createElement('canvas');
     canvas.width=outW; canvas.height=outH;
     var ctx=canvas.getContext('2d');
@@ -4867,15 +4868,13 @@ function _updateTrayThumb(i){
     var srcW=fw/totalScale, srcH=fh/totalScale;
     var srcX=(iw/2)-(tx/totalScale)-srcW/2;
     var srcY=(ih/2)-(ty/totalScale)-srcH/2;
-    // For the square thumb crop the center square of the source region
     var squareSize=Math.min(srcW,srcH);
     var sqX=srcX+(srcW-squareSize)/2, sqY=srcY+(srcH-squareSize)/2;
     sqX=Math.max(0,Math.min(iw-squareSize,sqX));
     sqY=Math.max(0,Math.min(ih-squareSize,sqY));
-    ctx.fillStyle='#000'; ctx.fillRect(0,0,outW,outH);
     ctx.drawImage(img2, sqX, sqY, squareSize, squareSize, 0, 0, outW, outH);
-    imgEl.src=canvas.toDataURL('image/jpeg',0.8);
-    imgEl.style.filter='none'; // already baked
+    imgEl.src=canvas.toDataURL('image/jpeg',0.92);
+    imgEl.style.filter='none';
   };
   img2.onerror=function(){URL.revokeObjectURL(objUrl2);};
   img2.src=objUrl2;
@@ -4885,7 +4884,7 @@ function _openDropPhotoViewer(startIdx){
   var _curIdx=startIdx;
   var ex=document.getElementById('drop-filter-ov');if(ex)ex.remove();
   var ov=document.createElement('div');ov.id='drop-filter-ov';
-  ov.style.cssText='position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);display:flex;flex-direction:column;justify-content:flex-end';
+  ov.style.cssText='position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.75);display:flex;flex-direction:column;justify-content:flex-end';
 
   ov.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:false});
   ov.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:false});
