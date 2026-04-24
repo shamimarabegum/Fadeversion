@@ -5508,15 +5508,12 @@ function _scUpdateCircles(){
   var colorDot=document.getElementById('sc-color-cycle');
   var bgBtn=document.getElementById('sc-bg-cycle');
   if(_scIsTyping){
-    // Typing: show color circle (changes text color), hide bg
-    if(colorDot){colorDot.style.display='';colorDot.style.background=SC_TEXT_COLORS[_scColorIdx];}
+    if(colorDot){colorDot.style.display='block';colorDot.style.background=SC_TEXT_COLORS[_scColorIdx];}
     if(bgBtn) bgBtn.style.display='none';
   } else if(!_scIsPhoto){
-    // Text-only idle: show bg circle (changes background), hide color
-    if(bgBtn){bgBtn.style.display='';bgBtn.style.background=SC_BG_COLORS[_scBgIdx];}
+    if(bgBtn){bgBtn.style.display='block';bgBtn.style.background=SC_BG_COLORS[_scBgIdx];}
     if(colorDot) colorDot.style.display='none';
   } else {
-    // Photo mode idle: hide both circles
     if(colorDot) colorDot.style.display='none';
     if(bgBtn) bgBtn.style.display='none';
   }
@@ -5545,13 +5542,15 @@ function _scInitColorCycle(){
 function scCycleColor(){
   _scColorIdx=(_scColorIdx+1)%SC_TEXT_COLORS.length;
   var c=SC_TEXT_COLORS[_scColorIdx];
-  var dot=document.getElementById('sc-color-cycle');if(dot)dot.style.background=c;
+  var dot=document.getElementById('sc-color-cycle');
+  if(dot){dot.style.display='block';dot.style.background=c;}
   var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=c;
 }
 function scCycleBg(){
   _scBgIdx=(_scBgIdx+1)%SC_BG_COLORS.length;
   var c=SC_BG_COLORS[_scBgIdx];scBg=c;
-  var bgBtn=document.getElementById('sc-bg-cycle');if(bgBtn)bgBtn.style.background=c;
+  var bgBtn=document.getElementById('sc-bg-cycle');
+  if(bgBtn){bgBtn.style.display='block';bgBtn.style.background=c;}
   var canvas=document.getElementById('sc-canvas');if(canvas)canvas.style.background=c;
 }
 // ── scActivateText ────────────────────────────────────────────────────────────
