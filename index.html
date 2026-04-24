@@ -4883,13 +4883,10 @@ function _updateTrayThumb(i){
 function _openDropPhotoViewer(startIdx){
   var _curIdx=startIdx;
   var ex=document.getElementById('drop-filter-ov');if(ex)ex.remove();
-  // Push compose sheet behind the overlay (transform creates stacking context that ignores z-index)
-  var _composeBg=document.getElementById('compose-bg');
-  if(_composeBg) _composeBg.style.zIndex='1';
   var ov=document.createElement('div');ov.id='drop-filter-ov';
-  ov.style.cssText='position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.75);display:flex;flex-direction:column;justify-content:flex-end';
+  ov.style.cssText='position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.75);display:flex;flex-direction:column;justify-content:flex-end;isolation:isolate';
 
-  function _restoreCompose(){ if(_composeBg) _composeBg.style.zIndex=''; }
+  function _restoreCompose(){}
 
   ov.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:false});
   ov.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:false});
