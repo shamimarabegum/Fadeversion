@@ -4883,8 +4883,13 @@ function _updateTrayThumb(i){
 function _openDropPhotoViewer(startIdx){
   var _curIdx=startIdx;
   var ex=document.getElementById('drop-filter-ov');if(ex)ex.remove();
+  // Push compose sheet behind the overlay (transform creates stacking context that ignores z-index)
+  var _composeBg=document.getElementById('compose-bg');
+  if(_composeBg) _composeBg.style.zIndex='1';
   var ov=document.createElement('div');ov.id='drop-filter-ov';
   ov.style.cssText='position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.75);display:flex;flex-direction:column;justify-content:flex-end';
+
+  function _restoreCompose(){ if(_composeBg) _composeBg.style.zIndex=''; }
 
   ov.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:false});
   ov.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:false});
@@ -5178,11 +5183,13 @@ function _openDropPhotoViewer(startIdx){
     item.appendChild(thumb);item.appendChild(lbl2);
     item.dataset.fid=fl.id;
     item.onclick=function(){
-      currentFilter=fl.id; currentCss=fl.css;
-      cFiles[_curIdx]&&(cFiles[_curIdx].filter=fl.id);
-      previewImg.style.filter=fl.css;
+      var wasSelected=(currentFilter===fl.id);
+      currentFilter=wasSelected?'none':fl.id;
+      currentCss=wasSelected?'none':fl.css;
+      cFiles[_curIdx]&&(cFiles[_curIdx].filter=currentFilter);
+      previewImg.style.filter=currentCss==='none'?'':currentCss;
       strip.querySelectorAll('div[data-fid]').forEach(function(x){
-        var iA=x.dataset.fid===fl.id;
+        var iA=x.dataset.fid===currentFilter;
         x.querySelector('div').style.borderColor=iA?'var(--text)':'var(--border)';
         x.querySelector('span').style.fontWeight=iA?'700':'400';
         x.querySelector('span').style.color=iA?'var(--text)':'var(--sub)';
@@ -5198,14 +5205,14 @@ function _openDropPhotoViewer(startIdx){
   var cancelBtn2=document.createElement('button');
   cancelBtn2.style.cssText='flex:1;padding:13px;border-radius:13px;border:1.5px solid var(--border);background:transparent;font-size:14px;font-weight:600;font-family:Inter,sans-serif;color:var(--text);cursor:pointer';
   cancelBtn2.textContent='Cancel';
-  cancelBtn2.onclick=function(){ov.remove();};
+  cancelBtn2.onclick=function(){_restoreCompose();ov.remove();};
 
   var applyOneBtn=document.createElement('button');
   applyOneBtn.style.cssText='flex:1;padding:13px;border-radius:13px;border:1.5px solid var(--border);background:transparent;font-size:14px;font-weight:600;font-family:Inter,sans-serif;color:var(--text);cursor:pointer';
   applyOneBtn.textContent='This photo';
   applyOneBtn.onclick=function(){
     if(cFiles[_curIdx])cFiles[_curIdx].filter=currentFilter;
-    ov.remove();renderPhotoTray();
+    _restoreCompose();ov.remove();renderPhotoTray();
   };
 
   var applyAllBtn=document.createElement('button');
@@ -5213,7 +5220,7 @@ function _openDropPhotoViewer(startIdx){
   applyAllBtn.textContent='All photos';
   applyAllBtn.onclick=function(){
     cFiles.forEach(function(c){if(c)c.filter=currentFilter;});
-    ov.remove();renderPhotoTray();
+    _restoreCompose();ov.remove();renderPhotoTray();
   };
 
   if(cFiles.length>1){
@@ -5226,7 +5233,7 @@ function _openDropPhotoViewer(startIdx){
     singleApply.textContent='Apply';
     singleApply.onclick=function(){
       if(cFiles[_curIdx])cFiles[_curIdx].filter=currentFilter;
-      ov.remove();renderPhotoTray();
+      _restoreCompose();ov.remove();renderPhotoTray();
     };
     doneRow.appendChild(cancelBtn2);
     doneRow.appendChild(singleApply);
@@ -5234,7 +5241,7 @@ function _openDropPhotoViewer(startIdx){
 
   sheet.appendChild(handle);sheet.appendChild(strip);sheet.appendChild(doneRow);
   ov.appendChild(preview);ov.appendChild(sheet);
-  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  ov.onclick=function(e){if(e.target===ov){_restoreCompose();ov.remove();}};
   document.body.appendChild(ov);
   previewImg.style.transition='none';
   previewImg.style.transform='translateX(0) scale(1)';
