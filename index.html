@@ -5487,12 +5487,17 @@ function openCreator(){
   ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';
   ov.classList.remove('draggable','active');
   applyFont();
-  // Initially: bg-cycle visible (text mode), color-cycle hidden until typing
-  _scUpdateCircles();
+  // Set dot colors first, then show correct one
+  var colorDot=document.getElementById('sc-color-cycle');
+  if(colorDot) colorDot.style.background=SC_TEXT_COLORS[0];
+  var bgBtn=document.getElementById('sc-bg-cycle');
+  if(bgBtn) bgBtn.style.background=SC_BG_COLORS[0];
+  buildSwatches();buildFChips();
   document.getElementById('sc-file').value='';
   document.getElementById('sc-fonts').classList.remove('on');
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();_scActiveFilter='none';
-  buildSwatches();buildFChips();_scInitColorCycle();
+  // Show correct circle for initial state (text-only idle = bg circle)
+  _scUpdateCircles();
   var cr=document.getElementById('story-creator');cr.style.display='flex';
   history.pushState({_fade:'story-creator'},'');
   requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';});});
@@ -5533,22 +5538,17 @@ var SC_TEXT_COLORS=['#FFFFFF','#F9E74B','#FF6B6B','#4ECDC4','#A855F7','#FF9F1C',
 // Background colors (text-only post)
 var SC_BG_COLORS=['#2C2C2C','#1A1A2E','#4A1942','#14213D','#1B4332','#7B2D00','#4A2040','#0D1B2A','#F5F5F0','#111111'];
 function _scInitColorCycle(){
-  var dot=document.getElementById('sc-color-cycle');
-  if(dot){dot.style.background=SC_TEXT_COLORS[0];}
-  var bgBtn=document.getElementById('sc-bg-cycle');
-  if(bgBtn){bgBtn.style.background=SC_BG_COLORS[0];}
-  var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=SC_TEXT_COLORS[0];
   _scColorIdx=0;_scBgIdx=0;
+  var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=SC_TEXT_COLORS[0];
+  // Don't touch display here — _scUpdateCircles handles that
 }
 function scCycleColor(){
-  // Only cycles text color (shown during typing)
   _scColorIdx=(_scColorIdx+1)%SC_TEXT_COLORS.length;
   var c=SC_TEXT_COLORS[_scColorIdx];
   var dot=document.getElementById('sc-color-cycle');if(dot)dot.style.background=c;
   var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=c;
 }
 function scCycleBg(){
-  // Only cycles background (shown in text-only idle mode)
   _scBgIdx=(_scBgIdx+1)%SC_BG_COLORS.length;
   var c=SC_BG_COLORS[_scBgIdx];scBg=c;
   var bgBtn=document.getElementById('sc-bg-cycle');if(bgBtn)bgBtn.style.background=c;
@@ -5615,18 +5615,21 @@ function scActivateText(){
     if(!cr||cr.style.display==='none')return;
     // If currently in edit mode (not draggable) and click is outside el
     if(!el.classList.contains('draggable')&&e.target!==el&&el.textContent.trim()){
-      el.blur();el.classList.add('draggable');_scIsTyping=false;_scUpdateCircles();
+      _scIsTyping=false;
+      el.blur();el.classList.add('draggable');_scUpdateCircles();
     }
   });
   // blur event on text → exit typing mode, enter draggable mode
   document.addEventListener('focusout',function(e){
     var el=getEl();if(!el||e.target!==el)return;
     var cr=document.getElementById('story-creator');
-    if(cr&&cr.style.display!=='none'){
-      _scIsTyping=false;
+    if(!cr||cr.style.display==='none')return;
+    // Delay so scActivateText (re-tap A) can set _scIsTyping=true before we clear it
+    setTimeout(function(){
+      if(_scIsTyping) return; // user re-tapped A, stay in typing mode
       if(el.textContent.trim()) el.classList.add('draggable');
       _scUpdateCircles();
-    }
+    }, 100);
   });
 })();
 function buildFChips(){
