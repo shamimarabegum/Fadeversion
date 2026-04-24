@@ -4886,7 +4886,15 @@ function _openDropPhotoViewer(startIdx){
   var ov=document.createElement('div');ov.id='drop-filter-ov';
   ov.style.cssText='position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.75);display:flex;flex-direction:column;justify-content:flex-end;isolation:isolate';
 
-  function _restoreCompose(){}
+  function _restoreCompose(){
+    var s=document.querySelector('#compose-bg .sheet');
+    if(s) s.style.visibility='';
+  }
+
+  // Hide compose sheet content so it doesn't paint over the fixed overlay
+  // (transform on .sheet creates a stacking context that ignores z-index)
+  var _cs=document.querySelector('#compose-bg .sheet');
+  if(_cs) _cs.style.visibility='hidden';
 
   ov.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:false});
   ov.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:false});
