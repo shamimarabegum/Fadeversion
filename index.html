@@ -4898,11 +4898,25 @@ function _openDropPhotoViewer(startIdx){
   var frame=document.createElement('div');
   frame.style.cssText='position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:16px;background:#111;touch-action:none;';
 
-  // Always cover — fills 4:5 frame, no black bars ever.
-  // In crop mode the user drags/pinches to reposition within the same frame.
+  // Image is sized explicitly in px to cover the frame (no object-fit:cover).
+  // This means translate actually moves real photo pixels — no black edges.
   var previewImg=document.createElement('img');
-  previewImg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;-webkit-touch-callout:none;user-select:none;display:block;transform-origin:center center;will-change:transform;';
+  previewImg.style.cssText='position:absolute;-webkit-touch-callout:none;user-select:none;display:block;transform-origin:center center;will-change:transform;max-width:none;';
   previewImg.draggable=false;
+
+  var _imgNatW=1, _imgNatH=1;
+
+  // Call after image loads or frame resizes to set explicit cover dimensions
+  function sizeImgToCover(){
+    var fw=frame.offsetWidth||300, fh=frame.offsetHeight||375;
+    var coverScale=Math.max(fw/_imgNatW, fh/_imgNatH)*_cropScale;
+    var w=Math.round(_imgNatW*coverScale);
+    var h=Math.round(_imgNatH*coverScale);
+    previewImg.style.width=w+'px';
+    previewImg.style.height=h+'px';
+    previewImg.style.left=Math.round((fw-w)/2)+'px';
+    previewImg.style.top=Math.round((fh-h)/2)+'px';
+  }
 
   frame.appendChild(previewImg);
   preview.appendChild(frame);
@@ -4926,7 +4940,7 @@ function _openDropPhotoViewer(startIdx){
 
   function applyImgTransform(animate){
     previewImg.style.transition=animate?'transform .15s ease':'none';
-    previewImg.style.transform=((_cropTx===0&&_cropTy===0&&_cropScale===1)?'none':'translate('+_cropTx+'px,'+_cropTy+'px) scale('+_cropScale+')');
+    previewImg.style.transform=(_cropTx===0&&_cropTy===0)?'none':'translate('+_cropTx+'px,'+_cropTy+'px)';
   }
 
   // Clamp so photo never shows empty space inside the 4:5 frame.
@@ -4937,12 +4951,8 @@ function _openDropPhotoViewer(startIdx){
 
   function clampCrop(){
     var fw=frame.offsetWidth||300, fh=frame.offsetHeight||375;
-    // Reproduce what the browser does for object-fit:cover
-    var coverScale=Math.max(fw/_imgNatW, fh/_imgNatH);
-    // Size of the cover-scaled image
-    var scaledW=_imgNatW*coverScale*_cropScale;
-    var scaledH=_imgNatH*coverScale*_cropScale;
-    // Max translate = half the overflow on each axis (so edges stay within frame)
+    var coverScale=Math.max(fw/_imgNatW, fh/_imgNatH)*_cropScale;
+    var scaledW=_imgNatW*coverScale, scaledH=_imgNatH*coverScale;
     var maxTx=Math.max(0,(scaledW-fw)/2);
     var maxTy=Math.max(0,(scaledH-fh)/2);
     _cropTx=Math.max(-maxTx,Math.min(maxTx,_cropTx));
@@ -4953,7 +4963,7 @@ function _openDropPhotoViewer(startIdx){
     _cropMode=true;
     var cs=getCropState(_curIdx);
     _cropTx=cs.tx; _cropTy=cs.ty; _cropScale=cs.scale||1;
-    // objectFit stays cover — photo fills 4:5 the whole time
+    sizeImgToCover();
     applyImgTransform(false);
     pencilBtn.style.cssText='position:absolute;top:26px;right:26px;z-index:20;padding:0 16px;height:34px;border-radius:999px;background:rgba(255,255,255,.95);border:none;color:#111;font-size:13px;font-weight:700;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;width:auto';
     pencilBtn.innerHTML='Done';
@@ -5002,7 +5012,7 @@ function _openDropPhotoViewer(startIdx){
     if(_cpPinchActive&&e.touches.length===2){
       var d=cpDist(e.touches);
       _cropScale=Math.min(4,Math.max(1,_cropInitScale*(d/_cpInitDist)));
-      clampCrop(); applyImgTransform(false);
+      sizeImgToCover(); clampCrop(); applyImgTransform(false);
       e.preventDefault();
     } else if(_cpDragActive&&e.touches.length===1){
       _cropTx=e.touches[0].clientX-_cpDragStartX;
@@ -5016,7 +5026,7 @@ function _openDropPhotoViewer(startIdx){
     if(_cpPinchActive){
       _cpPinchActive=false;
       if(_cropScale<1.05){_cropScale=1;_cropTx=0;_cropTy=0;}
-      clampCrop(); applyImgTransform(true);
+      sizeImgToCover(); clampCrop(); applyImgTransform(true);
     }
     if(_cpDragActive&&e.touches.length===0) _cpDragActive=false;
   },{passive:true});
@@ -5086,7 +5096,15 @@ function _openDropPhotoViewer(startIdx){
     var cf=cFiles[_curIdx];if(!cf)return;
     var f=cf.file||cf;
     var newUrl=URL.createObjectURL(f);
-    previewImg.onload=function(){ _imgNatW=previewImg.naturalWidth||1; _imgNatH=previewImg.naturalHeight||1; };
+    previewImg.onload=function(){
+      _imgNatW=previewImg.naturalWidth||1;
+      _imgNatH=previewImg.naturalHeight||1;
+      _cropScale=1; _cropTx=0; _cropTy=0;
+      var cs=getCropState(_curIdx);
+      _cropTx=cs.tx; _cropTy=cs.ty; _cropScale=cs.scale||1;
+      sizeImgToCover();
+      applyImgTransform(false);
+    };
     previewImg.src=newUrl;
     currentFilter=cf.filter||'none';
     currentCss=(_scFilters.find(function(fl){return fl.id===currentFilter;})||{css:'none'}).css;
