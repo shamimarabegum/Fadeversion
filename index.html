@@ -1497,7 +1497,7 @@ body {
     <div class="sc-acts">
       <label class="sc-pb" for="sc-file"><svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></label>
       <input id="sc-file" type="file" accept="image/*" style="display:none" onchange="scPhoto(event)"/>
-      <button class="sc-pb" onclick="scOpenStickers()" style="border:none;cursor:pointer;font-size:20px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;">😊</button>
+      <button class="sc-pb" onclick="scOpenStickers()" style="border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/><path d="M18 2l4 4-6.5 6.5-4 .5.5-4Z"/></svg></button>
       <button class="sc-share" onclick="scShare()">Add Moment</button>
     </div>
   </div>
@@ -5578,7 +5578,7 @@ function scActivateText(){
   function isEditMode(el){return!el.classList.contains('draggable');}
   function startDrag(e){
     var el=getEl();if(!el||isEditMode(el))return;
-    if(!el.textContent.trim())return;// nothing to drag
+    if(!el.textContent.trim())return;
     dragging=true;
     var touch=e.touches?e.touches[0]:e;
     startX=touch.clientX;startY=touch.clientY;
@@ -5588,50 +5588,59 @@ function scActivateText(){
     var cr=canvas.getBoundingClientRect();
     origLeft=rect.left-cr.left+rect.width/2;
     origTop=rect.top-cr.top+rect.height/2;
-    el.style.transform='none';el.style.left=origLeft+'px';el.style.top=origTop+'px';
+    // Fix position so there's no jump
+    el.style.transform='none';
+    el.style.left=origLeft+'px';
+    el.style.top=origTop+'px';
+    _scShowDeleteZone();
     e.preventDefault();
   }
   function onMove(e){
     if(!dragging)return;
     var el=getEl();if(!el)return;
     var touch=e.touches?e.touches[0]:e;
-    el.style.left=(origLeft+(touch.clientX-startX))+'px';
-    el.style.top=(origTop+(touch.clientY-startY))+'px';
+    var newLeft=origLeft+(touch.clientX-startX);
+    var newTop=origTop+(touch.clientY-startY);
+    el.style.left=newLeft+'px';
+    el.style.top=newTop+'px';
+    _scCheckDeleteZone(touch,el);
     e.preventDefault();
   }
-  function onUp(){dragging=false;}
-  // Touch: touchstart on text element starts drag only if draggable mode
+  function onUp(e){
+    if(!dragging)return;
+    dragging=false;
+    var el=getEl();
+    var t=e&&e.changedTouches?e.changedTouches[0]:null;
+    if(t&&el&&_scCheckDeleteZone(t,el)){
+      el.textContent='';el.classList.remove('active','draggable');
+      el.style.left='50%';el.style.top='50%';el.style.transform='translate(-50%,-50%)';
+    }
+    _scHideDeleteZone();
+  }
   document.addEventListener('touchstart',function(e){
     var el=getEl();if(!el)return;
     if(e.target===el&&el.classList.contains('draggable'))startDrag(e);
   },{passive:false});
   document.addEventListener('touchmove',function(e){if(dragging)onMove(e);},{passive:false});
   document.addEventListener('touchend',onUp);
-  // Tap outside text while editing → exit edit, enter draggable mode
   document.addEventListener('touchstart',function(e){
-    var el=getEl();if(!el||isEditMode(el))return;// already draggable, skip
-    // isEditMode returns true when NOT draggable (i.e. editing)
-    // We want: if editing and tap outside el → blur and go draggable
+    var el=getEl();if(!el||isEditMode(el))return;
   },{passive:true});
   document.addEventListener('click',function(e){
     var el=getEl();if(!el)return;
     var cr=document.getElementById('story-creator');
     if(!cr||cr.style.display==='none')return;
-    // If currently in edit mode (not draggable) and click is outside el
     if(!el.classList.contains('draggable')&&e.target!==el&&el.textContent.trim()){
       _scIsTyping=false;
       el.blur();el.classList.add('draggable');_scUpdateCircles();
     }
   });
-  // blur event on text → exit typing mode, enter draggable mode
   document.addEventListener('focusout',function(e){
     var el=getEl();if(!el||e.target!==el)return;
     var cr=document.getElementById('story-creator');
     if(!cr||cr.style.display==='none')return;
-    // Delay so scActivateText (re-tap A) or circle tap can set _scIsTyping=true
     setTimeout(function(){
       if(_scIsTyping) return;
-      // Check if focus moved to circle (tapping circle should keep typing mode)
       var dot=document.getElementById('sc-color-cycle');
       if(dot&&document.activeElement===dot) return;
       if(el.textContent.trim()) el.classList.add('draggable');
@@ -5645,64 +5654,148 @@ function _scDotTouch(e){
   scCycleColor();
 }
 
-// ── PINCH TO RESIZE TEXT ─────────────────────────────────────────────────────
+// ── PINCH TO RESIZE (text + stickers) ────────────────────────────────────────
 (function(){
-  var _pinching=false,_initDist=0,_initSize=20;
+  var _pinching=false,_initDist=0,_initScale=1,_pinchTarget=null;
   var _scTextSize=20;
   function dist(t){var dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy);}
-  var canvas=null;
-  function getCanvas(){return document.getElementById('sc-canvas');}
+
   document.addEventListener('touchstart',function(e){
     var cr=document.getElementById('story-creator');
     if(!cr||cr.style.display==='none')return;
     if(e.touches.length===2){
-      canvas=getCanvas();
-      if(!canvas||!canvas.contains(e.target))return;
-      _pinching=true;
-      _initDist=dist(e.touches);
-      _initSize=_scTextSize;
-      e.preventDefault();
+      var canvas=document.getElementById('sc-canvas');
+      if(!canvas)return;
+      // Find which canvas item is under one of the fingers
+      var t1=e.touches[0],t2=e.touches[1];
+      var el1=document.elementFromPoint(t1.clientX,t1.clientY);
+      var el2=document.elementFromPoint(t2.clientX,t2.clientY);
+      var sticker=null;
+      [el1,el2].forEach(function(el){
+        if(!sticker&&el){
+          var s=el.closest?el.closest('._sc-sticker'):null;
+          if(s&&canvas.contains(s)) sticker=s;
+        }
+      });
+      var textOv=document.getElementById('sc-text-ov');
+      if(sticker){
+        _pinchTarget='sticker';
+        _pinching=true;
+        _initDist=dist(e.touches);
+        _initScale=parseFloat(sticker.dataset.scale||'1');
+        sticker.dataset.pinching='1';
+      } else if(textOv&&textOv.classList.contains('draggable')){
+        _pinchTarget='text';
+        _pinching=true;
+        _initDist=dist(e.touches);
+        _initScale=_scTextSize;
+      } else if(canvas.contains(el1)||canvas.contains(el2)){
+        // Pinch on canvas with no specific target → resize text
+        _pinchTarget='text';
+        _pinching=true;
+        _initDist=dist(e.touches);
+        _initScale=_scTextSize;
+      }
+      if(_pinching) e.preventDefault();
     }
   },{passive:false});
+
   document.addEventListener('touchmove',function(e){
     if(!_pinching||e.touches.length!==2)return;
     var d=dist(e.touches);
-    var newSize=Math.min(80,Math.max(12,Math.round(_initSize*(d/_initDist))));
-    _scTextSize=newSize;
-    var ov=document.getElementById('sc-text-ov');
-    if(ov) ov.style.fontSize=newSize+'px';
+    var ratio=d/Math.max(_initDist,1);
+    if(_pinchTarget==='sticker'){
+      var canvas=document.getElementById('sc-canvas');
+      if(!canvas)return;
+      var sticker=canvas.querySelector('._sc-sticker[data-pinching="1"]');
+      if(sticker){
+        var newScale=Math.min(4,Math.max(0.3,_initScale*ratio));
+        sticker.dataset.scale=newScale;
+        // Keep translate(-50%,-50%) and apply scale
+        var baseTransform=sticker.dataset.rot?'translate(-50%,-50%) rotate('+sticker.dataset.rot+'deg)':'translate(-50%,-50%)';
+        sticker.style.transform=baseTransform+' scale('+newScale+')';
+      }
+    } else {
+      var newSize=Math.min(80,Math.max(12,Math.round(_initScale*ratio)));
+      _scTextSize=newSize;
+      var ov=document.getElementById('sc-text-ov');
+      if(ov) ov.style.fontSize=newSize+'px';
+    }
     e.preventDefault();
   },{passive:false});
-  document.addEventListener('touchend',function(){_pinching=false;});
+
+  document.addEventListener('touchend',function(){
+    if(_pinchTarget==='sticker'){
+      var canvas=document.getElementById('sc-canvas');
+      if(canvas){var s=canvas.querySelector('._sc-sticker[data-pinching="1"]');if(s)delete s.dataset.pinching;}
+    }
+    _pinching=false;_pinchTarget=null;
+  });
 })();
 
 // ── STICKER SYSTEM ───────────────────────────────────────────────────────────
+// Real illustrated SVG stickers (not emojis)
 var _SC_STICKERS=[
-  // Expressions
-  '😀','😂','😍','😎','🥹','😭','😤','🤩','🥳','😴',
-  // Nature
-  '🌸','🌙','⭐','🔥','❄️','🌈','☀️','🌊','🍃','💫',
-  // Objects
-  '❤️','💔','✨','🎉','🎊','👑','💎','🎵','📸','🏆',
-  // Food
-  '🍕','🧁','🍦','☕','🍓','🥑','🍩','🎂','🍜','🥤',
-  // Hands
-  '👋','✌️','🤙','👏','🙌','💪','🫶','🤝','👍','🫰'
+  // Hearts
+  {id:'heart-red',   svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M40 68s-30-18-30-38a18 18 0 0 1 30-13 18 18 0 0 1 30 13c0 20-30 38-30 38z" fill="#FF3B5C" stroke="#fff" stroke-width="2.5"/></svg>'},
+  {id:'heart-pink',  svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M40 68s-30-18-30-38a18 18 0 0 1 30-13 18 18 0 0 1 30 13c0 20-30 38-30 38z" fill="#FF85A1" stroke="#fff" stroke-width="2"/><path d="M40 58s-20-12-20-28a12 12 0 0 1 20-9" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="3" stroke-linecap="round"/></svg>'},
+  {id:'heart-broken',svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M40 68s-30-18-30-38a18 18 0 0 1 30-13 18 18 0 0 1 30 13c0 20-30 38-30 38z" fill="#8B93A0" stroke="#fff" stroke-width="2"/><path d="M40 20l-4 14h8l-6 18" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>'},
+  // Stars
+  {id:'star-gold',   svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M40 8l8 24h25l-20 15 7 24-20-14-20 14 7-24L7 32h25z" fill="#FFD700" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>'},
+  {id:'star-shine',  svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M40 4l5 31 31 5-31 5-5 31-5-31-31-5 31-5z" fill="#FFF176" stroke="#FFD700" stroke-width="1.5"/></svg>'},
+  // Fire
+  {id:'fire',        svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M40 72c-14 0-24-10-24-22 0-8 5-15 10-20-1 6 2 10 5 12 0-8 5-18 15-28-2 12 4 18 4 18s4-6 3-14c6 6 10 14 10 22 0 18-10 32-23 32z" fill="#FF6B35"/><path d="M40 72c-8 0-14-6-14-14 0-5 3-9 7-13-1 4 2 7 4 8 0-6 3-12 8-18-1 8 3 13 3 13s2-4 1-9c4 4 7 9 7 15 0 10-7 18-16 18z" fill="#FFD700"/></svg>'},
+  // Sun
+  {id:'sun',         svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="14" fill="#FFD700" stroke="#fff" stroke-width="2"/><g stroke="#FFD700" stroke-width="3" stroke-linecap="round"><line x1="40" y1="8" x2="40" y2="18"/><line x1="40" y1="62" x2="40" y2="72"/><line x1="8" y1="40" x2="18" y2="40"/><line x1="62" y1="40" x2="72" y2="40"/><line x1="18" y1="18" x2="25" y2="25"/><line x1="55" y1="55" x2="62" y2="62"/><line x1="62" y1="18" x2="55" y2="25"/><line x1="25" y1="55" x2="18" y2="62"/></g></svg>'},
+  // Moon
+  {id:'moon',        svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M48 16a26 26 0 1 0 0 48 20 20 0 0 1 0-48z" fill="#C8B8FF" stroke="#fff" stroke-width="2"/><circle cx="38" cy="24" r="3" fill="rgba(255,255,255,0.4)"/><circle cx="30" cy="38" r="2" fill="rgba(255,255,255,0.3)"/></svg>'},
+  // Rainbow
+  {id:'rainbow',     svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M10 56a30 30 0 0 1 60 0" fill="none" stroke="#FF3B5C" stroke-width="6" stroke-linecap="round"/><path d="M16 56a24 24 0 0 1 48 0" fill="none" stroke="#FF9500" stroke-width="5" stroke-linecap="round"/><path d="M22 56a18 18 0 0 1 36 0" fill="none" stroke="#FFD700" stroke-width="5" stroke-linecap="round"/><path d="M28 56a12 12 0 0 1 24 0" fill="none" stroke="#34C759" stroke-width="5" stroke-linecap="round"/><path d="M34 56a6 6 0 0 1 12 0" fill="none" stroke="#007AFF" stroke-width="4" stroke-linecap="round"/></svg>'},
+  // Lightning
+  {id:'bolt',        svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M46 8L24 44h18L30 72 58 34H40z" fill="#FFD700" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>'},
+  // Crown
+  {id:'crown',       svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M10 56l8-32 14 20 8-28 8 28 14-20 8 32H10z" fill="#FFD700" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><rect x="10" y="56" width="60" height="10" rx="3" fill="#FFB800"/><circle cx="40" cy="20" r="4" fill="#fff"/><circle cx="18" cy="36" r="3" fill="#fff"/><circle cx="62" cy="36" r="3" fill="#fff"/></svg>'},
+  // Diamond
+  {id:'diamond',     svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><polygon points="40,8 70,32 40,72 10,32" fill="#5AC8FA" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="40,8 70,32 40,38 10,32" fill="#0099CC" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><polygon points="40,72 70,32 40,38" fill="#A0E8FF"/><polygon points="40,72 10,32 40,38" fill="#7DD8F0"/></svg>'},
+  // Music note
+  {id:'music',       svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M52 14v32" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M32 20v32" stroke="#fff" stroke-width="3" stroke-linecap="round"/><path d="M32 20l20-6" stroke="#fff" stroke-width="3" stroke-linecap="round"/><circle cx="28" cy="52" r="8" fill="#FF85A1" stroke="#fff" stroke-width="2"/><circle cx="48" cy="46" r="8" fill="#FF85A1" stroke="#fff" stroke-width="2"/></svg>'},
+  // Camera
+  {id:'camera',      svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="24" width="64" height="44" rx="8" fill="#1C1C1E" stroke="#fff" stroke-width="2"/><circle cx="40" cy="46" r="14" fill="#3A3A3C" stroke="#fff" stroke-width="2.5"/><circle cx="40" cy="46" r="8" fill="#5AC8FA"/><circle cx="44" cy="42" r="2.5" fill="rgba(255,255,255,0.6)"/><path d="M28 24l4-8h16l4 8" fill="#1C1C1E" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><rect x="56" y="32" width="8" height="5" rx="2" fill="#FFD700"/></svg>'},
+  // Trophy
+  {id:'trophy',      svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M24 10h32v24a16 16 0 0 1-32 0V10z" fill="#FFD700" stroke="#fff" stroke-width="2"/><path d="M24 22H14a8 8 0 0 0 10 10" fill="none" stroke="#FFD700" stroke-width="6" stroke-linecap="round"/><path d="M56 22h10a8 8 0 0 1-10 10" fill="none" stroke="#FFD700" stroke-width="6" stroke-linecap="round"/><rect x="34" y="50" width="12" height="10" fill="#FFB800"/><rect x="26" y="60" width="28" height="8" rx="4" fill="#FFD700" stroke="#fff" stroke-width="2"/></svg>'},
+  // Peace
+  {id:'peace',       svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><circle cx="40" cy="40" r="28" fill="none" stroke="#7ED56F" stroke-width="5"/><line x1="40" y1="12" x2="40" y2="68" stroke="#7ED56F" stroke-width="5"/><line x1="40" y1="40" x2="20" y2="60" stroke="#7ED56F" stroke-width="5"/><line x1="40" y1="40" x2="60" y2="60" stroke="#7ED56F" stroke-width="5"/></svg>'},
+  // Snowflake
+  {id:'snow',        svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><line x1="40" y1="8" x2="40" y2="72" stroke="#A0E8FF" stroke-width="4" stroke-linecap="round"/><line x1="8" y1="40" x2="72" y2="40" stroke="#A0E8FF" stroke-width="4" stroke-linecap="round"/><line x1="17" y1="17" x2="63" y2="63" stroke="#A0E8FF" stroke-width="4" stroke-linecap="round"/><line x1="63" y1="17" x2="17" y2="63" stroke="#A0E8FF" stroke-width="4" stroke-linecap="round"/><circle cx="40" cy="40" r="6" fill="#A0E8FF" stroke="#fff" stroke-width="2"/></svg>'},
+  // Sparkle
+  {id:'sparkle',     svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M40 8l4 28 28 4-28 4-4 28-4-28-28-4 28-4z" fill="#FFF176" stroke="#FFD700" stroke-width="1.5"/><path d="M16 16l2 10 10 2-10 2-2 10-2-10-10-2 10-2z" fill="#FFF9C4" stroke="#FFD700" stroke-width="1"/><path d="M62 54l2 8 8 2-8 2-2 8-2-8-8-2 8-2z" fill="#FFF9C4" stroke="#FFD700" stroke-width="1"/></svg>'},
+  // Party
+  {id:'party',       svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M16 64L40 16l8 36-14-10z" fill="#FF9500" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><circle cx="56" cy="20" r="6" fill="#FF3B5C" stroke="#fff" stroke-width="2"/><circle cx="22" cy="28" r="4" fill="#5AC8FA" stroke="#fff" stroke-width="2"/><circle cx="60" cy="52" r="4" fill="#34C759" stroke="#fff" stroke-width="2"/><line x1="48" y1="48" x2="64" y2="56" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/><line x1="32" y1="18" x2="24" y2="10" stroke="#FF85A1" stroke-width="2.5" stroke-linecap="round"/></svg>'},
+  // Wave
+  {id:'wave',        svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><path d="M10 52c6-16 14-16 20-8s14 8 20-8 14-8 20 8" fill="none" stroke="#5AC8FA" stroke-width="6" stroke-linecap="round"/><path d="M10 42c6-16 14-16 20-8s14 8 20-8 14-8 20 8" fill="none" stroke="rgba(90,200,250,0.4)" stroke-width="4" stroke-linecap="round"/></svg>'},
+  // Cherry blossom
+  {id:'blossom',     svg:'<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg"><ellipse cx="40" cy="22" rx="10" ry="14" fill="#FFB7C5" transform="rotate(0 40 40)"/><ellipse cx="40" cy="22" rx="10" ry="14" fill="#FFB7C5" transform="rotate(72 40 40)"/><ellipse cx="40" cy="22" rx="10" ry="14" fill="#FFB7C5" transform="rotate(144 40 40)"/><ellipse cx="40" cy="22" rx="10" ry="14" fill="#FFB7C5" transform="rotate(216 40 40)"/><ellipse cx="40" cy="22" rx="10" ry="14" fill="#FFB7C5" transform="rotate(288 40 40)"/><circle cx="40" cy="40" r="8" fill="#FFD700"/></svg>'},
 ];
 
 function scOpenStickers(){
   var ex=document.getElementById('sc-sticker-sheet');if(ex){ex.remove();return;}
   var sheet=document.createElement('div');
   sheet.id='sc-sticker-sheet';
-  sheet.style.cssText='position:absolute;bottom:70px;left:0;right:0;z-index:50;background:rgba(20,20,20,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:20px 20px 0 0;padding:14px 16px 24px;';
+  sheet.style.cssText='position:absolute;bottom:70px;left:0;right:0;z-index:50;background:rgba(18,18,18,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:20px 20px 0 0;padding:12px 14px 28px;';
   var handle=document.createElement('div');
-  handle.style.cssText='width:34px;height:3px;background:rgba(255,255,255,.25);border-radius:2px;margin:0 auto 14px';
+  handle.style.cssText='width:34px;height:3px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 12px';
+  var label=document.createElement('div');
+  label.style.cssText='font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:10px;text-align:center';
+  label.textContent='STICKERS';
   var grid=document.createElement('div');
-  grid.style.cssText='display:grid;grid-template-columns:repeat(10,1fr);gap:6px;';
+  grid.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:10px;';
   _SC_STICKERS.forEach(function(s){
     var btn=document.createElement('button');
-    btn.style.cssText='background:none;border:none;font-size:26px;cursor:pointer;padding:4px;border-radius:8px;transition:transform .1s;-webkit-tap-highlight-color:transparent;line-height:1';
-    btn.textContent=s;
+    btn.style.cssText='background:rgba(255,255,255,.07);border:none;border-radius:14px;width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:10px;transition:transform .1s,background .1s;-webkit-tap-highlight-color:transparent;';
+    btn.innerHTML=s.svg;
+    btn.querySelector('svg').style.cssText='width:100%;height:100%;';
+    btn.addEventListener('touchstart',function(){btn.style.transform='scale(.88)';btn.style.background='rgba(255,255,255,.14)';},{passive:true});
+    btn.addEventListener('touchend',function(){btn.style.transform='';btn.style.background='rgba(255,255,255,.07)';},{passive:true});
     btn.addEventListener('click',function(){
       _scPlaceSticker(s);
       sheet.remove();
@@ -5710,52 +5803,153 @@ function scOpenStickers(){
     grid.appendChild(btn);
   });
   sheet.appendChild(handle);
+  sheet.appendChild(label);
   sheet.appendChild(grid);
   var canvas=document.getElementById('sc-canvas');
   if(canvas) canvas.appendChild(sheet);
+  // Tap outside closes
+  setTimeout(function(){
+    document.addEventListener('touchstart',function _sClose(e){
+      if(!sheet.contains(e.target)){sheet.remove();document.removeEventListener('touchstart',_sClose);}
+    },{passive:true});
+  },200);
 }
 
-function _scPlaceSticker(emoji){
+// ── DELETE ZONE (Instagram-style) ─────────────────────────────────────────────
+var _scDeleteZone=null;
+var _scDeleteActive=false;
+function _scShowDeleteZone(){
+  if(_scDeleteZone)return;
+  var canvas=document.getElementById('sc-canvas');if(!canvas)return;
+  var dz=document.createElement('div');
+  dz.id='sc-delete-zone';
+  dz.style.cssText='position:absolute;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);z-index:100;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transition:opacity .2s ease,transform .2s cubic-bezier(.34,1.2,.64,1);pointer-events:none;';
+  dz.innerHTML='<div id="sc-dz-circle" style="width:54px;height:54px;border-radius:50%;background:rgba(40,40,40,.85);backdrop-filter:blur(10px);border:1.5px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;transition:background .18s,transform .18s;">'+
+    '<svg width="22" height="22" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>'+
+    '</div>'+
+    '<span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.5px;text-transform:uppercase;">Delete</span>';
+  canvas.appendChild(dz);
+  _scDeleteZone=dz;
+  requestAnimationFrame(function(){
+    dz.style.opacity='1';
+    dz.style.transform='translateX(-50%) translateY(0)';
+  });
+}
+function _scHideDeleteZone(){
+  if(!_scDeleteZone)return;
+  var dz=_scDeleteZone;
+  dz.style.opacity='0';
+  dz.style.transform='translateX(-50%) translateY(20px)';
+  setTimeout(function(){if(dz.parentNode)dz.parentNode.removeChild(dz);},220);
+  _scDeleteZone=null;
+  _scDeleteActive=false;
+}
+function _scCheckDeleteZone(t,el){
+  if(!_scDeleteZone)return false;
+  var dz=document.getElementById('sc-dz-circle');if(!dz)return false;
+  var r=dz.getBoundingClientRect();
+  var inside=t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom;
+  if(inside&&!_scDeleteActive){
+    _scDeleteActive=true;
+    dz.style.background='rgba(232,53,42,.85)';
+    dz.style.transform='scale(1.18)';
+    dz.style.borderColor='rgba(232,53,42,.6)';
+    // Animate sticker shrink into trash
+    if(el){el.style.transition='transform .18s ease,opacity .18s ease';el.style.transform='translate(-50%,-50%) scale(0.3)';el.style.opacity='0.3';}
+  } else if(!inside&&_scDeleteActive){
+    _scDeleteActive=false;
+    dz.style.background='rgba(40,40,40,.85)';
+    dz.style.transform='';
+    dz.style.borderColor='rgba(255,255,255,.18)';
+    if(el){el.style.transition='';el.style.opacity='';}
+  }
+  return inside;
+}
+
+function _scPlaceSticker(stickerDef){
   var canvas=document.getElementById('sc-canvas');if(!canvas)return;
   var el=document.createElement('div');
-  el.style.cssText='position:absolute;font-size:48px;line-height:1;cursor:move;user-select:none;-webkit-user-select:none;z-index:15;touch-action:none;transform:translate(-50%,-50%)';
-  el.textContent=emoji;
+  el.className='_sc-sticker';
+  el.dataset.scale='1';
+  el.style.cssText='position:absolute;width:80px;height:80px;cursor:move;user-select:none;-webkit-user-select:none;z-index:15;touch-action:none;transform:translate(-50%,-50%);';
+  el.innerHTML=stickerDef.svg;
+  el.querySelector('svg').style.cssText='width:100%;height:100%;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.35));';
   // Place at center
-  el.style.left='50%';el.style.top='45%';
+  el.style.left='50%';el.style.top='42%';
   canvas.appendChild(el);
-  // Make draggable
-  var dragging=false,sx,sy,ox,oy;
+
+  // Entry animation
+  el.style.animation='_scStickerIn .28s cubic-bezier(.34,1.4,.64,1) both';
+
+  var dragging=false,sx,sy,ox,oy,_curScale=1,_curRot=0;
+
   el.addEventListener('touchstart',function(e){
-    dragging=true;
+    if(e.touches.length!==1)return;
     var t=e.touches[0];
     var r=el.getBoundingClientRect();
     var cr=canvas.getBoundingClientRect();
+    // Compute center position in canvas coords
     ox=r.left+r.width/2-cr.left;
     oy=r.top+r.height/2-cr.top;
+    // Convert current left/top to numbers (they may already be set)
+    el.style.left=ox+'px';
+    el.style.top=oy+'px';
+    el.style.transform='translate(-50%,-50%) scale('+(_curScale*1.12)+')';
     sx=t.clientX;sy=t.clientY;
-    el.style.transform='translate(-50%,-50%) scale(1.15)';
+    dragging=true;
+    _scShowDeleteZone();
     e.preventDefault();
+    e.stopPropagation();
   },{passive:false});
+
   el.addEventListener('touchmove',function(e){
-    if(!dragging)return;
+    if(!dragging||e.touches.length!==1)return;
     var t=e.touches[0];
-    var cr=canvas.getBoundingClientRect();
-    el.style.left=(ox+(t.clientX-sx))+'px';
-    el.style.top=(oy+(t.clientY-sy))+'px';
+    var newLeft=ox+(t.clientX-sx);
+    var newTop=oy+(t.clientY-sy);
+    el.style.left=newLeft+'px';
+    el.style.top=newTop+'px';
+    _scCheckDeleteZone(t,el);
     e.preventDefault();
   },{passive:false});
-  el.addEventListener('touchend',function(){
+
+  el.addEventListener('touchend',function(e){
+    if(!dragging)return;
     dragging=false;
-    el.style.transform='translate(-50%,-50%)';
+    var t=e.changedTouches[0];
+    if(_scCheckDeleteZone(t,el)){
+      // Delete it
+      el.style.transition='transform .15s ease,opacity .15s ease';
+      el.style.transform='translate(-50%,-50%) scale(0)';
+      el.style.opacity='0';
+      setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},160);
+    } else {
+      el.style.transform='translate(-50%,-50%) scale('+_curScale+')';
+    }
+    _scHideDeleteZone();
   });
-  // Double-tap to delete
-  var lastTap=0;
+
+  // Double-tap fallback delete
+  var _lastTap=0;
   el.addEventListener('touchend',function(){
     var now=Date.now();
-    if(now-lastTap<300){el.remove();}
-    lastTap=now;
+    if(now-_lastTap<300&&!dragging){
+      el.style.transition='transform .15s,opacity .15s';
+      el.style.transform='translate(-50%,-50%) scale(0)';el.style.opacity='0';
+      setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},160);
+    }
+    _lastTap=now;
   });
 }
+
+// Inject sticker entry keyframe once
+(function(){
+  if(document.getElementById('_sc-sticker-kf'))return;
+  var st=document.createElement('style');
+  st.id='_sc-sticker-kf';
+  st.textContent='@keyframes _scStickerIn{from{opacity:0;transform:translate(-50%,-50%) scale(0.3) rotate(-10deg)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}';
+  document.head.appendChild(st);
+})();
 
 function buildFChips(){
   var row=document.getElementById('sc-fonts');row.innerHTML='';
