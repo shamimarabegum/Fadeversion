@@ -170,12 +170,9 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .sc-rpbtn{background:rgba(0,0,0,.5);border:1.5px solid rgba(255,255,255,.18);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .15s,opacity .15s;flex-shrink:0}
 .sc-rpbtn:active{transform:scale(.88);opacity:.7}
 /* Single cycling color dot */
-#sc-color-cycle{width:34px;height:34px;border-radius:50%;cursor:pointer;border:2.5px solid rgba(255,255,255,.7);box-shadow:0 0 0 1.5px rgba(0,0,0,.3);transition:background .2s,transform .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0}
+#sc-color-cycle{width:34px;height:34px;border-radius:50%;cursor:pointer;border:2.5px solid rgba(255,255,255,.7);box-shadow:0 0 0 1.5px rgba(0,0,0,.3);transition:background .2s,transform .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;display:none}
 #sc-color-cycle:active{transform:scale(.88)}
-/* Bg color button (text-only mode) */
-#sc-bg-cycle{width:34px;height:34px;border-radius:50%;cursor:pointer;border:2.5px solid rgba(255,255,255,.5);box-shadow:0 0 0 1.5px rgba(0,0,0,.3);transition:background .2s,transform .15s cubic-bezier(.34,1.56,.64,1);display:none;flex-shrink:0;position:relative}
-#sc-bg-cycle:active{transform:scale(.88)}
-#sc-bg-cycle::after{content:'BG';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;font-family:'Inter',sans-serif;color:rgba(255,255,255,.85);letter-spacing:.3px}
+#sc-bg-cycle{display:none}
 #sc-bar{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:10px 16px max(22px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;background:linear-gradient(transparent,rgba(0,0,0,.68))}
 .sc-fonts{display:none;flex-direction:row;gap:8px;overflow-x:auto}
 .sc-fonts.on{display:flex}
@@ -1489,13 +1486,20 @@ body {
       <button class="sc-rpbtn" id="sc-addtext-btn" onclick="scActivateText()" title="Add text">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><text x="12" y="17" text-anchor="middle" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#fff">A</text></svg>
       </button>
-      <div id="sc-color-cycle" onclick="scCycleColor()" title="Color" style="display:none"></div>
-      <div id="sc-bg-cycle" onclick="scCycleBg()" title="Background color" style="display:none"></div>
+      <button class="sc-rpbtn" onclick="scOpenStickers()" title="Stickers">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="2"/><circle cx="9" cy="10" r="1.2" fill="#fff"/><circle cx="15" cy="10" r="1.2" fill="#fff"/><path d="M8 14.5c1.5 2 6.5 2 8 0" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <div id="sc-color-cycle" onclick="scCycleColor()" onmousedown="event.preventDefault()" ontouchstart="_scDotTouch(event)" title="Color" style="display:none"></div>
     </div>
   </div>
   <div id="sc-bar">
     <div class="sc-fonts" id="sc-fonts"></div>
-    <div class="sc-acts"><label class="sc-pb" for="sc-file"><svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></label><input id="sc-file" type="file" accept="image/*" style="display:none" onchange="scPhoto(event)"/><button class="sc-share" onclick="scShare()">Add Moment</button></div>
+    <div class="sc-acts">
+      <label class="sc-pb" for="sc-file"><svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></label>
+      <input id="sc-file" type="file" accept="image/*" style="display:none" onchange="scPhoto(event)"/>
+      <button class="sc-pb" onclick="scOpenStickers()" style="border:none;cursor:pointer;font-size:20px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;">😊</button>
+      <button class="sc-share" onclick="scShare()">Add Moment</button>
+    </div>
   </div>
 </div>
 
@@ -5505,19 +5509,34 @@ function openCreator(){
 
 // Update which circle buttons show based on current mode
 function _scUpdateCircles(){
-  var colorDot=document.getElementById('sc-color-cycle');
-  var bgBtn=document.getElementById('sc-bg-cycle');
-  if(_scIsTyping){
-    if(colorDot){colorDot.style.display='block';colorDot.style.background=SC_TEXT_COLORS[_scColorIdx];}
-    if(bgBtn) bgBtn.style.display='none';
-  } else if(!_scIsPhoto){
-    if(bgBtn){bgBtn.style.display='block';bgBtn.style.background=SC_BG_COLORS[_scBgIdx];}
-    if(colorDot) colorDot.style.display='none';
+  var dot=document.getElementById('sc-color-cycle');
+  if(!dot) return;
+  if(_scIsPhoto && !_scIsTyping){
+    // Photo idle: hide circle
+    dot.style.display='none';
   } else {
-    if(colorDot) colorDot.style.display='none';
-    if(bgBtn) bgBtn.style.display='none';
+    // Text idle: show color = current bg color
+    // Typing: show color = current text color
+    dot.style.display='block';
+    dot.style.background=_scIsTyping ? SC_TEXT_COLORS[_scColorIdx] : SC_BG_COLORS[_scBgIdx];
   }
 }
+// Single circle tap — cycles bg color when idle, text color when typing
+function scCycleColor(){
+  var dot=document.getElementById('sc-color-cycle');
+  if(_scIsTyping){
+    _scColorIdx=(_scColorIdx+1)%SC_TEXT_COLORS.length;
+    var c=SC_TEXT_COLORS[_scColorIdx];
+    if(dot){dot.style.display='block';dot.style.background=c;}
+    var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=c;
+  } else {
+    _scBgIdx=(_scBgIdx+1)%SC_BG_COLORS.length;
+    var c=SC_BG_COLORS[_scBgIdx];scBg=c;
+    if(dot){dot.style.display='block';dot.style.background=c;}
+    var canvas=document.getElementById('sc-canvas');if(canvas)canvas.style.background=c;
+  }
+}
+function scCycleBg(){ scCycleColor(); } // alias — bg-cycle button calls same fn
 function closeCreator(){
   var cr=document.getElementById('story-creator');cr.style.opacity='0';
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();
@@ -5538,20 +5557,6 @@ function _scInitColorCycle(){
   _scColorIdx=0;_scBgIdx=0;
   var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=SC_TEXT_COLORS[0];
   // Don't touch display here — _scUpdateCircles handles that
-}
-function scCycleColor(){
-  _scColorIdx=(_scColorIdx+1)%SC_TEXT_COLORS.length;
-  var c=SC_TEXT_COLORS[_scColorIdx];
-  var dot=document.getElementById('sc-color-cycle');
-  if(dot){dot.style.display='block';dot.style.background=c;}
-  var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=c;
-}
-function scCycleBg(){
-  _scBgIdx=(_scBgIdx+1)%SC_BG_COLORS.length;
-  var c=SC_BG_COLORS[_scBgIdx];scBg=c;
-  var bgBtn=document.getElementById('sc-bg-cycle');
-  if(bgBtn){bgBtn.style.display='block';bgBtn.style.background=c;}
-  var canvas=document.getElementById('sc-canvas');if(canvas)canvas.style.background=c;
 }
 // ── scActivateText ────────────────────────────────────────────────────────────
 function scActivateText(){
@@ -5623,14 +5628,135 @@ function scActivateText(){
     var el=getEl();if(!el||e.target!==el)return;
     var cr=document.getElementById('story-creator');
     if(!cr||cr.style.display==='none')return;
-    // Delay so scActivateText (re-tap A) can set _scIsTyping=true before we clear it
+    // Delay so scActivateText (re-tap A) or circle tap can set _scIsTyping=true
     setTimeout(function(){
-      if(_scIsTyping) return; // user re-tapped A, stay in typing mode
+      if(_scIsTyping) return;
+      // Check if focus moved to circle (tapping circle should keep typing mode)
+      var dot=document.getElementById('sc-color-cycle');
+      if(dot&&document.activeElement===dot) return;
       if(el.textContent.trim()) el.classList.add('draggable');
       _scUpdateCircles();
-    }, 100);
+    }, 150);
   });
 })();
+// Prevent text blur when tapping the color circle
+function _scDotTouch(e){
+  e.preventDefault();
+  scCycleColor();
+}
+
+// ── PINCH TO RESIZE TEXT ─────────────────────────────────────────────────────
+(function(){
+  var _pinching=false,_initDist=0,_initSize=20;
+  var _scTextSize=20;
+  function dist(t){var dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy);}
+  var canvas=null;
+  function getCanvas(){return document.getElementById('sc-canvas');}
+  document.addEventListener('touchstart',function(e){
+    var cr=document.getElementById('story-creator');
+    if(!cr||cr.style.display==='none')return;
+    if(e.touches.length===2){
+      canvas=getCanvas();
+      if(!canvas||!canvas.contains(e.target))return;
+      _pinching=true;
+      _initDist=dist(e.touches);
+      _initSize=_scTextSize;
+      e.preventDefault();
+    }
+  },{passive:false});
+  document.addEventListener('touchmove',function(e){
+    if(!_pinching||e.touches.length!==2)return;
+    var d=dist(e.touches);
+    var newSize=Math.min(80,Math.max(12,Math.round(_initSize*(d/_initDist))));
+    _scTextSize=newSize;
+    var ov=document.getElementById('sc-text-ov');
+    if(ov) ov.style.fontSize=newSize+'px';
+    e.preventDefault();
+  },{passive:false});
+  document.addEventListener('touchend',function(){_pinching=false;});
+})();
+
+// ── STICKER SYSTEM ───────────────────────────────────────────────────────────
+var _SC_STICKERS=[
+  // Expressions
+  '😀','😂','😍','😎','🥹','😭','😤','🤩','🥳','😴',
+  // Nature
+  '🌸','🌙','⭐','🔥','❄️','🌈','☀️','🌊','🍃','💫',
+  // Objects
+  '❤️','💔','✨','🎉','🎊','👑','💎','🎵','📸','🏆',
+  // Food
+  '🍕','🧁','🍦','☕','🍓','🥑','🍩','🎂','🍜','🥤',
+  // Hands
+  '👋','✌️','🤙','👏','🙌','💪','🫶','🤝','👍','🫰'
+];
+
+function scOpenStickers(){
+  var ex=document.getElementById('sc-sticker-sheet');if(ex){ex.remove();return;}
+  var sheet=document.createElement('div');
+  sheet.id='sc-sticker-sheet';
+  sheet.style.cssText='position:absolute;bottom:70px;left:0;right:0;z-index:50;background:rgba(20,20,20,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:20px 20px 0 0;padding:14px 16px 24px;';
+  var handle=document.createElement('div');
+  handle.style.cssText='width:34px;height:3px;background:rgba(255,255,255,.25);border-radius:2px;margin:0 auto 14px';
+  var grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(10,1fr);gap:6px;';
+  _SC_STICKERS.forEach(function(s){
+    var btn=document.createElement('button');
+    btn.style.cssText='background:none;border:none;font-size:26px;cursor:pointer;padding:4px;border-radius:8px;transition:transform .1s;-webkit-tap-highlight-color:transparent;line-height:1';
+    btn.textContent=s;
+    btn.addEventListener('click',function(){
+      _scPlaceSticker(s);
+      sheet.remove();
+    });
+    grid.appendChild(btn);
+  });
+  sheet.appendChild(handle);
+  sheet.appendChild(grid);
+  var canvas=document.getElementById('sc-canvas');
+  if(canvas) canvas.appendChild(sheet);
+}
+
+function _scPlaceSticker(emoji){
+  var canvas=document.getElementById('sc-canvas');if(!canvas)return;
+  var el=document.createElement('div');
+  el.style.cssText='position:absolute;font-size:48px;line-height:1;cursor:move;user-select:none;-webkit-user-select:none;z-index:15;touch-action:none;transform:translate(-50%,-50%)';
+  el.textContent=emoji;
+  // Place at center
+  el.style.left='50%';el.style.top='45%';
+  canvas.appendChild(el);
+  // Make draggable
+  var dragging=false,sx,sy,ox,oy;
+  el.addEventListener('touchstart',function(e){
+    dragging=true;
+    var t=e.touches[0];
+    var r=el.getBoundingClientRect();
+    var cr=canvas.getBoundingClientRect();
+    ox=r.left+r.width/2-cr.left;
+    oy=r.top+r.height/2-cr.top;
+    sx=t.clientX;sy=t.clientY;
+    el.style.transform='translate(-50%,-50%) scale(1.15)';
+    e.preventDefault();
+  },{passive:false});
+  el.addEventListener('touchmove',function(e){
+    if(!dragging)return;
+    var t=e.touches[0];
+    var cr=canvas.getBoundingClientRect();
+    el.style.left=(ox+(t.clientX-sx))+'px';
+    el.style.top=(oy+(t.clientY-sy))+'px';
+    e.preventDefault();
+  },{passive:false});
+  el.addEventListener('touchend',function(){
+    dragging=false;
+    el.style.transform='translate(-50%,-50%)';
+  });
+  // Double-tap to delete
+  var lastTap=0;
+  el.addEventListener('touchend',function(){
+    var now=Date.now();
+    if(now-lastTap<300){el.remove();}
+    lastTap=now;
+  });
+}
+
 function buildFChips(){
   var row=document.getElementById('sc-fonts');row.innerHTML='';
   SC_FONTS.forEach(function(f,i){var chip=document.createElement('div');chip.className='sc-fc'+(i===scFI?' sel':'');chip.style.fontFamily=f.ff;chip.style.fontStyle=f.fs;chip.style.fontWeight=f.fw;chip.textContent=f.l;chip.onclick=function(){scFI=i;applyFont();row.querySelectorAll('.sc-fc').forEach(function(c,j){c.classList.toggle('sel',j===i);});};row.appendChild(chip);});
@@ -5639,9 +5765,8 @@ function scFontToggle(){
   scFontOpen=!scFontOpen;
   document.getElementById('sc-fonts').classList.toggle('on',scFontOpen);
   if(scFontOpen){
-    // Entering text mode — make sure overlay is visible
-    var ov=document.getElementById('sc-text-ov');if(ov)ov.style.display='';
-    var colorDot=document.getElementById('sc-color-cycle');if(colorDot)colorDot.style.display='';
+    var ov=document.getElementById('sc-text-ov');if(ov)ov.classList.add('active');
+    scActivateText();
   }
 }
 function scPhoto(e){
