@@ -4929,13 +4929,22 @@ function _openDropPhotoViewer(startIdx){
     previewImg.style.transform=((_cropTx===0&&_cropTy===0&&_cropScale===1)?'none':'translate('+_cropTx+'px,'+_cropTy+'px) scale('+_cropScale+')');
   }
 
-  // Clamp so photo never shows empty space inside the 4:5 frame
+  // Clamp so photo never shows empty space inside the 4:5 frame.
+  // With object-fit:cover the browser already scales the image to fill the frame.
+  // We need to know how much the cover-scaled image overflows the frame on each axis,
+  // then allow tx/ty to move up to that overflow amount.
+  var _imgNatW=1, _imgNatH=1; // set when image loads
+
   function clampCrop(){
     var fw=frame.offsetWidth||300, fh=frame.offsetHeight||375;
-    // With object-fit:cover the image is already cover-scaled.
-    // Extra translate is limited to half the overflow on each axis.
-    var maxTx=Math.max(0,(fw*_cropScale-fw)/2);
-    var maxTy=Math.max(0,(fh*_cropScale-fh)/2);
+    // Reproduce what the browser does for object-fit:cover
+    var coverScale=Math.max(fw/_imgNatW, fh/_imgNatH);
+    // Size of the cover-scaled image
+    var scaledW=_imgNatW*coverScale*_cropScale;
+    var scaledH=_imgNatH*coverScale*_cropScale;
+    // Max translate = half the overflow on each axis (so edges stay within frame)
+    var maxTx=Math.max(0,(scaledW-fw)/2);
+    var maxTy=Math.max(0,(scaledH-fh)/2);
     _cropTx=Math.max(-maxTx,Math.min(maxTx,_cropTx));
     _cropTy=Math.max(-maxTy,Math.min(maxTy,_cropTy));
   }
@@ -5077,6 +5086,7 @@ function _openDropPhotoViewer(startIdx){
     var cf=cFiles[_curIdx];if(!cf)return;
     var f=cf.file||cf;
     var newUrl=URL.createObjectURL(f);
+    previewImg.onload=function(){ _imgNatW=previewImg.naturalWidth||1; _imgNatH=previewImg.naturalHeight||1; };
     previewImg.src=newUrl;
     currentFilter=cf.filter||'none';
     currentCss=(_scFilters.find(function(fl){return fl.id===currentFilter;})||{css:'none'}).css;
