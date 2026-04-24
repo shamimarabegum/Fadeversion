@@ -161,9 +161,8 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #sc-canvas-img.on{display:block}
-#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:20px;line-height:1.35;outline:none;cursor:text;word-break:break-word;-webkit-user-select:text;user-select:text;max-width:82%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px}
-#sc-text-ov.draggable{cursor:move}
-#sc-text-ov:empty::before{content:attr(data-placeholder);opacity:.38;pointer-events:none;cursor:text}
+#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:20px;line-height:1.35;outline:none;cursor:text;word-break:break-word;-webkit-user-select:text;user-select:text;max-width:82%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px;display:none}
+#sc-text-ov.active{display:block}
 /* Top-right panel */
 #sc-top{position:absolute;top:0;left:0;right:0;z-index:26;display:flex;align-items:flex-start;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 14px 0}
 .sc-tbtn{background:rgba(0,0,0,.5);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.14)}
@@ -1480,7 +1479,7 @@ body {
 
 <!-- STORY CREATOR -->
 <div id="story-creator">
-  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov" contenteditable="true" data-placeholder="What's your moment…" spellcheck="false"></div></div>
+  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov" contenteditable="true" spellcheck="false"></div></div>
   <div id="sc-top">
     <button class="sc-tbtn" onclick="closeCreator()">✕</button>
     <div id="sc-right-panel">
@@ -1488,10 +1487,10 @@ body {
         <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
       </button>
       <button class="sc-rpbtn" id="sc-addtext-btn" onclick="scActivateText()" title="Add text">
-        <svg width="17" height="17" fill="none" viewBox="0 0 24 24"><text x="2" y="18" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#fff">A</text><line x1="2" y1="22" x2="22" y2="22" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><text x="12" y="17" text-anchor="middle" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#fff">A</text></svg>
       </button>
-      <div id="sc-color-cycle" onclick="scCycleColor()" title="Text color"></div>
-      <div id="sc-bg-cycle" onclick="scCycleBg()" title="Background color"></div>
+      <div id="sc-color-cycle" onclick="scCycleColor()" title="Color" style="display:none"></div>
+      <div id="sc-bg-cycle" onclick="scCycleBg()" title="Background color" style="display:none"></div>
     </div>
   </div>
   <div id="sc-bar">
@@ -5475,27 +5474,47 @@ function renderStrip(){
 }
 
 // ── STORY CREATOR ─────────────────────────────────────────────────────────────
+var _scIsPhoto=false; // true when a photo is loaded
+var _scIsTyping=false; // true when user is actively typing
+
 function openCreator(){
   scBg='#2C2C2C';scFontOpen=false;scFI=0;scAudience=S.storyAudience||'followers';
-  _scColorIdx=0;_scBgIdx=0;
+  _scColorIdx=0;_scBgIdx=0;_scIsPhoto=false;_scIsTyping=false;
   var c=document.getElementById('sc-canvas');c.style.background=scBg;
   var img=document.getElementById('sc-canvas-img');img.src='';img.classList.remove('on');
   var ov=document.getElementById('sc-text-ov');
-  ov.textContent='';ov.style.color=SC_TEXT_COLORS[0];ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';
-  ov.style.display='';// restore visibility
-  ov.classList.remove('draggable');
+  ov.textContent='';ov.style.color=SC_TEXT_COLORS[0];
+  ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';
+  ov.classList.remove('draggable','active');
   applyFont();
-  // Show color dot and bg-cycle for text mode
-  var colorDot=document.getElementById('sc-color-cycle');if(colorDot)colorDot.style.display='';
-  // Show bg-cycle only when no photo
-  var bgBtn=document.getElementById('sc-bg-cycle');if(bgBtn)bgBtn.style.display='';
-  document.getElementById('sc-file').value='';document.getElementById('sc-fonts').classList.remove('on');
+  // Initially: bg-cycle visible (text mode), color-cycle hidden until typing
+  _scUpdateCircles();
+  document.getElementById('sc-file').value='';
+  document.getElementById('sc-fonts').classList.remove('on');
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();_scActiveFilter='none';
   buildSwatches();buildFChips();_scInitColorCycle();
   var cr=document.getElementById('story-creator');cr.style.display='flex';
   history.pushState({_fade:'story-creator'},'');
   requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';});});
-  // No auto-focus — user taps text icon to enter text mode
+}
+
+// Update which circle buttons show based on current mode
+function _scUpdateCircles(){
+  var colorDot=document.getElementById('sc-color-cycle');
+  var bgBtn=document.getElementById('sc-bg-cycle');
+  if(_scIsTyping){
+    // Typing: show color circle (changes text color), hide bg
+    if(colorDot){colorDot.style.display='';colorDot.style.background=SC_TEXT_COLORS[_scColorIdx];}
+    if(bgBtn) bgBtn.style.display='none';
+  } else if(!_scIsPhoto){
+    // Text-only idle: show bg circle (changes background), hide color
+    if(bgBtn){bgBtn.style.display='';bgBtn.style.background=SC_BG_COLORS[_scBgIdx];}
+    if(colorDot) colorDot.style.display='none';
+  } else {
+    // Photo mode idle: hide both circles
+    if(colorDot) colorDot.style.display='none';
+    if(bgBtn) bgBtn.style.display='none';
+  }
 }
 function closeCreator(){
   var cr=document.getElementById('story-creator');cr.style.opacity='0';
@@ -5522,12 +5541,14 @@ function _scInitColorCycle(){
   _scColorIdx=0;_scBgIdx=0;
 }
 function scCycleColor(){
+  // Only cycles text color (shown during typing)
   _scColorIdx=(_scColorIdx+1)%SC_TEXT_COLORS.length;
   var c=SC_TEXT_COLORS[_scColorIdx];
   var dot=document.getElementById('sc-color-cycle');if(dot)dot.style.background=c;
   var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=c;
 }
 function scCycleBg(){
+  // Only cycles background (shown in text-only idle mode)
   _scBgIdx=(_scBgIdx+1)%SC_BG_COLORS.length;
   var c=SC_BG_COLORS[_scBgIdx];scBg=c;
   var bgBtn=document.getElementById('sc-bg-cycle');if(bgBtn)bgBtn.style.background=c;
@@ -5535,11 +5556,11 @@ function scCycleBg(){
 }
 // ── scActivateText ────────────────────────────────────────────────────────────
 function scActivateText(){
+  _scIsTyping=true;
   var ov=document.getElementById('sc-text-ov');
-  ov.style.display='';// show in case photo mode hid it
+  ov.classList.add('active');
   ov.classList.remove('draggable');
-  // Show color dot (needed in text mode)
-  var colorDot=document.getElementById('sc-color-cycle');if(colorDot)colorDot.style.display='';
+  _scUpdateCircles();
   setTimeout(function(){
     ov.focus();
     var range=document.createRange();range.selectNodeContents(ov);range.collapse(false);
@@ -5594,15 +5615,17 @@ function scActivateText(){
     if(!cr||cr.style.display==='none')return;
     // If currently in edit mode (not draggable) and click is outside el
     if(!el.classList.contains('draggable')&&e.target!==el&&el.textContent.trim()){
-      el.blur();el.classList.add('draggable');
+      el.blur();el.classList.add('draggable');_scIsTyping=false;_scUpdateCircles();
     }
   });
-  // blur event on text → enter draggable mode
+  // blur event on text → exit typing mode, enter draggable mode
   document.addEventListener('focusout',function(e){
     var el=getEl();if(!el||e.target!==el)return;
     var cr=document.getElementById('story-creator');
-    if(cr&&cr.style.display!=='none'&&el.textContent.trim()){
-      el.classList.add('draggable');
+    if(cr&&cr.style.display!=='none'){
+      _scIsTyping=false;
+      if(el.textContent.trim()) el.classList.add('draggable');
+      _scUpdateCircles();
     }
   });
 })();
@@ -5626,15 +5649,15 @@ function scPhoto(e){
   img.src=url;img.classList.add('on');
   img.style.filter='none';
   _scActiveFilter='none';
-  // Hide text overlay while photo is shown
-  var ov=document.getElementById('sc-text-ov');if(ov)ov.style.display='none';
-  // Hide font strip and reset its open state
+  _scIsPhoto=true;_scIsTyping=false;
+  // Reset text overlay — hidden until user taps A
+  var ov=document.getElementById('sc-text-ov');
+  if(ov){ov.textContent='';ov.classList.remove('active','draggable');ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';}
+  // Hide font strip
   scFontOpen=false;
   var fonts=document.getElementById('sc-fonts');if(fonts)fonts.classList.remove('on');
-  // Hide the color dot and bg dot (not needed for photo mode)
-  var colorDot=document.getElementById('sc-color-cycle');if(colorDot)colorDot.style.display='none';
-  // Hide bg-cycle (bg color only for text posts)
-  var bgBtn=document.getElementById('sc-bg-cycle');if(bgBtn)bgBtn.style.display='none';
+  // Update circles: photo idle = both hidden
+  _scUpdateCircles();
   _scBuildFilterStrip();
 }
 var _scActiveFilter='none';
