@@ -4861,22 +4861,19 @@ function _updateTrayThumb(i){
     var ctx=canvas.getContext('2d');
     if(filterCss!=='none') ctx.filter=filterCss;
     var fw=crop.fw||300, fh=crop.fh||375;
-    var containScale=Math.min(fw/iw, fh/ih);
+    var coverScale=Math.max(fw/iw, fh/ih);
     var tx=crop.tx||0, ty=crop.ty||0, userScale=crop.scale||1;
-    // The thumb is square — treat as a square crop of the same framing
-    var srcW=fw/(containScale*userScale);
-    var srcH=fh/(containScale*userScale);
-    var srcX=iw/2 - (fw/2 - tx)/(containScale*userScale);
-    var srcY=ih/2 - (fh/2 - ty)/(containScale*userScale);
-    ctx.fillStyle='#000'; ctx.fillRect(0,0,outW,outH);
-    // For the square thumb use the center-square of the source region
+    var totalScale=coverScale*userScale;
+    var srcW=fw/totalScale, srcH=fh/totalScale;
+    var srcX=(iw/2)-(tx/totalScale)-srcW/2;
+    var srcY=(ih/2)-(ty/totalScale)-srcH/2;
+    // For the square thumb crop the center square of the source region
     var squareSize=Math.min(srcW,srcH);
     var sqX=srcX+(srcW-squareSize)/2, sqY=srcY+(srcH-squareSize)/2;
-    sqX=Math.max(0,sqX); sqY=Math.max(0,sqY);
-    var clampW=Math.min(squareSize,iw-sqX), clampH=Math.min(squareSize,ih-sqY);
-    if(clampW>0&&clampH>0){
-      ctx.drawImage(img2, sqX, sqY, clampW, clampH, (outW-outW*(clampW/squareSize))/2, (outH-outH*(clampH/squareSize))/2, outW*(clampW/squareSize), outH*(clampH/squareSize));
-    }
+    sqX=Math.max(0,Math.min(iw-squareSize,sqX));
+    sqY=Math.max(0,Math.min(ih-squareSize,sqY));
+    ctx.fillStyle='#000'; ctx.fillRect(0,0,outW,outH);
+    ctx.drawImage(img2, sqX, sqY, squareSize, squareSize, 0, 0, outW, outH);
     imgEl.src=canvas.toDataURL('image/jpeg',0.8);
     imgEl.style.filter='none'; // already baked
   };
@@ -4899,23 +4896,24 @@ function _openDropPhotoViewer(startIdx){
   preview.style.cssText='width:100%;padding:16px 16px 0;box-sizing:border-box;position:relative;';
 
   var frame=document.createElement('div');
-  frame.style.cssText='position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:16px;background:#000;touch-action:none;';
+  frame.style.cssText='position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:16px;background:#111;touch-action:none;';
 
-  // The image sits inside the frame — always contain (shows full photo). Crop is done via transform + canvas on upload.
+  // Always cover — fills 4:5 frame, no black bars ever.
+  // In crop mode the user drags/pinches to reposition within the same frame.
   var previewImg=document.createElement('img');
-  previewImg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;-webkit-touch-callout:none;user-select:none;display:block;transform-origin:center center;will-change:transform;';
+  previewImg.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;-webkit-touch-callout:none;user-select:none;display:block;transform-origin:center center;will-change:transform;';
   previewImg.draggable=false;
 
   frame.appendChild(previewImg);
   preview.appendChild(frame);
 
-  // ── Pencil / Done button — sits in preview (above frame) so never clipped ──
+  // ── Pencil / Done button ──────────────────────────────────────────────
   var pencilBtn=document.createElement('button');
   pencilBtn.style.cssText='position:absolute;top:26px;right:26px;z-index:20;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.52);border:1.5px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s';
   pencilBtn.innerHTML='<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
   preview.appendChild(pencilBtn);
 
-  // ── Instagram-style crop overlay ─────────────────────────────────────
+  // ── Crop state ────────────────────────────────────────────────────────
   var _cropMode=false;
   var _cropTx=0, _cropTy=0, _cropScale=1;
   var _cropInitTx=0, _cropInitTy=0, _cropInitScale=1;
@@ -4923,19 +4921,19 @@ function _openDropPhotoViewer(startIdx){
   var _cpDragStartX=0, _cpDragStartY=0;
   var _cpInitDist=0;
 
-  // Save per-photo crop state
-  if(!cFiles[_curIdx]){}
   function getCropState(idx){ var c=cFiles[idx]; return c&&c._crop ? c._crop : {tx:0,ty:0,scale:1,fw:0,fh:0}; }
-  function saveCropState(idx, tx, ty, scale, fw, fh){ if(cFiles[idx]) cFiles[idx]._crop={tx:tx,ty:ty,scale:scale,fw:fw||300,fh:fh||375}; }
+  function saveCropState(idx,tx,ty,scale,fw,fh){ if(cFiles[idx]) cFiles[idx]._crop={tx:tx,ty:ty,scale:scale,fw:fw||300,fh:fh||375}; }
 
   function applyImgTransform(animate){
     previewImg.style.transition=animate?'transform .15s ease':'none';
-    previewImg.style.transform='translate('+_cropTx+'px,'+_cropTy+'px) scale('+_cropScale+')';
+    previewImg.style.transform=((_cropTx===0&&_cropTy===0&&_cropScale===1)?'none':'translate('+_cropTx+'px,'+_cropTy+'px) scale('+_cropScale+')');
   }
 
+  // Clamp so photo never shows empty space inside the 4:5 frame
   function clampCrop(){
-    // In contain mode the image may be smaller than the frame — allow free pan but clamp to image bounds
-    var fw=frame.offsetWidth, fh=frame.offsetHeight;
+    var fw=frame.offsetWidth||300, fh=frame.offsetHeight||375;
+    // With object-fit:cover the image is already cover-scaled.
+    // Extra translate is limited to half the overflow on each axis.
     var maxTx=Math.max(0,(fw*_cropScale-fw)/2);
     var maxTy=Math.max(0,(fh*_cropScale-fh)/2);
     _cropTx=Math.max(-maxTx,Math.min(maxTx,_cropTx));
@@ -4946,9 +4944,8 @@ function _openDropPhotoViewer(startIdx){
     _cropMode=true;
     var cs=getCropState(_curIdx);
     _cropTx=cs.tx; _cropTy=cs.ty; _cropScale=cs.scale||1;
-    // Already contain — full photo visible. User pinches/drags to frame their crop.
+    // objectFit stays cover — photo fills 4:5 the whole time
     applyImgTransform(false);
-    // Switch pencil icon to "Done" pill
     pencilBtn.style.cssText='position:absolute;top:26px;right:26px;z-index:20;padding:0 16px;height:34px;border-radius:999px;background:rgba(255,255,255,.95);border:none;color:#111;font-size:13px;font-weight:700;font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;width:auto';
     pencilBtn.innerHTML='Done';
     if(sheet)sheet.style.opacity='0.35';
@@ -4959,12 +4956,9 @@ function _openDropPhotoViewer(startIdx){
     _cropMode=false;
     clampCrop();
     applyImgTransform(true);
-    // Save crop state AND the frame dimensions so the upload canvas can reproduce exactly
     var fw=frame.offsetWidth||300, fh=frame.offsetHeight||375;
-    saveCropState(_curIdx, _cropTx, _cropTy, _cropScale, fw, fh);
-    // Redraw the tray thumbnail to reflect the framing
+    saveCropState(_curIdx,_cropTx,_cropTy,_cropScale,fw,fh);
     _updateTrayThumb(_curIdx);
-    // Restore pencil icon
     pencilBtn.style.cssText='position:absolute;top:26px;right:26px;z-index:20;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.52);border:1.5px solid rgba(255,255,255,.22);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s';
     pencilBtn.innerHTML='<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
     if(sheet)sheet.style.opacity='';
@@ -4976,7 +4970,7 @@ function _openDropPhotoViewer(startIdx){
     if(_cropMode) exitCropMode(); else enterCropMode();
   });
 
-  // Crop drag + pinch (only active in crop mode)
+  // Drag + pinch — only active in crop mode
   function cpDist(t){var dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy);}
 
   frame.addEventListener('touchstart',function(e){
@@ -4984,8 +4978,7 @@ function _openDropPhotoViewer(startIdx){
     if(e.touches.length===2){
       _cpPinchActive=true; _cpDragActive=false;
       _cpInitDist=cpDist(e.touches);
-      _cropInitScale=_cropScale;
-      _cropInitTx=_cropTx; _cropInitTy=_cropTy;
+      _cropInitScale=_cropScale; _cropInitTx=_cropTx; _cropInitTy=_cropTy;
       e.preventDefault();
     } else if(e.touches.length===1){
       _cpDragActive=true; _cpPinchActive=false;
@@ -5000,14 +4993,12 @@ function _openDropPhotoViewer(startIdx){
     if(_cpPinchActive&&e.touches.length===2){
       var d=cpDist(e.touches);
       _cropScale=Math.min(4,Math.max(1,_cropInitScale*(d/_cpInitDist)));
-      clampCrop();
-      applyImgTransform(false);
+      clampCrop(); applyImgTransform(false);
       e.preventDefault();
     } else if(_cpDragActive&&e.touches.length===1){
       _cropTx=e.touches[0].clientX-_cpDragStartX;
       _cropTy=e.touches[0].clientY-_cpDragStartY;
-      clampCrop();
-      applyImgTransform(false);
+      clampCrop(); applyImgTransform(false);
       e.preventDefault();
     }
   },{passive:false});
@@ -5091,8 +5082,8 @@ function _openDropPhotoViewer(startIdx){
     currentCss=(_scFilters.find(function(fl){return fl.id===currentFilter;})||{css:'none'}).css;
     // Apply CSS filter immediately
     previewImg.style.filter=currentCss;
-    // Always contain — full photo shown, crop transform applied on top
-    previewImg.style.objectFit='contain';
+    // Always cover — no black bars
+    previewImg.style.objectFit='cover';
     var cs=getCropState(_curIdx);
     _cropTx=cs.tx; _cropTy=cs.ty; _cropScale=cs.scale||1;
     previewImg.style.transform=(_cropScale>1||_cropTx!==0||_cropTy!==0)?'translate('+_cropTx+'px,'+_cropTy+'px) scale('+_cropScale+')':'none';
@@ -5309,31 +5300,24 @@ function submitPost(){
           var ctx2=canvas2.getContext('2d');
           if(filterCss!=='none') ctx2.filter=filterCss;
           if(hasCrop){
-            // Reproduce what the preview shows using the SAVED frame dimensions
-            // (frame is already removed from DOM by the time upload runs)
+            // Reproduce what the cover preview shows.
+            // object-fit:cover scales the image so it fills the frame, then tx/ty/scale shifts it.
             var previewW=cropState.fw||300, previewH=cropState.fh||Math.round((cropState.fw||300)*5/4);
-            // contain scale: fit entire image in frame
-            var containScale=Math.min(previewW/iw, previewH/ih);
-            // user's transform (in px relative to preview frame center)
+            // cover scale: image fills the frame completely
+            var coverScale=Math.max(previewW/iw, previewH/ih);
             var tx=cropState.tx||0, ty=cropState.ty||0, userScale=cropState.scale||1;
-            // Source region in image-natural coords
-            var srcW=previewW/(containScale*userScale);
-            var srcH=previewH/(containScale*userScale);
-            var srcX=iw/2 - (previewW/2 - tx)/(containScale*userScale);
-            var srcY=ih/2 - (previewH/2 - ty)/(containScale*userScale);
-            // Clamp source rect to image bounds (letterbox with black for out-of-bounds)
-            ctx2.fillStyle='#000';
-            ctx2.fillRect(0,0,outW,outH);
-            var dstSrcX=Math.max(0,srcX), dstSrcY=Math.max(0,srcY);
-            var dstSrcW=Math.min(srcW-(dstSrcX-srcX), iw-dstSrcX);
-            var dstSrcH=Math.min(srcH-(dstSrcY-srcY), ih-dstSrcY);
-            var dstX=Math.round((dstSrcX-srcX)/srcW*outW);
-            var dstY=Math.round((dstSrcY-srcY)/srcH*outH);
-            var dstW=Math.round(dstSrcW/srcW*outW);
-            var dstH=Math.round(dstSrcH/srcH*outH);
-            if(dstSrcW>0&&dstSrcH>0&&dstW>0&&dstH>0){
-              ctx2.drawImage(img2, dstSrcX, dstSrcY, dstSrcW, dstSrcH, dstX, dstY, dstW, dstH);
-            }
+            // Total scale applied to the image in the preview
+            var totalScale=coverScale*userScale;
+            // The visible source region (in image-natural coords)
+            var srcW=previewW/totalScale;
+            var srcH=previewH/totalScale;
+            // Center of source region, shifted by -tx/-ty (translate moves image, so source moves opposite)
+            var srcX=(iw/2) - (tx/totalScale) - srcW/2;
+            var srcY=(ih/2) - (ty/totalScale) - srcH/2;
+            // Clamp to image bounds — cover always fills so should never go out, but clamp anyway
+            srcX=Math.max(0,Math.min(iw-srcW,srcX));
+            srcY=Math.max(0,Math.min(ih-srcH,srcY));
+            ctx2.drawImage(img2, srcX, srcY, srcW, srcH, 0, 0, outW, outH);
           } else {
             // No crop — draw full image scaled to 4:5 output (object-fit:cover behaviour)
             var scale=Math.max(outW/iw, outH/ih);
