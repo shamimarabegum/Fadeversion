@@ -13318,6 +13318,8 @@ function _startExpiryTick(){
 _startExpiryTick();
 
 
+var _epOpen=false; // declared here so voice recording block can reference it safely
+
 // ── VOICE NOTE RECORDING ─────────────────────────────────────────────────────
 // Voice recording — tap mic to start, tap Cancel/Send to finish.
 // touchend on button does NOT auto-send; user must tap Send explicitly.
