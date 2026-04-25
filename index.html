@@ -13567,49 +13567,40 @@ function _startVoiceRecord(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
     T('Microphone not supported');return;
   }
-  if(_voiceActive)return;
+  // Close emoji panel if open
   if(_epOpen)closeEmojiPanel();
-
-  // ── CRITICAL: call getUserMedia FIRST, before any blur/DOM changes.
-  // On Android, inp.blur() consumes the user-gesture context, causing
-  // getUserMedia to be blocked as if it wasn't triggered by a tap.
+  // Show overlay immediately (optimistic) so user sees feedback
   _voiceActive=true;
   _voiceCancelled=false;
+  var ov=document.getElementById('voice-overlay');
+  var btn=document.getElementById('cw-send-btn');
+  var recBar=document.getElementById('voice-rec-bar');
+  if(ov)ov.classList.add('active');
+  if(btn)btn.classList.add('recording');
+
+  // Keep rec bar above keyboard using visualViewport when available
+  function _positionRecBar(){
+    if(!recBar)return;
+    if(window.visualViewport){
+      var offset=window.innerHeight-window.visualViewport.height-window.visualViewport.offsetTop;
+      recBar.style.bottom=Math.max(0,offset)+'px';
+    }
+  }
+  _positionRecBar();
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',_positionRecBar);
+    window.visualViewport.addEventListener('scroll',_positionRecBar);
+    recBar._vpCleanup=function(){
+      window.visualViewport.removeEventListener('resize',_positionRecBar);
+      window.visualViewport.removeEventListener('scroll',_positionRecBar);
+      if(recBar)recBar.style.bottom='';
+    };
+  }
+
+  requestAnimationFrame(function(){if(recBar)recBar.classList.add('show');});
 
   navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
     if(!_voiceActive){stream.getTracks().forEach(function(t){t.stop();});return;}
-
-    // Mic granted — NOW dismiss keyboard and show the rec bar
-    var ci=document.getElementById('chatinp');
-    if(ci)ci.blur();
-
-    var ov=document.getElementById('voice-overlay');
-    var btn=document.getElementById('cw-send-btn');
-    var recBar=document.getElementById('voice-rec-bar');
-    if(ov)ov.classList.add('active');
-    if(btn)btn.classList.add('recording');
-
-    // Position rec bar above keyboard
-    function _positionRecBar(){
-      if(!recBar)return;
-      if(window.visualViewport){
-        var offset=window.innerHeight-window.visualViewport.height-window.visualViewport.offsetTop;
-        recBar.style.bottom=Math.max(0,offset)+'px';
-      }
-    }
-    _positionRecBar();
-    if(window.visualViewport){
-      window.visualViewport.addEventListener('resize',_positionRecBar);
-      window.visualViewport.addEventListener('scroll',_positionRecBar);
-      recBar._vpCleanup=function(){
-        window.visualViewport.removeEventListener('resize',_positionRecBar);
-        window.visualViewport.removeEventListener('scroll',_positionRecBar);
-        if(recBar)recBar.style.bottom='';
-      };
-    }
-    requestAnimationFrame(function(){if(recBar)recBar.classList.add('show');});
-
-    // Start recording
     _audioChunks=[];
     var mime=MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/mp4';
     _mediaRec=new MediaRecorder(stream,{mimeType:mime});
@@ -13637,13 +13628,7 @@ function _startVoiceRecord(){
     console.error('Mic error',err);
     _voiceActive=false;
     _hideVoiceOverlay();
-    if(err.name==='NotAllowedError'||err.name==='PermissionDeniedError'){
-      T('Mic blocked — go to browser Settings → Site Settings → Microphone → Allow');
-    } else if(err.name==='NotFoundError'){
-      T('No microphone found on this device');
-    } else {
-      T('Mic error: '+err.name);
-    }
+    T('Microphone access denied');
   });
 }
 
