@@ -13360,14 +13360,7 @@ function _cwUpdateSendBtn(){
       if(btn.classList.contains('has-text')){
         sendMsg();
       } else if(!_voiceActive){
-        // Mic tapped — dismiss keyboard first if open, then start recording
-        var inp=document.getElementById('chatinp');
-        if(inp&&document.activeElement===inp){
-          inp.blur();
-          setTimeout(_startVoiceRecord,220);
-        } else {
-          _startVoiceRecord();
-        }
+        _startVoiceRecord();
       }
     });
 
@@ -13592,6 +13585,9 @@ function _startVoiceRecord(){
   }
   // Close emoji panel if open
   if(_epOpen)closeEmojiPanel();
+  // Blur input so keyboard closes — rec bar slides up in its place
+  var _ci=document.getElementById('chatinp');
+  if(_ci)_ci.blur();
   // Show overlay immediately (optimistic) so user sees feedback
   _voiceActive=true;
   _voiceCancelled=false;
