@@ -11618,7 +11618,7 @@ function closeFollowSheet(){
   function adjustAuth(){if(!window.visualViewport)return;var vv=window.visualViewport;var visH=vv.height;var fullH=window.innerHeight;var kbH=Math.max(0,fullH-visH-vv.offsetTop);if(authScroll){authScroll.style.height=(fullH-kbH)+'px';authScroll.style.maxHeight=(fullH-kbH)+'px';}}
   if(window.visualViewport){window.visualViewport.addEventListener('resize',adjustAuth,{passive:true});window.visualViewport.addEventListener('scroll',adjustAuth,{passive:true});}
 })();
-(function(){if(!window.visualViewport)return;window.visualViewport.addEventListener('resize',function(){if(typeof _epOpen!=='undefined'&&_epOpen)return;var kbH=Math.max(0,window.innerHeight-window.visualViewport.height);var cw=document.getElementById('cw'),foot=cw&&cw.querySelector('.chatfoot'),msgs=document.getElementById('msgs');if(cw&&cw.classList.contains('on')&&foot){foot.style.marginBottom=kbH>0?kbH+'px':'0';if(kbH>0&&msgs)msgs.scrollTop=msgs.scrollHeight;}},{passive:true});})();
+(function(){if(!window.visualViewport)return;window.visualViewport.addEventListener('resize',function(){if(typeof _epOpen!=='undefined'&&_epOpen)return;var kbH=Math.max(0,window.innerHeight-window.visualViewport.height);var cw=document.getElementById('cw'),foot=cw&&cw.querySelector('.chatfoot'),msgs=document.getElementById('msgs');if(cw&&cw.classList.contains('on')&&foot){foot.style.marginBottom=kbH>0?kbH+'px':'';if(kbH>0&&msgs)msgs.scrollTop=msgs.scrollHeight;}},{passive:true});})();
 
 // ── COMMENT SHEET KEYBOARD AVOID ─────────────────────────────────────────────
 (function(){
@@ -13340,35 +13340,28 @@ function _cwUpdateSendBtn(){
     var btn=document.getElementById('cw-send-btn');
     if(!btn)return;
 
-    // Track whether a touchstart already handled this interaction
-    // so the synthetic click that follows on mobile doesn't double-fire.
-    var _touchHandled=false;
+    // Flag so the synthetic 'click' that follows touchstart doesn't double-fire
+    var _touchFired=false;
 
-    // ── Touch events (mobile) ────────────────────────────────────────
     btn.addEventListener('touchstart',function(e){
-      _touchHandled=true;
+      _touchFired=true;
       _voiceTouchStart(e);
     },{passive:false});
     btn.addEventListener('touchmove',_voiceTouchMove,{passive:false});
     btn.addEventListener('touchend',_voiceTouchEnd,{passive:false});
     btn.addEventListener('touchcancel',_voiceTouchEnd,{passive:false});
 
-    // ── Click (mobile tap fallback + desktop left-click) ─────────────
-    // After a touchstart the browser fires a synthetic click ~300ms later.
-    // We skip it if touch already handled things (_touchHandled).
-    btn.addEventListener('click',function(e){
-      if(_touchHandled){_touchHandled=false;return;}
+    // click: covers mobile taps where touchstart didn't suppress it,
+    // and desktop left-clicks.
+    btn.addEventListener('click',function(){
+      if(_touchFired){_touchFired=false;return;} // touch already handled
       if(btn.classList.contains('has-text')){sendMsg();}
-      else{_startVoiceRecord();}          // desktop tap on mic icon
+      else if(!_voiceActive){_startVoiceRecord();} // mic tap
     });
 
-    // ── Mouse events (desktop hold-to-record feel, optional) ─────────
-    // mousedown on mic = start recording; mouseup = keep recording until
-    // user clicks Send/Cancel in the overlay (same UX as touch).
+    // mousedown: desktop — start recording on press
     btn.addEventListener('mousedown',function(e){
-      if(e.button!==0)return;            // left button only
-      if(btn.classList.contains('has-text'))return; // text mode → handled by click
-      if(_voiceActive)return;
+      if(e.button!==0||btn.classList.contains('has-text')||_voiceActive)return;
       _holdStartX=e.clientX;
       _startVoiceRecord();
     });
