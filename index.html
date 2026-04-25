@@ -1218,7 +1218,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .chat-send.has-text .ic-send{opacity:1;transform:scale(1) rotate(0deg)}
 .chat-send.has-text .ic-mic{opacity:0;transform:scale(.5) rotate(45deg)}
 /* DM idle: flat mic icon, no bg, no border */
-#cw .chat-send{background:none;border:none;color:color-mix(in srgb,var(--text) 60%,transparent);width:40px;height:40px;border-radius:50%;margin-right:2px}
+#cw .chat-send{background:none;border:none;color:color-mix(in srgb,var(--text) 60%,transparent);width:40px;height:40px;border-radius:50%;margin-left:4px;flex-shrink:0}
 /* DM typing: compact filled circle — brand-native */
 #cw .chat-send.has-text{background:var(--text);color:var(--card);width:32px;height:32px}
 #cw .chat-send.recording{background:#E8352A !important;color:#fff;width:38px;height:38px}
@@ -1630,11 +1630,11 @@ body {
         </label>
         <input id="chat-photo-inp" type="file" accept="image/*" style="display:none" onchange="sendPhoto(event)"/>
         <textarea class="chatinp" id="chatinp" placeholder="Message..." rows="1" oninput="grow(this);broadcastTyping();_cwUpdateSendBtn()" onkeydown="chatKD(event)"></textarea>
-        <button id="cw-send-btn" class="chat-send" aria-label="Send or record">
+      </div>
+      <button id="cw-send-btn" class="chat-send" aria-label="Send or record">
           <span class="ic-send"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.478 2.405a.75.75 0 0 0-.926.94l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.405z"/></svg></span>
           <span class="ic-mic"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></span>
         </button>
-      </div>
     </div>
   </div>
 </div>
@@ -9897,7 +9897,7 @@ function buildSRoot(){
     {title:'Privacy',items:[{ico:IC.shield,label:'Private Account',tog:'private'},{ico:IC.shield,label:'Hide Like Counts',tog:'hideLikes'},{ico:IC.star,label:'Close Friends',act:function(){soPush('Close Friends',buildCFPage);}},{ico:IC.chat,label:'Activity Status',right:function(){return'<span style="font-size:13px;color:var(--sub);margin-right:6px" id="activity-vis-lbl">'+({everyone:'Everyone',followers:'Followers',nobody:'Nobody'}[S.activityVisible]||'Everyone')+'</span>'+IC.chev;},act:function(){soPush('Activity Status',buildActivityPage);}}]},
     {title:'Notifications',items:[{ico:IC.bell,label:'Push Notifications',tog:'pushNotifs'},{ico:IC.chat,label:'Talk Notifications',tog:'talkNotifs'}]},
     {title:'Appearance',items:[{ico:IC.bell,label:'Sound Effects',togSnd:true},{ico:IC.moon,label:'Dark Mode',togDark:true}]},
-    {title:'Support',items:[{ico:IC.help,label:'Report a Problem',act:function(){soPush('Report a Problem',buildReportPage);}}]},
+    {title:'Support',items:[{ico:IC.help,label:'Report a Problem',act:function(){soPush('Report a Problem',buildReportPage);}},{ico:'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2v13M8 11l4 4 4-4"/><path d="M3 17v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"/></svg>',label:'Install App',sub:'Add Fade to your home screen',act:function(){if(window._a2hsDeferredPrompt){window._a2hsDeferredPrompt.prompt();window._a2hsDeferredPrompt.userChoice.then(function(){window._a2hsDeferredPrompt=null;});}else if(navigator.standalone===false||(!window.matchMedia('(display-mode: standalone)').matches&&/iPhone|iPad|iPod/.test(navigator.userAgent))){showToast('On Safari: tap the Share button, then "Add to Home Screen"');}else{showToast('Open in Safari or Chrome to install Fade');}}}]},
     {title:'',items:[{ico:IC.logout,label:'Log Out',act:function(){closeSettings();_sb.auth.signOut();}}]},
   ];
   // Admin section — founder only, inserted at top
@@ -13339,13 +13339,39 @@ function _cwUpdateSendBtn(){
   function init(){
     var btn=document.getElementById('cw-send-btn');
     if(!btn)return;
-    btn.addEventListener('click',function(){
-      if(btn.classList.contains('has-text'))sendMsg();
-    });
-    btn.addEventListener('touchstart',_voiceTouchStart,{passive:false});
+
+    // Track whether a touchstart already handled this interaction
+    // so the synthetic click that follows on mobile doesn't double-fire.
+    var _touchHandled=false;
+
+    // ── Touch events (mobile) ────────────────────────────────────────
+    btn.addEventListener('touchstart',function(e){
+      _touchHandled=true;
+      _voiceTouchStart(e);
+    },{passive:false});
     btn.addEventListener('touchmove',_voiceTouchMove,{passive:false});
     btn.addEventListener('touchend',_voiceTouchEnd,{passive:false});
     btn.addEventListener('touchcancel',_voiceTouchEnd,{passive:false});
+
+    // ── Click (mobile tap fallback + desktop left-click) ─────────────
+    // After a touchstart the browser fires a synthetic click ~300ms later.
+    // We skip it if touch already handled things (_touchHandled).
+    btn.addEventListener('click',function(e){
+      if(_touchHandled){_touchHandled=false;return;}
+      if(btn.classList.contains('has-text')){sendMsg();}
+      else{_startVoiceRecord();}          // desktop tap on mic icon
+    });
+
+    // ── Mouse events (desktop hold-to-record feel, optional) ─────────
+    // mousedown on mic = start recording; mouseup = keep recording until
+    // user clicks Send/Cancel in the overlay (same UX as touch).
+    btn.addEventListener('mousedown',function(e){
+      if(e.button!==0)return;            // left button only
+      if(btn.classList.contains('has-text'))return; // text mode → handled by click
+      if(_voiceActive)return;
+      _holdStartX=e.clientX;
+      _startVoiceRecord();
+    });
 
     // Cancel / Send buttons inside the overlay bar
     var cancelBtn=document.getElementById('voice-cancel-btn');
