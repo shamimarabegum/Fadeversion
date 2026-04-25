@@ -8637,6 +8637,7 @@ function sendPhoto(e){
 function sendMsg(){
   var inp=document.getElementById('chatinp');var txt=inp.value.trim();if(!txt||!chatUser)return;
   inp.value='';inp.style.height='';_cwUpdateSendBtn();
+  inp.focus(); // keep keyboard up after sending
   // Stop any pending typing broadcast
   clearTimeout(_typingBroadcastT);
   if(_chatChannel)_chatChannel.send({type:'broadcast',event:'typing_stop',payload:{uid:profile.id}}).catch(function(){});
@@ -13343,29 +13344,31 @@ function _cwUpdateSendBtn(){
     // Flag so the synthetic 'click' that follows touchstart doesn't double-fire
     var _touchFired=false;
 
+    // touchstart: only used to track swipe-to-cancel (touchmove)
+    // Does NOT start recording — click handles that reliably on all platforms
     btn.addEventListener('touchstart',function(e){
-      // Only flag as touch-handled when in mic mode (no text)
-      // so the send-text click still fires normally after typing
-      if(!btn.classList.contains('has-text'))_touchFired=true;
-      _voiceTouchStart(e);
-    },{passive:false});
+      if(!btn.classList.contains('has-text')&&!_voiceActive){
+        _holdStartX=e.touches[0].clientX;
+      }
+    },{passive:true});
     btn.addEventListener('touchmove',_voiceTouchMove,{passive:false});
-    btn.addEventListener('touchend',_voiceTouchEnd,{passive:false});
-    btn.addEventListener('touchcancel',_voiceTouchEnd,{passive:false});
+    btn.addEventListener('touchend',function(){},{ passive:true });
+    btn.addEventListener('touchcancel',function(){},{passive:true});
 
-    // click: covers mobile taps where touchstart didn't suppress it,
-    // and desktop left-clicks.
+    // click: single handler for BOTH send and mic — most reliable on Android/iOS
     btn.addEventListener('click',function(){
-      if(_touchFired){_touchFired=false;return;} // touch already handled
-      if(btn.classList.contains('has-text')){sendMsg();}
-      else if(!_voiceActive){_startVoiceRecord();} // mic tap
-    });
-
-    // mousedown: desktop — start recording on press
-    btn.addEventListener('mousedown',function(e){
-      if(e.button!==0||btn.classList.contains('has-text')||_voiceActive)return;
-      _holdStartX=e.clientX;
-      _startVoiceRecord();
+      if(btn.classList.contains('has-text')){
+        sendMsg();
+      } else if(!_voiceActive){
+        // Mic tapped — dismiss keyboard first if open, then start recording
+        var inp=document.getElementById('chatinp');
+        if(inp&&document.activeElement===inp){
+          inp.blur();
+          setTimeout(_startVoiceRecord,220);
+        } else {
+          _startVoiceRecord();
+        }
+      }
     });
 
     // Cancel / Send buttons inside the overlay bar
