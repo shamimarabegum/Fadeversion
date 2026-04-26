@@ -158,7 +158,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 /* STORY CREATOR */
 #story-creator{display:none;position:fixed;inset:0;z-index:400;flex-direction:column;background:#000;opacity:0;transition:opacity .25s ease}
 #story-creator.on{display:flex}
-#sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#1C1C1E;transition:background .2s ease}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #sc-canvas-img.on{display:block}
 #sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:36px;line-height:1.35;word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;-webkit-user-select:none;user-select:none;width:88%;max-width:88%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px;display:none;left:50%;top:50%;transform:translate(-50%,-50%);margin-left:0;will-change:transform;cursor:default}
@@ -181,6 +181,16 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .sc-acts{display:flex;align-items:center;gap:10px}
 .sc-pb{background:rgba(255,255,255,.12);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1.5px solid rgba(255,255,255,.3);border-radius:50%;width:46px;height:46px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
 .sc-share{background:rgba(255,255,255,.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:50px;height:46px;padding:0 26px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-left:auto;letter-spacing:-.1px}
+/* SIZE SLIDER */
+#sc-size-slider-wrap{display:none;flex-direction:column;align-items:center;gap:4px;padding-top:2px}
+#sc-size-slider-wrap.on{display:flex}
+#sc-size-slider-outer{width:36px;height:120px;display:flex;align-items:center;justify-content:center;overflow:visible}
+#sc-size-slider{-webkit-appearance:none;appearance:none;width:110px;height:4px;border-radius:4px;background:rgba(255,255,255,.4);outline:none;cursor:pointer;transform:rotate(-90deg);transform-origin:center center;touch-action:none}
+#sc-size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.5)}
+#sc-size-label{color:#fff;font-size:11px;font-weight:700;letter-spacing:.3px;text-shadow:0 1px 3px rgba(0,0,0,.6);min-width:24px;text-align:center}
+/* Delete button on selected text */
+._sc-del-btn{position:absolute;top:-14px;right:-14px;width:26px;height:26px;border-radius:50%;background:#E8352A;border:2.5px solid #fff;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:21;font-size:14px;line-height:1;color:#fff;font-weight:900;box-shadow:0 1px 6px rgba(0,0,0,.4)}
+._sc-te.selected ._sc-del-btn{display:flex}
 
 /* STORY VIEWER */
 #sv{display:none;position:fixed;inset:0;z-index:300;background:#000;flex-direction:column;opacity:0;transition:opacity .22s ease}
@@ -1490,6 +1500,12 @@ body {
         <svg width="23" height="23" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.8"/><circle cx="9.2" cy="10.5" r="1.1" fill="#fff"/><circle cx="14.8" cy="10.5" r="1.1" fill="#fff"/><path d="M8.5 14.5c1 1.8 6 1.8 7 0" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M16 4.5C17.5 3 20 3.5 20.5 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
       </button>
       <div id="sc-color-cycle" onclick="scCycleColor()" onmousedown="event.preventDefault()" ontouchstart="_scDotTouch(event)" title="Color"></div>
+      <div id="sc-size-slider-wrap">
+        <div id="sc-size-slider-outer">
+          <input id="sc-size-slider" type="range" min="14" max="120" value="36" oninput="_scSliderChange(this.value)"/>
+        </div>
+        <span id="sc-size-label">36</span>
+      </div>
     </div>
   </div>
   <div id="sc-bar">
@@ -2100,7 +2116,7 @@ function setupRealtime(){
     .subscribe();
 }
 var S={pushNotifs:true,talkNotifs:true,private:false,hideLikes:false,cmtPerm:'everyone',storyAudience:'followers',activityVisible:'followers'};
-var scBg='#2C2C2C',scFontOpen=false,scFI=0,scAudience='followers';
+var scBg='#1C1C1E',scFontOpen=false,scFI=0,scAudience='followers';
 var scheduled=[],_schedListEl=null,_schedEditIdx=-1,_schedImgUrl=null;
 var soStack=[];
 var _profUser=null;
@@ -5492,9 +5508,12 @@ var _scIsPhoto=false; // true when a photo is loaded
 var _scIsTyping=false; // true when user is actively typing
 
 function openCreator(){
-  scBg='#2C2C2C';scFontOpen=false;scFI=0;scAudience=S.storyAudience||'followers';
+  scFontOpen=false;scFI=0;scAudience=S.storyAudience||'followers';
   _scColorIdx=0;_scBgIdx=0;_scIsPhoto=false;_scIsTyping=false;
-  var c=document.getElementById('sc-canvas');c.style.background=scBg;
+  scBg=SC_BG_COLORS[0];
+  _scTextSize=36;
+  var c=document.getElementById('sc-canvas');
+  c.style.background=scBg;
   // Clear stickers and text elements from previous session
   c.querySelectorAll('._sc-sticker').forEach(function(s){s.remove();});
   c.querySelectorAll('._sc-te').forEach(function(t){t.remove();});
@@ -5504,13 +5523,14 @@ function openCreator(){
   _scDeleteZone=null;_scDeleteActive=false;
   _scActiveTextEl=null;_scIsTyping=false;
   var img=document.getElementById('sc-canvas-img');img.src='';img.classList.remove('on');
-  // Reset legacy text overlay (hidden)
   var ov=document.getElementById('sc-text-ov');if(ov){ov.textContent='';ov.style.display='none';}
-  _scTextSize=36;
+  var fontsEl=document.getElementById('sc-fonts');
+  if(fontsEl){fontsEl.classList.remove('on');fontsEl.innerHTML='';}
+  _scHideSizeSlider();
   buildSwatches();
   document.getElementById('sc-file').value='';
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();_scActiveFilter='none';
-  // Set color dot
+  // Set color dot to background color
   var colorDot=document.getElementById('sc-color-cycle');
   if(colorDot)colorDot.style.background=SC_BG_COLORS[0];
   _scUpdateCircles();
@@ -5544,16 +5564,6 @@ function scCycleColor(){
   }
 }
 function scCycleBg(){ scCycleColor(); } // alias -- bg-cycle button calls same fn
-// Check if creator has any real content worth saving
-function _scHasContent(){
-  var img=document.getElementById('sc-canvas-img');
-  if(img&&img.classList.contains('on')&&img.src)return true;
-  var ov=document.getElementById('sc-text-ov');
-  if(ov&&ov.textContent.trim())return true;
-  var canvas=document.getElementById('sc-canvas');
-  if(canvas&&canvas.querySelector('._sc-sticker'))return true;
-  return false;
-}
 // Show discard dialog (used by x button + swipe-back)
 function _scTryClose(){
   if(_scHasContent()){
@@ -5594,16 +5604,25 @@ function _scDoClose(){
   _scCommitText&&_scCommitText();
   var cr=document.getElementById('story-creator');cr.style.opacity='0';
   var canvas=document.getElementById('sc-canvas');
-  if(canvas){canvas.querySelectorAll('._sc-te').forEach(function(t){t.remove();});}
+  if(canvas){
+    canvas.querySelectorAll('._sc-te').forEach(function(t){t.remove();});
+    canvas.querySelectorAll('._sc-sticker').forEach(function(s){s.remove();});
+    canvas.style.background=SC_BG_COLORS[0]; // reset bg
+  }
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();
+  var fontsEl=document.getElementById('sc-fonts');
+  if(fontsEl)fontsEl.classList.remove('on');
+  _scHideSizeSlider();
+  scFontOpen=false;
   _scActiveTextEl=null;_scIsTyping=false;_scActiveFilter='none';
   var ln=document.getElementById('_sc-snap-line');if(ln)ln.remove();
+  var dz=document.getElementById('sc-delete-zone');if(dz)dz.remove();
+  _scDeleteZone=null;_scDeleteActive=false;
   setTimeout(function(){cr.style.display='none';},250);
 }
 function closeCreator(){
   _scTryClose();
 }
-function applyFont(){var f=SC_FONTS[scFI],ov=document.getElementById('sc-text-ov');ov.style.fontFamily=f.ff;ov.style.fontStyle=f.fs;ov.style.fontWeight=f.fw;}
 function buildSwatches(){
   // No-op -- bg color now via sc-bg-cycle button
 }
@@ -5670,6 +5689,15 @@ function _scHideSnapLine(){
   if(_scSnapTimer){clearTimeout(_scSnapTimer);_scSnapTimer=null;}
 }
 
+// Helper: get text content of a text element excluding the delete button
+function _scGetElText(el){
+  var delB=el.querySelector('._sc-del-btn');
+  if(!delB)return el.textContent.trim();
+  var clone=el.cloneNode(true);
+  var db=clone.querySelector('._sc-del-btn');if(db)db.remove();
+  return clone.textContent.trim();
+}
+
 // Deselect / commit current active text element
 function _scCommitText(){
   if(!_scActiveTextEl)return;
@@ -5677,38 +5705,54 @@ function _scCommitText(){
   _scActiveTextEl=null;
   el.contentEditable='false';
   el.classList.remove('editing','selected');
-  if(!el.textContent.trim()){
+  el.style.marginTop=''; // clear keyboard nudge offset
+  if(!_scGetElText(el)){
     if(el.parentNode)el.parentNode.removeChild(el);
   }
   _scIsTyping=false;
   _scUpdateCircles();
   _scHideSnapLine();
+  _scHideSizeSlider();
 }
 
 // Keyboard nudge: moves active text el above keyboard, canvas stays put
 (function(){
   if(!window.visualViewport)return;
+  var _kbOffset=0;
   function _onVV(){
     var cr=document.getElementById('story-creator');
     if(!cr||cr.style.display==='none')return;
-    // Never move the canvas — only nudge the active text element
     if(!_scActiveTextEl||!_scActiveTextEl.classList.contains('editing'))return;
     var canvas=_scGetCanvas();if(!canvas)return;
     var vvH=window.visualViewport.height;
     var fullH=window.innerHeight;
     var kbH=Math.max(0,fullH-vvH);
-    if(kbH<80){_scActiveTextEl.style.bottom='';return;}
-    var cr2=canvas.getBoundingClientRect();
     var er=_scActiveTextEl.getBoundingClientRect();
-    var elBottom=er.bottom; // viewport px
-    var safeBottom=fullH-kbH-12;
+    var elBottom=er.bottom;
+    var safeBottom=fullH-kbH-16;
+    if(kbH<80){
+      // Keyboard gone — reset any offset applied
+      _scActiveTextEl.style.marginTop='';
+      _kbOffset=0;
+      return;
+    }
     if(elBottom>safeBottom){
-      // Shift top upward by the overflow amount
-      var curTop=parseFloat(_scActiveTextEl.style.top)||cr2.height/2;
-      _scActiveTextEl.style.top=(curTop-(elBottom-safeBottom))+'px';
+      var over=elBottom-safeBottom;
+      // Use marginTop to nudge up (doesn't disrupt the stored top position)
+      var curMargin=parseFloat(_scActiveTextEl.style.marginTop)||0;
+      _scActiveTextEl.style.marginTop=(curMargin-over)+'px';
     }
   }
-  window.visualViewport.addEventListener('resize',_onVV);
+  function _onKbGone(){
+    if(_scActiveTextEl){_scActiveTextEl.style.marginTop='';}
+    _kbOffset=0;
+  }
+  window.visualViewport.addEventListener('resize',function(){
+    var vvH=window.visualViewport.height;
+    var fullH=window.innerHeight;
+    var kbH=Math.max(0,fullH-vvH);
+    if(kbH<80)_onKbGone(); else _onVV();
+  });
   window.visualViewport.addEventListener('scroll',_onVV);
 })();
 
@@ -5731,10 +5775,24 @@ function scActivateText(){
   ].join('');
   el.style.animation='_scTeIn .22s cubic-bezier(.34,1.4,.64,1) both';
   el._rot=0; el._scale=_scTextSize;
+  // Add delete button
+  var delBtn=document.createElement('div');
+  delBtn.className='_sc-del-btn';
+  delBtn.innerHTML='&times;';
+  delBtn.addEventListener('touchend',function(ev){
+    ev.stopPropagation();ev.preventDefault();
+    if(_scActiveTextEl===el)_scActiveTextEl=null;
+    el.style.transition='transform .15s ease,opacity .15s ease';
+    el.style.opacity='0';
+    el.style.transform='translate(-50%,-50%) scale(0)';
+    setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},160);
+  },{passive:false});
+  el.appendChild(delBtn);
   canvas.appendChild(el);
   _scActiveTextEl=el;
   _scIsTyping=true;
   _scUpdateCircles();
+  _scShowSizeSlider();
   // Focus after animation frame so iOS keyboard opens smoothly
   requestAnimationFrame(function(){
     el.focus();
@@ -5767,15 +5825,16 @@ function _scAttachTextHandlers(el){
     // Delay so tap-outside deselect wins cleanly
     setTimeout(function(){
       if(_scActiveTextEl!==el)return;
-      if(!el.textContent.trim()){
+      if(!_scGetElText(el)){
         _scCommitText();return;
       }
       el.contentEditable='false';
       el.classList.remove('editing');
-      el.classList.add('selected');
+      el.classList.add('selected'); // keep selected so delete btn shows
+      el.style.marginTop=''; // clear keyboard nudge
       _scIsTyping=false;
       _scUpdateCircles();
-    },120);
+    },150);
   });
 
   el.addEventListener('touchstart',function(e){
@@ -5783,9 +5842,10 @@ function _scAttachTextHandlers(el){
     var now=Date.now();
     var t=e.touches[0];
     var isEditing=el.classList.contains('editing');
+    var isSelected=el.classList.contains('selected');
 
-    // Double-tap on draggable → re-edit
-    if(!isEditing&&now-_lastTap<320){
+    // Tap on already-selected (non-editing) text → re-enter edit immediately
+    if(isSelected&&!isEditing){
       _lastTap=0;
       _scCommitText();
       _scActiveTextEl=el;
@@ -5793,6 +5853,7 @@ function _scAttachTextHandlers(el){
       el.classList.add('editing','selected');
       _scIsTyping=true;
       _scUpdateCircles();
+      _scShowSizeSlider();
       requestAnimationFrame(function(){el.focus();});
       e.preventDefault();
       return;
@@ -5848,13 +5909,25 @@ function _scAttachTextHandlers(el){
     if(_didDrag&&_scCheckDeleteZone(t,el)){
       if(_scActiveTextEl===el)_scActiveTextEl=null;
       el.style.transition='transform .15s ease,opacity .15s ease';
-      var rot=el._rot||0,sc=el._scale||_scTextSize;
+      var rot=el._rot||0;
       el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale(0)';
       el.style.opacity='0';
       setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},160);
+    } else if(!_didDrag){
+      // Simple tap with no drag: enter edit mode
+      _scCommitText();
+      _scActiveTextEl=el;
+      el.contentEditable='true';
+      el.classList.add('editing','selected');
+      _scIsTyping=true;
+      _scUpdateCircles();
+      _scShowSizeSlider();
+      requestAnimationFrame(function(){el.focus();});
     } else {
-      // Settle back to draggable (not editing)
-      var rot2=el._rot||0,sc2=el._scale||_scTextSize;
+      // Settled after drag — keep selected, show delete button
+      _scActiveTextEl=el;
+      el.classList.add('selected');
+      var rot2=el._rot||0;
       el.style.transform='translate(-50%,-50%) rotate('+rot2+'deg)';
     }
     _scHideDeleteZone();
@@ -5876,21 +5949,25 @@ document.addEventListener('touchstart',function(e){
   if(!_scActiveTextEl)return;
   var el=_scActiveTextEl;
   if(e.target===el||el.contains(e.target))return;
-  // Not on a sticker or toolbar button
-  if(e.target.closest&&(e.target.closest('._sc-sticker')||e.target.closest('#sc-top')||e.target.closest('#sc-bar')))return;
+  // Not on a sticker, toolbar, or delete button
+  if(e.target.closest&&(e.target.closest('._sc-sticker')||e.target.closest('#sc-top')||e.target.closest('#sc-bar')||e.target.closest('._sc-del-btn')))return;
   _scCommitText();
 },{passive:true});
 
 // Color dot: cycle text color of active element while keeping keyboard
 function _scDotTouch(e){
   e.preventDefault(); e.stopPropagation();
-  _scColorIdx=(_scColorIdx+1)%SC_TEXT_COLORS.length;
-  var c=SC_TEXT_COLORS[_scColorIdx];
-  var dot=document.getElementById('sc-color-cycle');
-  if(dot)dot.style.background=c;
-  if(_scActiveTextEl)_scActiveTextEl.style.color=c;
-  if(_scActiveTextEl&&_scActiveTextEl.classList.contains('editing')){
-    requestAnimationFrame(function(){_scActiveTextEl.focus();});
+  var isTyping=_scActiveTextEl&&_scActiveTextEl.classList.contains('editing');
+  var isSelected=_scActiveTextEl&&_scActiveTextEl.classList.contains('selected');
+  if(isTyping||isSelected){
+    _scColorIdx=(_scColorIdx+1)%SC_TEXT_COLORS.length;
+    var c=SC_TEXT_COLORS[_scColorIdx];
+    var dot=document.getElementById('sc-color-cycle');
+    if(dot)dot.style.background=c;
+    _scActiveTextEl.style.color=c;
+    if(isTyping){requestAnimationFrame(function(){if(_scActiveTextEl)_scActiveTextEl.focus();});}
+  } else {
+    scCycleColor();
   }
 }
 
@@ -5900,12 +5977,50 @@ function _scHasContent(){
   var img=document.getElementById('sc-canvas-img');
   if(img&&img.classList.contains('on')&&img.src)return true;
   var tes=canvas.querySelectorAll('._sc-te');
-  for(var i=0;i<tes.length;i++){if(tes[i].textContent.trim())return true;}
+  for(var i=0;i<tes.length;i++){
+    if(_scGetElText(tes[i]))return true;
+  }
   if(canvas.querySelector('._sc-sticker'))return true;
   return false;
 }
 
 // (scShare and openCreator are defined/fixed directly below)
+
+// ── FONT SIZE SLIDER ─────────────────────────────────────────────────────────
+(function(){
+  // Isolate slider touch events from canvas pan/swipe after DOM ready
+  document.addEventListener('DOMContentLoaded',function(){
+    var sl=document.getElementById('sc-size-slider');
+    if(!sl)return;
+    sl.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:true});
+    sl.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:true});
+  });
+})();
+function _scShowSizeSlider(){
+  var wrap=document.getElementById('sc-size-slider-wrap');
+  if(!wrap)return;
+  wrap.classList.add('on');
+  var slider=document.getElementById('sc-size-slider');
+  var lbl=document.getElementById('sc-size-label');
+  var sz=(_scActiveTextEl&&_scActiveTextEl._scale)||_scTextSize||36;
+  sz=Math.min(120,Math.max(14,sz));
+  if(slider){slider.value=sz;}
+  if(lbl){lbl.textContent=sz;}
+}
+function _scHideSizeSlider(){
+  var wrap=document.getElementById('sc-size-slider-wrap');
+  if(wrap)wrap.classList.remove('on');
+}
+function _scSliderChange(val){
+  var sz=parseInt(val,10);
+  _scTextSize=sz;
+  var lbl=document.getElementById('sc-size-label');
+  if(lbl)lbl.textContent=sz;
+  if(_scActiveTextEl){
+    _scActiveTextEl._scale=sz;
+    _scActiveTextEl.style.fontSize=sz+'px';
+  }
+}
 
 // applyFont: apply to active text element
 function applyFont(){
@@ -6295,10 +6410,12 @@ function _scCheckDeleteZone(t,el){
     dz.style.borderColor='rgba(255,255,255,.15)';
     var svg=dz.querySelector('svg');if(svg)svg.style.stroke='rgba(255,255,255,.55)';
     if(el){
-      var sc=el._curScale||parseFloat(el.dataset.scale||'1');
+      // Text elements use el._scale; stickers use el._curScale
+      var sc=el._curScale||(el._scale?1:null)||parseFloat(el.dataset.scale||'1');
+      var rot=el._rot||el._curRot||0;
       el.style.transition='transform .28s cubic-bezier(.34,1.4,.64,1),opacity .2s ease';
       el.style.opacity='1';
-      el.style.transform='translate(-50%,-50%) scale('+sc+')';
+      el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale('+sc+')';
       setTimeout(function(){if(el)el.style.transition='';},300);
     }
   }
@@ -6416,14 +6533,36 @@ function _scPlaceSticker(stickerDef){
 
 function buildFChips(){
   var row=document.getElementById('sc-fonts');row.innerHTML='';
-  SC_FONTS.forEach(function(f,i){var chip=document.createElement('div');chip.className='sc-fc'+(i===scFI?' sel':'');chip.style.fontFamily=f.ff;chip.style.fontStyle=f.fs;chip.style.fontWeight=f.fw;chip.textContent=f.l;chip.onclick=function(){scFI=i;applyFont();row.querySelectorAll('.sc-fc').forEach(function(c,j){c.classList.toggle('sel',j===i);});};row.appendChild(chip);});
+  SC_FONTS.forEach(function(f,i){
+    var chip=document.createElement('div');
+    chip.className='sc-fc'+(i===scFI?' sel':'');
+    chip.style.fontFamily=f.ff;chip.style.fontStyle=f.fs;chip.style.fontWeight=f.fw;
+    chip.textContent=f.l;
+    function selectFont(){
+      scFI=i;applyFont();
+      row.querySelectorAll('.sc-fc').forEach(function(c,j){c.classList.toggle('sel',j===i);});
+    }
+    chip.addEventListener('touchend',function(ev){ev.preventDefault();selectFont();},{passive:false});
+    chip.onclick=selectFont;
+    row.appendChild(chip);
+  });
 }
 function scFontToggle(){
   scFontOpen=!scFontOpen;
-  document.getElementById('sc-fonts').classList.toggle('on',scFontOpen);
+  var fontsEl=document.getElementById('sc-fonts');
+  fontsEl.classList.toggle('on',scFontOpen);
   if(scFontOpen){
-    var ov=document.getElementById('sc-text-ov');if(ov)ov.classList.add('active');
-    scActivateText();
+    buildFChips();
+    // Only spawn a new text element if nothing is already active
+    if(!_scActiveTextEl){
+      scActivateText();
+    } else {
+      _scShowSizeSlider();
+    }
+  } else {
+    _scHideSizeSlider();
+    // Commit (deselect) active text so it sits cleanly on canvas
+    _scCommitText();
   }
 }
 function scPhoto(e){
@@ -6434,11 +6573,12 @@ function scPhoto(e){
   img.style.filter='none';
   _scActiveFilter='none';
   _scIsPhoto=true;_scIsTyping=false;
-  // Reset legacy text overlay (kept hidden)
-  var ov=document.getElementById('sc-text-ov');if(ov){ov.textContent='';}
-  // Hide font strip
+  // Commit any active text, hide font strip and size slider
+  _scCommitText();
   scFontOpen=false;
-  // Update circles: photo idle = both hidden
+  var fontsEl=document.getElementById('sc-fonts');
+  if(fontsEl)fontsEl.classList.remove('on');
+  _scHideSizeSlider();
   _scUpdateCircles();
   _scBuildFilterStrip();
 }
@@ -6531,10 +6671,12 @@ function closeAudSheet(){
 function scShare(){
   // Commit any open text first
   _scCommitText&&_scCommitText();
-  // Gather text from all text elements on canvas
+  // Gather text from all text elements on canvas, excluding delete button children
   var canvas=document.getElementById('sc-canvas');
   var parts=[];
-  if(canvas)canvas.querySelectorAll('._sc-te').forEach(function(t){var s=t.textContent.trim();if(s)parts.push(s);});
+  if(canvas)canvas.querySelectorAll('._sc-te').forEach(function(t){
+    var s=_scGetElText(t);if(s)parts.push(s);
+  });
   var txt=parts.join(' ');
   var pUrl=document.getElementById('sc-canvas-img');var photoUrl=(pUrl.src&&pUrl.classList.contains('on'))?pUrl.src:null;
   if(!txt&&!photoUrl)return T('Add text or a photo first');
