@@ -5491,6 +5491,7 @@ var _scIsPhoto=false; // true when a photo is loaded
 var _scIsTyping=false; // true when user is actively typing
 
 function openCreator(){
+  if(_scCloseTimer){clearTimeout(_scCloseTimer);_scCloseTimer=null;}
   scBg='#2C2C2C';scFontOpen=false;scFI=0;scAudience=S.storyAudience||'followers';
   _scColorIdx=0;_scBgIdx=0;_scIsPhoto=false;_scIsTyping=false;
   var c=document.getElementById('sc-canvas');c.style.background=scBg;
@@ -5511,7 +5512,9 @@ function openCreator(){
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();_scActiveFilter='none';
   // Show correct circle for initial state (text-only idle = bg circle)
   _scUpdateCircles();
-  var cr=document.getElementById('story-creator');cr.style.display='flex';
+  var cr=document.getElementById('story-creator');
+  cr.style.opacity='0';
+  cr.style.display='flex';
   history.pushState({_fade:'story-creator'},'');
   requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';});});
 }
@@ -5552,6 +5555,7 @@ function _scHasContent(){
 }
 
 // ── CLOSE / DISCARD ───────────────────────────────────────────────────────────
+var _scCloseTimer=null;
 function _scDoClose(){
   var cr=document.getElementById('story-creator');
   cr.style.opacity='0';
@@ -5560,7 +5564,8 @@ function _scDoClose(){
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();
   _scActiveFilter='none';
   _scActiveTextEl=null;
-  setTimeout(function(){cr.style.display='none';},250);
+  if(_scCloseTimer)clearTimeout(_scCloseTimer);
+  _scCloseTimer=setTimeout(function(){_scCloseTimer=null;cr.style.display='none';},260);
 }
 function _scShowDiscardDialog(){
   var bg=document.getElementById('sc-discard-bg');if(!bg)return;
