@@ -182,18 +182,9 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .sc-pb{background:rgba(255,255,255,.12);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1.5px solid rgba(255,255,255,.3);border-radius:50%;width:46px;height:46px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
 .sc-share{background:rgba(255,255,255,.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:50px;height:46px;padding:0 26px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-left:auto;letter-spacing:-.1px}
 /* SIZE SLIDER — left edge, Instagram style */
-#sc-size-slider-wrap{display:none;position:absolute;left:14px;top:50%;transform:translateY(-50%);flex-direction:column;align-items:center;gap:8px;z-index:27;pointer-events:auto;transition:opacity .2s ease}
-#sc-size-slider-wrap.on{display:flex}
-#sc-size-slider-track{width:28px;height:160px;background:rgba(255,255,255,.18);border-radius:14px;position:relative;display:flex;align-items:center;justify-content:center;overflow:visible;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.22)}
-#sc-size-slider{-webkit-appearance:none;appearance:none;width:140px;height:4px;border-radius:4px;background:rgba(255,255,255,.45);outline:none;cursor:pointer;transform:rotate(-90deg);transform-origin:center center;touch-action:none;position:absolute}
-#sc-size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:grab}
-#sc-size-label{color:#fff;font-size:10px;font-weight:700;letter-spacing:.3px;text-shadow:0 1px 4px rgba(0,0,0,.7);text-align:center;background:rgba(0,0,0,.4);border-radius:6px;padding:2px 5px}
-#sc-size-aa{color:rgba(255,255,255,.7);font-size:9px;font-weight:700;letter-spacing:.4px;text-shadow:0 1px 3px rgba(0,0,0,.6);text-align:center;text-transform:uppercase}
+#sc-size-slider-wrap{display:none!important}
 /* Delete button on selected text — only show when text element has content */
-._sc-del-btn{position:absolute;top:-14px;right:-14px;width:26px;height:26px;border-radius:50%;background:#E8352A;border:2.5px solid #fff;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:21;font-size:14px;line-height:1;color:#fff;font-weight:900;box-shadow:0 1px 6px rgba(0,0,0,.4)}
-._sc-te.selected._sc-has-text ._sc-del-btn{display:flex}
-/* Hide selection box on empty text elements */
-._sc-te.selected:not(._sc-has-text){box-shadow:none!important}
+._sc-del-btn{display:none!important}
 
 /* STORY VIEWER */
 #sv{display:none;position:fixed;inset:0;z-index:300;background:#000;flex-direction:column;opacity:0;transition:opacity .22s ease}
@@ -5663,7 +5654,7 @@ var _scTextSize = 36;         // kept for pinch compat (per-element stored too)
     'cursor:default;z-index:10;transform:translate(-50%,-50%);will-change:transform;',
     'outline:none;-webkit-tap-highlight-color:transparent;width:max-content}',
     '._sc-te.editing{user-select:text;-webkit-user-select:text;cursor:text}',
-    '._sc-te.selected{box-shadow:0 0 0 1.5px rgba(255,255,255,.55)}',
+    '._sc-te.selected{box-shadow:none}',
     '@keyframes _scTeIn{from{opacity:0;transform:translate(-50%,-50%) scale(.7)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}',
     // Snap guide line
     '#_sc-snap-line{position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(255,220,0,.7);',
