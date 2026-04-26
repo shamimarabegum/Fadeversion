@@ -161,7 +161,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #sc-canvas-img.on{display:block}
-#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:36px;line-height:1.35;outline:none;cursor:text;word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;-webkit-user-select:text;user-select:text;width:88%;max-width:88%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px;display:none;left:50%;top:50%;transform:translate(-50%,-50%);margin-left:0;will-change:transform}
+#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:36px;line-height:1.35;word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;-webkit-user-select:none;user-select:none;width:88%;max-width:88%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px;display:none;left:50%;top:50%;transform:translate(-50%,-50%);margin-left:0;will-change:transform;cursor:default}
 #sc-text-ov.active{display:block}
 /* Top-right panel */
 #sc-top{position:absolute;top:0;left:0;right:0;z-index:26;display:flex;align-items:flex-start;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 14px 0}
@@ -1476,7 +1476,7 @@ body {
 
 <!-- STORY CREATOR -->
 <div id="story-creator">
-  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov" contenteditable="true" spellcheck="false"></div></div>
+  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov"></div><textarea id="sc-text-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="sentences" style="position:fixed;left:-9999px;top:50%;width:1px;height:1px;opacity:0;pointer-events:none;border:none;outline:none;resize:none;font-size:16px;"></textarea></div>
   <div id="sc-top">
     <div></div>
     <div id="sc-right-panel">
@@ -5505,7 +5505,7 @@ function openCreator(){
   _scDeleteZone=null;_scDeleteActive=false;
   var img=document.getElementById('sc-canvas-img');img.src='';img.classList.remove('on');
   var ov=document.getElementById('sc-text-ov');
-  ov.textContent='';ov.style.color=SC_TEXT_COLORS[0];
+  ov.textContent='';var inp=document.getElementById('sc-text-input');if(inp){inp.value='';inp.style.pointerEvents='none';}ov.style.color=SC_TEXT_COLORS[0];_scTextSize=36;_scTextRot=0;
   ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';
   ov.style.textAlign='center';
   ov.classList.remove('draggable','active');
@@ -5647,15 +5647,18 @@ function _scInitColorCycle(){
 function scActivateText(){
   _scIsTyping=true;
   var ov=document.getElementById('sc-text-ov');
-  ov.classList.add('active');
+  var inp=document.getElementById('sc-text-input');
+  ov.classList.add('active','editing');
   ov.classList.remove('draggable');
   _scShowAlignBtn(true);
   _scUpdateCircles();
-  setTimeout(function(){
-    ov.focus();
-    var range=document.createRange();range.selectNodeContents(ov);range.collapse(false);
-    var sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(range);}
-  },50);
+  // Sync textarea value from display
+  if(inp){
+    inp.style.pointerEvents='auto';
+    inp.value=ov.textContent||'';
+    inp.focus();
+    inp.selectionStart=inp.selectionEnd=inp.value.length;
+  }
 }
 // -- TEXT ALIGNMENT TOGGLE -----------------------------------------------------
 var _scTextAlign = 'center';
@@ -5678,12 +5681,50 @@ function _scShowAlignBtn(show){
   if(btn) btn.style.display=show?'flex':'none';
 }
 
-// -- DRAGGABLE TEXT (double-tap re-edits, snap-to-center, haptics) -------------
+// -- TEXTAREA → DISPLAY SYNC --------------------------------------------------
+(function(){
+  var inp=document.getElementById('sc-text-input');
+  if(!inp)return;
+
+  function _sync(){
+    var ov=document.getElementById('sc-text-ov');
+    if(!ov)return;
+    ov.textContent=inp.value;
+    // Keep font size applied
+    ov.style.fontSize=(_scTextSize||36)+'px';
+  }
+
+  inp.addEventListener('input',_sync);
+  inp.addEventListener('keydown',function(e){
+    // Allow all keys - no interception needed since it's a real input
+    setTimeout(_sync,0);
+  });
+
+  // When keyboard dismisses (blur on textarea)
+  inp.addEventListener('blur',function(){
+    var ov=document.getElementById('sc-text-ov');
+    var cr=document.getElementById('story-creator');
+    if(!ov||!cr||cr.style.display==='none')return;
+    inp.style.pointerEvents='none';
+    setTimeout(function(){
+      if(_scIsTyping)return; // still typing (e.g. tapped color dot)
+      if(ov.textContent.trim()){
+        ov.classList.remove('editing');
+        ov.classList.add('draggable');
+        _scShowAlignBtn(false);
+      }
+      _scUpdateCircles();
+    },150);
+  });
+})();
+
+// -- DRAGGABLE TEXT (single-tap drags, double-tap re-edits, snap, haptics) ----
 (function(){
   var dragging=false,startTouchX,startTouchY,origLeft,origTop;
-  var _lastTap=0;
+  var _tapTimer=null,_lastTapTime=0,_tapCount=0;
   function getEl(){return document.getElementById('sc-text-ov');}
-  function isEditMode(el){return!el.classList.contains('draggable');}
+  function getInp(){return document.getElementById('sc-text-input');}
+  function isDraggable(el){return el.classList.contains('draggable');}
 
   function _haptic(ms){try{if(navigator.vibrate)navigator.vibrate(ms||8);}catch(e){}}
 
@@ -5693,14 +5734,31 @@ function _scShowAlignBtn(show){
     return{left:er.left+er.width/2-cr.left,top:er.top+er.height/2-cr.top};
   }
 
+  function _enterEditMode(el){
+    el.classList.remove('draggable','');
+    el.classList.add('editing');
+    _scIsTyping=true;
+    _scShowAlignBtn(true);
+    _scUpdateCircles();
+    var inp=getInp();
+    if(inp){
+      inp.style.pointerEvents='auto';
+      inp.value=el.textContent||'';
+      setTimeout(function(){
+        inp.focus();
+        inp.selectionStart=inp.selectionEnd=inp.value.length;
+      },30);
+    }
+  }
+
   function startDrag(e){
-    var el=getEl();if(!el||isEditMode(el))return;
+    var el=getEl();if(!el||!isDraggable(el))return;
     if(!el.textContent.trim())return;
     var canvas=document.getElementById('sc-canvas');if(!canvas)return;
     var center=_resolveCenter(el,canvas);
     origLeft=center.left; origTop=center.top;
     el.style.left=origLeft+'px'; el.style.top=origTop+'px';
-    el.style.transform='translate(-50%,-50%)';
+    el.style.transform='translate(-50%,-50%) rotate('+(_scTextRot||0)+'deg)';
     var touch=e.touches[0];
     startTouchX=touch.clientX; startTouchY=touch.clientY;
     dragging=true;
@@ -5720,13 +5778,11 @@ function _scShowAlignBtn(show){
     newLeft=Math.max(elW*0.1,Math.min(cr.width-elW*0.1,newLeft));
     newTop=Math.max(elH*0.3,Math.min(cr.height-elH*0.3,newTop));
     // Snap to horizontal center
-    var snapRange=cr.width*0.06;
+    var snapRange=cr.width*0.055;
     if(Math.abs(newLeft-cr.width/2)<snapRange){
       newLeft=cr.width/2;
       if(!el.dataset.snapped){el.dataset.snapped='1';_haptic(6);}
-    } else {
-      delete el.dataset.snapped;
-    }
+    } else {delete el.dataset.snapped;}
     el.style.left=newLeft+'px'; el.style.top=newTop+'px';
     _scCheckDeleteZone(touch,el);
     e.preventDefault();
@@ -5736,12 +5792,14 @@ function _scShowAlignBtn(show){
     if(!dragging)return;
     dragging=false;
     var el=getEl();
-    delete el.dataset.snapped;
+    if(el) delete el.dataset.snapped;
     var t=e&&e.changedTouches?e.changedTouches[0]:null;
     if(t&&el&&_scCheckDeleteZone(t,el)){
-      el.textContent='';el.classList.remove('active','draggable');
-      el.style.left='50%';el.style.top='50%';el.style.transform='translate(-50%,-50%)';
+      el.textContent=''; el.classList.remove('active','draggable','editing');
+      el.style.left='50%';el.style.top='50%';
+      el.style.transform='translate(-50%,-50%)';
       _scShowAlignBtn(false);
+      var inp=getInp();if(inp){inp.value='';inp.style.pointerEvents='none';}
     }
     _scHideDeleteZone();
   }
@@ -5752,23 +5810,25 @@ function _scShowAlignBtn(show){
     if(!cr||cr.style.display==='none')return;
     var isOnText=e.target===el||el.contains(e.target);
     if(!isOnText)return;
-    if(el.classList.contains('draggable')){
-      // Double-tap -> re-enter edit mode
+
+    if(isDraggable(el)){
       var now=Date.now();
-      if(now-_lastTap<300){
-        _lastTap=0;
-        el.classList.remove('draggable');
-        _scIsTyping=true;
-        _scShowAlignBtn(true);
-        _scUpdateCircles();
-        setTimeout(function(){
-          el.focus();
-          var range=document.createRange();range.selectNodeContents(el);range.collapse(false);
-          var sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(range);}
-        },30);
-        e.preventDefault(); return;
+      var dt=now-_lastTapTime;
+      _lastTapTime=now;
+
+      if(dt<320){
+        // Double-tap: re-enter edit mode
+        _tapCount=0;
+        if(_tapTimer){clearTimeout(_tapTimer);_tapTimer=null;}
+        dragging=false; // cancel any drag that started on first tap
+        _enterEditMode(el);
+        _haptic(8);
+        e.preventDefault();
+        return;
       }
-      _lastTap=now;
+
+      // First tap: start drag immediately (single finger, intent to move)
+      _tapCount=1;
       startDrag(e);
     }
   },{passive:false});
@@ -5780,40 +5840,37 @@ function _scShowAlignBtn(show){
     dragging=false; _scHideDeleteZone();
   },{passive:true});
 
-  document.addEventListener('click',function(e){
+  // Tap anywhere outside text while in draggable mode → stays draggable (no auto-edit)
+  // Tap outside while editing → blur handled by textarea blur event above
+  document.addEventListener('touchstart',function(e){
     var el=getEl();if(!el)return;
     var cr=document.getElementById('story-creator');
     if(!cr||cr.style.display==='none')return;
-    if(!el.classList.contains('draggable')&&e.target!==el&&el.textContent.trim()){
+    var isOnText=e.target===el||el.contains(e.target);
+    // If text is in EDIT mode and user taps outside → blur the textarea
+    if(!isOnText&&el.classList.contains('editing')){
       _scIsTyping=false;
-      el.blur();el.classList.add('draggable');
-      _scShowAlignBtn(false);
-      _scUpdateCircles();
+      var inp=getInp();if(inp){inp.style.pointerEvents='none';inp.blur();}
     }
-  });
-  document.addEventListener('focusout',function(e){
-    var el=getEl();if(!el||e.target!==el)return;
-    var cr=document.getElementById('story-creator');
-    if(!cr||cr.style.display==='none')return;
-    setTimeout(function(){
-      if(_scIsTyping)return;
-      var dot=document.getElementById('sc-color-cycle');
-      if(dot&&document.activeElement===dot)return;
-      if(el.textContent.trim()){el.classList.add('draggable');_scShowAlignBtn(false);}
-      _scUpdateCircles();
-    },150);
-  });
+    // If text is draggable and user taps outside → keep draggable (no change)
+  },{passive:true});
 })();
+
 // Prevent text blur when tapping the color circle
 function _scDotTouch(e){
   e.preventDefault();
+  e.stopPropagation();
+  // Keep textarea focused so keyboard stays open while changing color
+  var inp=document.getElementById("sc-text-input");
   scCycleColor();
+  if(inp&&_scIsTyping)setTimeout(function(){inp.focus();},10);
 }
 
+var _scTextSize=36,_scTextRot=0;
 // -- PINCH-TO-RESIZE + TWO-FINGER ROTATE (text + stickers) --------------------
 (function(){
   var _pinching=false,_initDist=0,_initScale=1,_initAngle=0,_initRot=0,_pinchTarget=null;
-  var _scTextSize=36,_scTextRot=0;
+
   function dist(t){var dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy);}
   function angle(t){return Math.atan2(t[1].clientY-t[0].clientY,t[1].clientX-t[0].clientX)*180/Math.PI;}
 
@@ -6302,7 +6359,7 @@ function scPhoto(e){
   _scIsPhoto=true;_scIsTyping=false;
   // Reset text overlay -- hidden until user taps A
   var ov=document.getElementById('sc-text-ov');
-  if(ov){ov.textContent='';ov.classList.remove('active','draggable');ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';}
+  var inp2=document.getElementById('sc-text-input');if(inp2){inp2.value='';inp2.style.pointerEvents='none';}if(ov){ov.textContent='';ov.classList.remove('active','draggable','editing');ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';}
   // Hide font strip
   scFontOpen=false;
   var fonts=document.getElementById('sc-fonts');if(fonts)fonts.classList.remove('on');
