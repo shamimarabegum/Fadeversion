@@ -161,7 +161,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #sc-canvas-img.on{display:block}
-#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:36px;line-height:1.35;outline:none;cursor:text;word-break:break-word;overflow-wrap:break-word;-webkit-user-select:text;user-select:text;width:88%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px;display:none;left:50%;transform:translateX(-50%);margin-left:0}
+#sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:36px;line-height:1.35;outline:none;cursor:text;word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;-webkit-user-select:text;user-select:text;width:88%;max-width:88%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px;display:none;left:50%;top:50%;transform:translate(-50%,-50%);margin-left:0;will-change:transform}
 #sc-text-ov.active{display:block}
 /* Top-right panel */
 #sc-top{position:absolute;top:0;left:0;right:0;z-index:26;display:flex;align-items:flex-start;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 14px 0}
@@ -1486,14 +1486,11 @@ body {
       <button class="sc-rpbtn" id="sc-addtext-btn" onclick="scActivateText()" title="Add text">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><text x="12" y="18" text-anchor="middle" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#fff">A</text></svg>
       </button>
-      <button class="sc-rpbtn" onclick="scOpenStickers()" title="Stickers">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 3C7.03 3 3 7.03 3 12c0 4.97 4.03 9 9 9 .55 0 1-.45 1-1v-.5c0-.28-.11-.53-.29-.71-.17-.17-.28-.42-.28-.68 0-.55.45-1 1-1h1.5C17.43 17.11 21 13.54 21 9c0-3.31-4.03-6-9-6z" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="8.5" cy="10.5" r="1" fill="#fff"/>
-          <circle cx="12.5" cy="8" r="1" fill="#fff"/>
-          <circle cx="15.5" cy="11" r="1" fill="#fff"/>
-          <circle cx="11.5" cy="13.5" r="1" fill="#fff"/>
-        </svg>
+      <button class="sc-rpbtn" id="sc-align-btn" onclick="scCycleAlign()" title="Text alignment" style="display:none">
+        <svg id="sc-align-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <button class="sc-rpbtn" id="sc-sticker-btn" onclick="scOpenStickers()" title="Stickers">
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.8"/><circle cx="9.2" cy="10.5" r="1.1" fill="#fff"/><circle cx="14.8" cy="10.5" r="1.1" fill="#fff"/><path d="M8.5 14.5c1 1.8 6 1.8 7 0" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M16 4.5C17.5 3 20 3.5 20.5 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
       </button>
       <div id="sc-color-cycle" onclick="scCycleColor()" onmousedown="event.preventDefault()" ontouchstart="_scDotTouch(event)" title="Color"></div>
     </div>
@@ -5510,7 +5507,10 @@ function openCreator(){
   var ov=document.getElementById('sc-text-ov');
   ov.textContent='';ov.style.color=SC_TEXT_COLORS[0];
   ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';
+  ov.style.textAlign='center';
   ov.classList.remove('draggable','active');
+  _scTextAlign='center';
+  _scShowAlignBtn(false);
   applyFont();
   // Set dot colors first, then show correct one
   var colorDot=document.getElementById('sc-color-cycle');
@@ -5603,6 +5603,7 @@ function scConfirmDiscard(){
 }
 function _scDoClose(){
   var cr=document.getElementById('story-creator');cr.style.opacity='0';
+  var canvas=document.getElementById('sc-canvas');if(canvas)canvas.style.marginBottom='';
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();
   _scActiveFilter='none';
   setTimeout(function(){cr.style.display='none';},250);
@@ -5625,12 +5626,30 @@ function _scInitColorCycle(){
   var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=SC_TEXT_COLORS[0];
   // Don't touch display here -- _scUpdateCircles handles that
 }
+// -- KEYBOARD / VISUAL VIEWPORT HANDLER ---------------------------------------
+(function(){
+  if(!window.visualViewport)return;
+  function _onVVResize(){
+    var cr=document.getElementById('story-creator');
+    if(!cr||cr.style.display==='none')return;
+    var canvas=document.getElementById('sc-canvas');
+    if(!canvas)return;
+    var vvH=window.visualViewport.height;
+    var fullH=window.innerHeight;
+    var kbH=Math.max(0,fullH-vvH-window.visualViewport.offsetTop);
+    canvas.style.marginBottom=kbH>80?kbH+'px':'';
+  }
+  window.visualViewport.addEventListener('resize',_onVVResize);
+  window.visualViewport.addEventListener('scroll',_onVVResize);
+})();
+
 // -- scActivateText ------------------------------------------------------------
 function scActivateText(){
   _scIsTyping=true;
   var ov=document.getElementById('sc-text-ov');
   ov.classList.add('active');
   ov.classList.remove('draggable');
+  _scShowAlignBtn(true);
   _scUpdateCircles();
   setTimeout(function(){
     ov.focus();
@@ -5638,84 +5657,138 @@ function scActivateText(){
     var sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(range);}
   },50);
 }
-// -- DRAGGABLE TEXT (only after done editing -- double-tap or tap-outside exits edit) --
+// -- TEXT ALIGNMENT TOGGLE -----------------------------------------------------
+var _scTextAlign = 'center';
+var _scAlignIcons = {
+  center: '<line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>',
+  left:   '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>',
+  right:  '<line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>'
+};
+function scCycleAlign(){
+  var order=['center','left','right'];
+  var i=order.indexOf(_scTextAlign);
+  _scTextAlign=order[(i+1)%3];
+  var ov=document.getElementById('sc-text-ov');
+  if(ov) ov.style.textAlign=_scTextAlign;
+  var icon=document.getElementById('sc-align-icon');
+  if(icon) icon.innerHTML=_scAlignIcons[_scTextAlign];
+}
+function _scShowAlignBtn(show){
+  var btn=document.getElementById('sc-align-btn');
+  if(btn) btn.style.display=show?'flex':'none';
+}
+
+// -- DRAGGABLE TEXT (double-tap re-edits, snap-to-center, haptics) -------------
 (function(){
-  var dragging=false,startX,startY,origLeft,origTop;
+  var dragging=false,startTouchX,startTouchY,origLeft,origTop;
+  var _lastTap=0;
   function getEl(){return document.getElementById('sc-text-ov');}
   function isEditMode(el){return!el.classList.contains('draggable');}
+
+  function _haptic(ms){try{if(navigator.vibrate)navigator.vibrate(ms||8);}catch(e){}}
+
+  function _resolveCenter(el,canvas){
+    var cr=canvas.getBoundingClientRect();
+    var er=el.getBoundingClientRect();
+    return{left:er.left+er.width/2-cr.left,top:er.top+er.height/2-cr.top};
+  }
+
   function startDrag(e){
     var el=getEl();if(!el||isEditMode(el))return;
     if(!el.textContent.trim())return;
-    dragging=true;
-    var touch=e.touches?e.touches[0]:e;
-    startX=touch.clientX;startY=touch.clientY;
-    var canvas=document.getElementById('sc-canvas');
-    if(!canvas)return;
-    var cr=canvas.getBoundingClientRect();
-    // Read position from current left/top (already set as px from previous drag or 50%)
-    var curLeft=parseFloat(el.style.left)||cr.width/2;
-    var curTop=parseFloat(el.style.top)||cr.height*0.4;
-    origLeft=curLeft;
-    origTop=curTop;
-    el.style.width='88%';
-    el.style.left=origLeft+'px';
-    el.style.top=origTop+'px';
+    var canvas=document.getElementById('sc-canvas');if(!canvas)return;
+    var center=_resolveCenter(el,canvas);
+    origLeft=center.left; origTop=center.top;
+    el.style.left=origLeft+'px'; el.style.top=origTop+'px';
     el.style.transform='translate(-50%,-50%)';
+    var touch=e.touches[0];
+    startTouchX=touch.clientX; startTouchY=touch.clientY;
+    dragging=true;
     _scShowDeleteZone();
-    e.preventDefault();
+    e.preventDefault(); e.stopPropagation();
   }
+
   function onMove(e){
     if(!dragging)return;
     var el=getEl();if(!el)return;
-    var touch=e.touches?e.touches[0]:e;
+    var touch=e.touches[0];
     var canvas=document.getElementById('sc-canvas');
     var cr=canvas?canvas.getBoundingClientRect():{width:390,height:700};
-    var elW=el.offsetWidth||200;
-    var elH=el.offsetHeight||60;
-    var newLeft=origLeft+(touch.clientX-startX);
-    var newTop=origTop+(touch.clientY-startY);
-    // Clamp so text stays within canvas
-    var minL=elW*0.1; var maxL=cr.width-elW*0.1;
-    var minT=elH*0.3; var maxT=cr.height-elH*0.3;
-    newLeft=Math.max(minL,Math.min(maxL,newLeft));
-    newTop=Math.max(minT,Math.min(maxT,newTop));
-    el.style.left=newLeft+'px';
-    el.style.top=newTop+'px';
+    var newLeft=origLeft+(touch.clientX-startTouchX);
+    var newTop=origTop+(touch.clientY-startTouchY);
+    var elW=el.offsetWidth||200; var elH=el.offsetHeight||60;
+    newLeft=Math.max(elW*0.1,Math.min(cr.width-elW*0.1,newLeft));
+    newTop=Math.max(elH*0.3,Math.min(cr.height-elH*0.3,newTop));
+    // Snap to horizontal center
+    var snapRange=cr.width*0.06;
+    if(Math.abs(newLeft-cr.width/2)<snapRange){
+      newLeft=cr.width/2;
+      if(!el.dataset.snapped){el.dataset.snapped='1';_haptic(6);}
+    } else {
+      delete el.dataset.snapped;
+    }
+    el.style.left=newLeft+'px'; el.style.top=newTop+'px';
     _scCheckDeleteZone(touch,el);
     e.preventDefault();
   }
+
   function onUp(e){
     if(!dragging)return;
     dragging=false;
     var el=getEl();
+    delete el.dataset.snapped;
     var t=e&&e.changedTouches?e.changedTouches[0]:null;
     if(t&&el&&_scCheckDeleteZone(t,el)){
       el.textContent='';el.classList.remove('active','draggable');
       el.style.left='50%';el.style.top='50%';el.style.transform='translate(-50%,-50%)';
-    } else if(el){
-      // Restore normal transform so text stays at correct position
-      el.style.transform='translate(-50%,-50%)';
+      _scShowAlignBtn(false);
     }
     _scHideDeleteZone();
   }
+
   document.addEventListener('touchstart',function(e){
     var el=getEl();if(!el)return;
-    // Allow drag from the element itself or any child (e.g. when text is styled)
+    var cr=document.getElementById('story-creator');
+    if(!cr||cr.style.display==='none')return;
     var isOnText=e.target===el||el.contains(e.target);
-    if(isOnText&&el.classList.contains('draggable'))startDrag(e);
+    if(!isOnText)return;
+    if(el.classList.contains('draggable')){
+      // Double-tap -> re-enter edit mode
+      var now=Date.now();
+      if(now-_lastTap<300){
+        _lastTap=0;
+        el.classList.remove('draggable');
+        _scIsTyping=true;
+        _scShowAlignBtn(true);
+        _scUpdateCircles();
+        setTimeout(function(){
+          el.focus();
+          var range=document.createRange();range.selectNodeContents(el);range.collapse(false);
+          var sel=window.getSelection();if(sel){sel.removeAllRanges();sel.addRange(range);}
+        },30);
+        e.preventDefault(); return;
+      }
+      _lastTap=now;
+      startDrag(e);
+    }
   },{passive:false});
+
   document.addEventListener('touchmove',function(e){if(dragging)onMove(e);},{passive:false});
-  document.addEventListener('touchend',onUp);
-  document.addEventListener('touchstart',function(e){
-    var el=getEl();if(!el||isEditMode(el))return;
+  document.addEventListener('touchend',onUp,{passive:true});
+  document.addEventListener('touchcancel',function(){
+    if(!dragging)return;
+    dragging=false; _scHideDeleteZone();
   },{passive:true});
+
   document.addEventListener('click',function(e){
     var el=getEl();if(!el)return;
     var cr=document.getElementById('story-creator');
     if(!cr||cr.style.display==='none')return;
     if(!el.classList.contains('draggable')&&e.target!==el&&el.textContent.trim()){
       _scIsTyping=false;
-      el.blur();el.classList.add('draggable');_scUpdateCircles();
+      el.blur();el.classList.add('draggable');
+      _scShowAlignBtn(false);
+      _scUpdateCircles();
     }
   });
   document.addEventListener('focusout',function(e){
@@ -5723,12 +5796,12 @@ function scActivateText(){
     var cr=document.getElementById('story-creator');
     if(!cr||cr.style.display==='none')return;
     setTimeout(function(){
-      if(_scIsTyping) return;
+      if(_scIsTyping)return;
       var dot=document.getElementById('sc-color-cycle');
-      if(dot&&document.activeElement===dot) return;
-      if(el.textContent.trim()) el.classList.add('draggable');
+      if(dot&&document.activeElement===dot)return;
+      if(el.textContent.trim()){el.classList.add('draggable');_scShowAlignBtn(false);}
       _scUpdateCircles();
-    }, 150);
+    },150);
   });
 })();
 // Prevent text blur when tapping the color circle
@@ -5737,11 +5810,14 @@ function _scDotTouch(e){
   scCycleColor();
 }
 
-// -- PINCH TO RESIZE (text + stickers) ----------------------------------------
+// -- PINCH-TO-RESIZE + TWO-FINGER ROTATE (text + stickers) --------------------
 (function(){
-  var _pinching=false,_initDist=0,_initScale=1,_pinchTarget=null;
-  var _scTextSize=36;
+  var _pinching=false,_initDist=0,_initScale=1,_initAngle=0,_initRot=0,_pinchTarget=null;
+  var _scTextSize=36,_scTextRot=0;
   function dist(t){var dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy);}
+  function angle(t){return Math.atan2(t[1].clientY-t[0].clientY,t[1].clientX-t[0].clientX)*180/Math.PI;}
+
+  function _haptic(ms){try{if(navigator.vibrate)navigator.vibrate(ms||8);}catch(e){}}
 
   document.addEventListener('touchstart',function(e){
     var cr=document.getElementById('story-creator');
@@ -5749,36 +5825,44 @@ function _scDotTouch(e){
     if(e.touches.length===2){
       var canvas=document.getElementById('sc-canvas');
       if(!canvas)return;
-      // Find which canvas item is under one of the fingers
       var t1=e.touches[0],t2=e.touches[1];
       var el1=document.elementFromPoint(t1.clientX,t1.clientY);
       var el2=document.elementFromPoint(t2.clientX,t2.clientY);
       var sticker=null;
       [el1,el2].forEach(function(el){
-        if(!sticker&&el){
-          var s=el.closest?el.closest('._sc-sticker'):null;
-          if(s&&canvas.contains(s)) sticker=s;
-        }
+        if(!sticker&&el){var s=el.closest?el.closest('._sc-sticker'):null;if(s&&canvas.contains(s))sticker=s;}
       });
       var textOv=document.getElementById('sc-text-ov');
       if(sticker){
+        // Commit position from getBoundingClientRect before pinching
+        var cr2=canvas.getBoundingClientRect();
+        var er=sticker.getBoundingClientRect();
+        sticker.style.left=(er.left+er.width/2-cr2.left)+'px';
+        sticker.style.top=(er.top+er.height/2-cr2.top)+'px';
         _pinchTarget='sticker';
         _pinching=true;
         _initDist=dist(e.touches);
-        _initScale=parseFloat(sticker.dataset.scale||'1');
+        _initAngle=angle(e.touches);
+        _initScale=sticker._curScale||parseFloat(sticker.dataset.scale||'1');
+        _initRot=sticker._curRot||0;
         sticker.dataset.pinching='1';
         sticker.style.animation='';
+        _haptic(6);
       } else if(textOv&&textOv.classList.contains('draggable')){
         _pinchTarget='text';
         _pinching=true;
         _initDist=dist(e.touches);
+        _initAngle=angle(e.touches);
         _initScale=_scTextSize;
+        _initRot=_scTextRot;
+        _haptic(6);
       } else if(canvas.contains(el1)||canvas.contains(el2)){
-        // Pinch on canvas with no specific target -> resize text
         _pinchTarget='text';
         _pinching=true;
         _initDist=dist(e.touches);
+        _initAngle=angle(e.touches);
         _initScale=_scTextSize;
+        _initRot=_scTextRot;
       }
       if(_pinching) e.preventDefault();
     }
@@ -5787,22 +5871,26 @@ function _scDotTouch(e){
   document.addEventListener('touchmove',function(e){
     if(!_pinching||e.touches.length!==2)return;
     var d=dist(e.touches);
+    var a=angle(e.touches);
     var ratio=d/Math.max(_initDist,30);
+    var dAngle=a-_initAngle;
     if(_pinchTarget==='sticker'){
-      var canvas=document.getElementById('sc-canvas');
-      if(!canvas)return;
+      var canvas=document.getElementById('sc-canvas');if(!canvas)return;
       var sticker=canvas.querySelector('._sc-sticker[data-pinching="1"]');
       if(sticker){
         var newScale=Math.min(5,Math.max(0.2,_initScale*ratio));
+        var newRot=_initRot+dAngle;
         sticker._curScale=newScale;
+        sticker._curRot=newRot;
         sticker.dataset.scale=String(newScale);
-        sticker.style.transform='translate(-50%,-50%) scale('+newScale+')';
+        sticker.style.transform='translate(-50%,-50%) scale('+newScale+') rotate('+newRot+'deg)';
       }
     } else {
       var newSize=Math.min(160,Math.max(12,Math.round(_initScale*ratio)));
       _scTextSize=newSize;
+      _scTextRot=_initRot+dAngle;
       var ov=document.getElementById('sc-text-ov');
-      if(ov) ov.style.fontSize=newSize+'px';
+      if(ov){ov.style.fontSize=newSize+'px';ov.style.transform='translate(-50%,-50%) rotate('+_scTextRot+'deg)';}
     }
     e.preventDefault();
   },{passive:false});
@@ -5812,16 +5900,16 @@ function _scDotTouch(e){
       var canvas2=document.getElementById('sc-canvas');
       if(canvas2){
         canvas2.querySelectorAll('._sc-sticker').forEach(function(s2){
-          // Commit scale from dataset into _curScale and clear pinching flag
           if(s2.dataset.scale) s2._curScale=parseFloat(s2.dataset.scale);
+          if(!s2._curRot) s2._curRot=0;
           delete s2.dataset.pinching;
         });
       }
     }
     _pinching=false;_pinchTarget=null;
   }
-  document.addEventListener('touchend',_endPinch);
-  document.addEventListener('touchcancel',_endPinch);
+  document.addEventListener('touchend',_endPinch,{passive:true});
+  document.addEventListener('touchcancel',_endPinch,{passive:true});
 })();
 
 // -- STICKER SYSTEM -----------------------------------------------------------
@@ -5895,41 +5983,128 @@ var _SC_STICKERS=[
 ];
 
 function scOpenStickers(){
-  var ex=document.getElementById('sc-sticker-sheet');if(ex){ex.remove();return;}
+  var ex=document.getElementById('sc-sticker-sheet');
+  if(ex){
+    // Close with animation
+    ex.style.transform='translateY(100%)';
+    setTimeout(function(){if(ex.parentNode)ex.parentNode.removeChild(ex);},300);
+    return;
+  }
+  try{if(navigator.vibrate)navigator.vibrate(8);}catch(e){}
+
+  var canvas=document.getElementById('sc-canvas');if(!canvas)return;
+
+  // Dim overlay
+  var dim=document.createElement('div');
+  dim.id='sc-sticker-dim';
+  dim.style.cssText='position:absolute;inset:0;z-index:49;background:rgba(0,0,0,0);transition:background .28s ease;';
+  canvas.appendChild(dim);
+  requestAnimationFrame(function(){dim.style.background='rgba(0,0,0,.45)';});
+
   var sheet=document.createElement('div');
   sheet.id='sc-sticker-sheet';
-  sheet.style.cssText='position:absolute;bottom:70px;left:0;right:0;z-index:50;background:rgba(18,18,18,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:20px 20px 0 0;padding:12px 14px 28px;';
-  var handle=document.createElement('div');
-  handle.style.cssText='width:34px;height:3px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 12px';
-  var label=document.createElement('div');
-  label.style.cssText='font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:10px;text-align:center';
-  label.textContent='STICKERS';
-  var grid=document.createElement('div');
-  grid.style.cssText='display:grid;grid-template-columns:repeat(5,1fr);gap:10px;';
-  _SC_STICKERS.forEach(function(s){
-    var btn=document.createElement('button');
-    btn.style.cssText='background:rgba(255,255,255,.07);border:none;border-radius:14px;width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:10px;transition:transform .1s,background .1s;-webkit-tap-highlight-color:transparent;';
-    btn.innerHTML=s.svg;
-    btn.querySelector('svg').style.cssText='width:100%;height:100%;';
-    btn.addEventListener('touchstart',function(){btn.style.transform='scale(.88)';btn.style.background='rgba(255,255,255,.14)';},{passive:true});
-    btn.addEventListener('touchend',function(){btn.style.transform='';btn.style.background='rgba(255,255,255,.07)';},{passive:true});
-    btn.addEventListener('click',function(){
-      _scPlaceSticker(s);
-      sheet.remove();
+  sheet.style.cssText='position:absolute;bottom:0;left:0;right:0;z-index:50;background:rgba(22,22,24,.98);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:22px 22px 0 0;padding:0 0 max(28px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .32s cubic-bezier(.25,.46,.45,.94);touch-action:none;';
+
+  // Categories
+  var CATS=[
+    {id:'all',    label:'All'},
+    {id:'faces',  label:'Mood'},
+    {id:'nature', label:'Nature'},
+    {id:'vibe',   label:'Vibe'},
+    {id:'shapes', label:'Shapes'},
+  ];
+  var CAT_MAP={
+    faces:  ['mood-up','mood-down','deadpan','ghost','alien','skull'],
+    nature: ['fire','sun','moon','cloud','snow','blossom','wave'],
+    vibe:   ['vibe','nocap','hundo','party','confetti','sparkle','bolt'],
+    shapes: ['heart-red','heart-pink','heart-broken','star-gold','star-shine','diamond','crown','peace','location','clock','hourglass','camera','trophy','music'],
+  };
+
+  var activeCat='all';
+
+  sheet.innerHTML=
+    '<div style="width:36px;height:4px;background:rgba(255,255,255,.18);border-radius:2px;margin:10px auto 0;cursor:grab"></div>'+
+    '<div id="sc-stk-cats" style="display:flex;gap:6px;padding:12px 14px 8px;overflow-x:auto;scrollbar-width:none"></div>'+
+    '<div id="sc-stk-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:4px 14px 8px;max-height:48vw;overflow-y:auto;scrollbar-width:none"></div>';
+
+  canvas.appendChild(sheet);
+
+  function _buildCats(){
+    var row=sheet.querySelector('#sc-stk-cats');
+    row.innerHTML='';
+    CATS.forEach(function(c){
+      var btn=document.createElement('button');
+      var isActive=c.id===activeCat;
+      btn.style.cssText='background:'+(isActive?'rgba(255,255,255,.18)':'rgba(255,255,255,.07)')+';border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:'+(isActive?'700':'500')+';color:'+(isActive?'#fff':'rgba(255,255,255,.5)')+';cursor:pointer;white-space:nowrap;font-family:Inter,sans-serif;transition:background .15s,color .15s;flex-shrink:0';
+      btn.textContent=c.label;
+      btn.addEventListener('click',function(){
+        activeCat=c.id;
+        try{if(navigator.vibrate)navigator.vibrate(5);}catch(e){}
+        _buildCats();_buildGrid();
+      });
+      row.appendChild(btn);
     });
-    grid.appendChild(btn);
-  });
-  sheet.appendChild(handle);
-  sheet.appendChild(label);
-  sheet.appendChild(grid);
-  var canvas=document.getElementById('sc-canvas');
-  if(canvas) canvas.appendChild(sheet);
-  // Tap outside closes
-  setTimeout(function(){
-    document.addEventListener('touchstart',function _sClose(e){
-      if(!sheet.contains(e.target)){sheet.remove();document.removeEventListener('touchstart',_sClose);}
-    },{passive:true});
-  },200);
+  }
+
+  function _buildGrid(){
+    var grid=sheet.querySelector('#sc-stk-grid');
+    grid.innerHTML='';
+    var list=activeCat==='all'?_SC_STICKERS:_SC_STICKERS.filter(function(s){return(CAT_MAP[activeCat]||[]).indexOf(s.id)>=0;});
+    list.forEach(function(s){
+      var btn=document.createElement('button');
+      btn.style.cssText='background:rgba(255,255,255,.07);border:none;border-radius:16px;width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:10px;transition:transform .12s cubic-bezier(.34,1.4,.64,1),background .1s;-webkit-tap-highlight-color:transparent;';
+      btn.innerHTML=s.svg;
+      btn.querySelector('svg').style.cssText='width:100%;height:100%;';
+      btn.addEventListener('touchstart',function(){
+        btn.style.transform='scale(.82)';btn.style.background='rgba(255,255,255,.16)';
+        try{if(navigator.vibrate)navigator.vibrate(5);}catch(e){}
+      },{passive:true});
+      btn.addEventListener('touchend',function(){btn.style.transform='';btn.style.background='rgba(255,255,255,.07)';},{passive:true});
+      btn.addEventListener('click',function(){
+        _scPlaceSticker(s);
+        _closeSheet();
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  function _closeSheet(){
+    sheet.style.transform='translateY(100%)';
+    dim.style.background='rgba(0,0,0,0)';
+    setTimeout(function(){
+      if(sheet.parentNode)sheet.parentNode.removeChild(sheet);
+      if(dim.parentNode)dim.parentNode.removeChild(dim);
+    },320);
+  }
+
+  _buildCats();_buildGrid();
+
+  // Animate in
+  requestAnimationFrame(function(){requestAnimationFrame(function(){sheet.style.transform='translateY(0)';});});
+
+  // Swipe-down to close
+  var _sheetDragY=0,_sheetDragging=false,_sheetStartY=0;
+  sheet.addEventListener('touchstart',function(e){
+    if(e.target.closest('#sc-stk-grid')||e.target.closest('#sc-stk-cats'))return;
+    _sheetDragging=true;_sheetStartY=e.touches[0].clientY;
+  },{passive:true});
+  sheet.addEventListener('touchmove',function(e){
+    if(!_sheetDragging)return;
+    _sheetDragY=Math.max(0,e.touches[0].clientY-_sheetStartY);
+    sheet.style.transition='none';
+    sheet.style.transform='translateY('+_sheetDragY+'px)';
+  },{passive:true});
+  sheet.addEventListener('touchend',function(){
+    if(!_sheetDragging)return;
+    _sheetDragging=false;
+    sheet.style.transition='transform .28s cubic-bezier(.25,.46,.45,.94)';
+    if(_sheetDragY>80){_closeSheet();}
+    else{sheet.style.transform='translateY(0)';}
+    _sheetDragY=0;
+  },{passive:true});
+
+  // Tap dim to close
+  dim.addEventListener('click',_closeSheet);
 }
 
 // -- DELETE ZONE (Instagram-style) ---------------------------------------------
@@ -5973,6 +6148,7 @@ function _scCheckDeleteZone(t,el){
     dz.style.transform='scale(1.2)';
     dz.style.borderColor='rgba(220,38,38,.4)';
     var svg=dz.querySelector('svg');if(svg)svg.style.stroke='#fff';
+    try{if(navigator.vibrate)navigator.vibrate([10,30,10]);}catch(e){}
     if(el){
       el.style.transition='transform .22s cubic-bezier(.34,1,.64,1),opacity .22s ease';
       el.style.transform='translate(-50%,-50%) scale(0.25)';
@@ -6010,20 +6186,26 @@ function _scPlaceSticker(stickerDef){
   // Entry animation
   el.style.animation='_scStickerIn .28s cubic-bezier(.34,1.4,.64,1) both';
 
-  // Single source of truth: always read/write el._curScale
+  // Single source of truth: always read/write el._curScale, el._curRot
   el._curScale=1;
+  el._curRot=0;
   var dragging=false,sx,sy,ox,oy,_moved=false,_lastTap=0;
 
   el.addEventListener('touchstart',function(e){
-    if(e.touches.length!==1)return;
+    if(e.touches.length!==1){
+      // Multi-touch (pinch) starting — abort any active drag cleanly
+      if(dragging){dragging=false;_scHideDeleteZone();}
+      return;
+    }
     if(dragging)return;
     // Always read from el._curScale — the pinch handler writes here
     var sc=el._curScale||1;
     var t=e.touches[0];
-    var r=el.getBoundingClientRect();
     var cr=canvas.getBoundingClientRect();
-    ox=r.left+r.width/2-cr.left;
-    oy=r.top+r.height/2-cr.top;
+    var er=el.getBoundingClientRect();
+    // Resolve center in canvas-relative px from actual layout (not style strings)
+    ox=er.left+er.width/2-cr.left;
+    oy=er.top+er.height/2-cr.top;
     el.style.left=ox+'px';
     el.style.top=oy+'px';
     el.style.animation='';
@@ -6047,7 +6229,6 @@ function _scPlaceSticker(stickerDef){
     newTop=Math.max(0,Math.min(cr.height,newTop));
     el.style.left=newLeft+'px';
     el.style.top=newTop+'px';
-    ox=newLeft;oy=newTop;sx=t.clientX;sy=t.clientY; // incremental so no jump
     _scCheckDeleteZone(t,el);
     e.preventDefault();
   },{passive:false});
@@ -6072,8 +6253,9 @@ function _scPlaceSticker(stickerDef){
       setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
     } else {
       var sc=el._curScale||1;
+      var rot=el._curRot||0;
       el.style.transition='transform .12s ease';
-      el.style.transform='translate(-50%,-50%) scale('+sc+')';
+      el.style.transform='translate(-50%,-50%) scale('+sc+') rotate('+rot+'deg)';
       setTimeout(function(){el.style.transition='';},150);
     }
     _scHideDeleteZone();
@@ -6083,9 +6265,10 @@ function _scPlaceSticker(stickerDef){
   el.addEventListener('touchcancel',function(){
     dragging=false;_moved=false;
     var sc=el._curScale||1;
-    el.style.transform='translate(-50%,-50%) scale('+sc+')';
+    var rot=el._curRot||0;
+    el.style.transform='translate(-50%,-50%) scale('+sc+') rotate('+rot+'deg)';
     _scHideDeleteZone();
-  });
+  },{passive:true});
 }
 
 // Inject sticker entry keyframe once
