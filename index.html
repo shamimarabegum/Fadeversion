@@ -181,13 +181,14 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .sc-acts{display:flex;align-items:center;gap:10px}
 .sc-pb{background:rgba(255,255,255,.12);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1.5px solid rgba(255,255,255,.3);border-radius:50%;width:46px;height:46px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
 .sc-share{background:rgba(255,255,255,.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:50px;height:46px;padding:0 26px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-left:auto;letter-spacing:-.1px}
-/* SIZE SLIDER */
-#sc-size-slider-wrap{display:none;flex-direction:column;align-items:center;gap:4px;padding-top:2px}
+/* SIZE SLIDER — left edge, Instagram style */
+#sc-size-slider-wrap{display:none;position:absolute;left:14px;top:50%;transform:translateY(-50%);flex-direction:column;align-items:center;gap:8px;z-index:27;pointer-events:auto}
 #sc-size-slider-wrap.on{display:flex}
-#sc-size-slider-outer{width:36px;height:120px;display:flex;align-items:center;justify-content:center;overflow:visible}
-#sc-size-slider{-webkit-appearance:none;appearance:none;width:110px;height:4px;border-radius:4px;background:rgba(255,255,255,.4);outline:none;cursor:pointer;transform:rotate(-90deg);transform-origin:center center;touch-action:none}
-#sc-size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.5)}
-#sc-size-label{color:#fff;font-size:11px;font-weight:700;letter-spacing:.3px;text-shadow:0 1px 3px rgba(0,0,0,.6);min-width:24px;text-align:center}
+#sc-size-slider-track{width:28px;height:160px;background:rgba(255,255,255,.18);border-radius:14px;position:relative;display:flex;align-items:center;justify-content:center;overflow:visible;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.22)}
+#sc-size-slider{-webkit-appearance:none;appearance:none;width:140px;height:4px;border-radius:4px;background:rgba(255,255,255,.45);outline:none;cursor:pointer;transform:rotate(-90deg);transform-origin:center center;touch-action:none;position:absolute}
+#sc-size-slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:grab}
+#sc-size-label{color:#fff;font-size:10px;font-weight:700;letter-spacing:.3px;text-shadow:0 1px 4px rgba(0,0,0,.7);text-align:center;background:rgba(0,0,0,.4);border-radius:6px;padding:2px 5px}
+#sc-size-aa{color:rgba(255,255,255,.7);font-size:9px;font-weight:700;letter-spacing:.4px;text-shadow:0 1px 3px rgba(0,0,0,.6);text-align:center;text-transform:uppercase}
 /* Delete button on selected text */
 ._sc-del-btn{position:absolute;top:-14px;right:-14px;width:26px;height:26px;border-radius:50%;background:#E8352A;border:2.5px solid #fff;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:21;font-size:14px;line-height:1;color:#fff;font-weight:900;box-shadow:0 1px 6px rgba(0,0,0,.4)}
 ._sc-te.selected ._sc-del-btn{display:flex}
@@ -1486,9 +1487,19 @@ body {
 
 <!-- STORY CREATOR -->
 <div id="story-creator">
-  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov"></div><textarea id="sc-text-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="sentences" style="position:fixed;left:-9999px;top:50%;width:1px;height:1px;opacity:0;pointer-events:none;border:none;outline:none;resize:none;font-size:16px;"></textarea></div>
+  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov"></div><textarea id="sc-text-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="sentences" style="position:fixed;left:-9999px;top:50%;width:1px;height:1px;opacity:0;pointer-events:none;border:none;outline:none;resize:none;font-size:16px;"></textarea>
+    <div id="sc-size-slider-wrap">
+      <span id="sc-size-aa">Aa</span>
+      <div id="sc-size-slider-track">
+        <input id="sc-size-slider" type="range" min="14" max="120" value="36" oninput="_scSliderChange(this.value)"/>
+      </div>
+      <span id="sc-size-label">36</span>
+    </div>
+  </div>
   <div id="sc-top">
-    <div></div>
+    <button class="sc-tbtn" onclick="closeCreator()" title="Close" style="margin-top:max(0px,env(safe-area-inset-top))">
+      <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
     <div id="sc-right-panel">
       <button class="sc-rpbtn" onclick="scFontToggle()" title="Font style">
         <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
@@ -1500,12 +1511,6 @@ body {
         <svg width="23" height="23" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.8"/><circle cx="9.2" cy="10.5" r="1.1" fill="#fff"/><circle cx="14.8" cy="10.5" r="1.1" fill="#fff"/><path d="M8.5 14.5c1 1.8 6 1.8 7 0" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M16 4.5C17.5 3 20 3.5 20.5 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
       </button>
       <div id="sc-color-cycle" onclick="scCycleColor()" onmousedown="event.preventDefault()" ontouchstart="_scDotTouch(event)" title="Color"></div>
-      <div id="sc-size-slider-wrap">
-        <div id="sc-size-slider-outer">
-          <input id="sc-size-slider" type="range" min="14" max="120" value="36" oninput="_scSliderChange(this.value)"/>
-        </div>
-        <span id="sc-size-label">36</span>
-      </div>
     </div>
   </div>
   <div id="sc-bar">
@@ -5650,11 +5655,11 @@ var _scTextSize = 36;         // kept for pinch compat (per-element stored too)
   var s=document.createElement('style');
   s.id='_sc-te-style';
   s.textContent=[
-    '._sc-te{position:absolute;min-width:48px;max-width:88%;padding:6px 12px;border-radius:10px;',
+    '._sc-te{position:absolute;min-width:64px;max-width:88%;padding:6px 12px;border-radius:10px;',
     'font-size:36px;line-height:1.35;word-break:break-word;white-space:pre-wrap;',
     'text-align:center;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none;',
     'cursor:default;z-index:10;transform:translate(-50%,-50%);will-change:transform;',
-    'outline:none;-webkit-tap-highlight-color:transparent}',
+    'outline:none;-webkit-tap-highlight-color:transparent;width:max-content}',
     '._sc-te.editing{user-select:text;-webkit-user-select:text;cursor:text}',
     '._sc-te.selected{box-shadow:0 0 0 1.5px rgba(255,255,255,.55)}',
     '@keyframes _scTeIn{from{opacity:0;transform:translate(-50%,-50%) scale(.7)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}',
@@ -5771,7 +5776,8 @@ function scActivateText(){
     'left:50%;top:46%;',
     'font-size:'+_scTextSize+'px;',
     'color:'+SC_TEXT_COLORS[_scColorIdx]+';',
-    'font-family:'+f.ff+';font-style:'+f.fs+';font-weight:'+f.fw+';'
+    'font-family:'+f.ff+';font-style:'+f.fs+';font-weight:'+f.fw+';',
+    'width:max-content;max-width:88%;'
   ].join('');
   el.style.animation='_scTeIn .22s cubic-bezier(.34,1.4,.64,1) both';
   el._rot=0; el._scale=_scTextSize;
@@ -5807,6 +5813,41 @@ function scActivateText(){
     }catch(e_){}
   });
   _scAttachTextHandlers(el);
+}
+
+// Place cursor at the exact (x, y) screen coordinate inside a contentEditable element
+function _scPlaceCursorAt(el, x, y){
+  try {
+    var range, sel=window.getSelection();
+    if(!sel)return;
+    // Modern standard (Firefox)
+    if(document.caretPositionFromPoint){
+      var pos=document.caretPositionFromPoint(x,y);
+      if(pos){
+        range=document.createRange();
+        range.setStart(pos.offsetNode,pos.offset);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        return;
+      }
+    }
+    // WebKit / Chrome / Safari (iOS)
+    if(document.caretRangeFromPoint){
+      range=document.caretRangeFromPoint(x,y);
+      if(range){
+        sel.removeAllRanges();
+        sel.addRange(range);
+        return;
+      }
+    }
+    // Fallback: put cursor at end
+    range=document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } catch(e_){}
 }
 
 function _scAttachTextHandlers(el){
@@ -5854,7 +5895,8 @@ function _scAttachTextHandlers(el){
       _scIsTyping=true;
       _scUpdateCircles();
       _scShowSizeSlider();
-      requestAnimationFrame(function(){el.focus();});
+      var _tx=t.clientX,_ty=t.clientY;
+      requestAnimationFrame(function(){el.focus();_scPlaceCursorAt(el,_tx,_ty);});
       e.preventDefault();
       return;
     }
@@ -5914,7 +5956,8 @@ function _scAttachTextHandlers(el){
       el.style.opacity='0';
       setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},160);
     } else if(!_didDrag){
-      // Simple tap with no drag: enter edit mode
+      // Simple tap with no drag: enter edit mode at tap position
+      var _tapX=t.clientX,_tapY=t.clientY;
       _scCommitText();
       _scActiveTextEl=el;
       el.contentEditable='true';
@@ -5922,7 +5965,7 @@ function _scAttachTextHandlers(el){
       _scIsTyping=true;
       _scUpdateCircles();
       _scShowSizeSlider();
-      requestAnimationFrame(function(){el.focus();});
+      requestAnimationFrame(function(){el.focus();_scPlaceCursorAt(el,_tapX,_tapY);});
     } else {
       // Settled after drag — keep selected, show delete button
       _scActiveTextEl=el;
@@ -5991,9 +6034,15 @@ function _scHasContent(){
   // Isolate slider touch events from canvas pan/swipe after DOM ready
   document.addEventListener('DOMContentLoaded',function(){
     var sl=document.getElementById('sc-size-slider');
-    if(!sl)return;
-    sl.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:true});
-    sl.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:true});
+    var track=document.getElementById('sc-size-slider-track');
+    if(sl){
+      sl.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:true});
+      sl.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:true});
+    }
+    if(track){
+      track.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:true});
+      track.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:true});
+    }
   });
 })();
 function _scShowSizeSlider(){
