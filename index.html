@@ -183,6 +183,34 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .sc-share{background:rgba(255,255,255,.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:50px;height:46px;padding:0 26px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-left:auto;letter-spacing:-.1px}
 /* SIZE SLIDER — left edge, Instagram style */
 #sc-size-slider-wrap{display:none!important}
+
+/* ── INSTAGRAM-STYLE TEXT EDITOR OVERLAY ── */
+#sc-text-editor{display:none;position:absolute;inset:0;z-index:50;flex-direction:column}
+#sc-text-editor.on{display:flex}
+/* Tap-to-type hint on canvas */
+#sc-tap-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:rgba(255,255,255,.55);font-size:22px;font-family:'Inter',sans-serif;font-weight:500;pointer-events:none;z-index:5;transition:opacity .2s;letter-spacing:-.2px}
+/* Top bar: Done button */
+#sc-te-done{position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;color:#fff;font-size:17px;font-weight:600;font-family:'Inter',sans-serif;background:none;border:none;cursor:pointer;z-index:60;padding:6px 4px;letter-spacing:-.2px}
+/* Left vertical size slider */
+#sc-vslider-wrap{position:absolute;left:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none}
+#sc-vslider-wrap.on{opacity:1;pointer-events:auto}
+#sc-vslider-aa{color:rgba(255,255,255,.7);font-size:11px;font-family:'Inter',sans-serif;font-weight:700;letter-spacing:.3px}
+#sc-vslider-track{width:4px;height:180px;background:rgba(255,255,255,.25);border-radius:4px;position:relative;cursor:pointer}
+#sc-vslider-fill{position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:4px}
+#sc-vslider-thumb{position:absolute;left:50%;transform:translateX(-50%);width:22px;height:22px;background:#fff;border-radius:50%;box-shadow:0 1px 6px rgba(0,0,0,.4);cursor:grab}
+/* Bottom toolbar area */
+#sc-te-bottom{position:absolute;bottom:0;left:0;right:0;z-index:60;padding:0 0 max(28px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:0}
+/* Font style strip */
+#sc-te-fonts{display:flex;flex-direction:row;gap:0;overflow-x:auto;padding:10px 16px 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#sc-te-fonts::-webkit-scrollbar{display:none}
+.sc-te-font{padding:7px 18px;border-radius:22px;color:rgba(255,255,255,.7);white-space:nowrap;font-size:14px;cursor:pointer;flex-shrink:0;transition:all .15s;border:1.5px solid transparent}
+.sc-te-font.sel{background:rgba(255,255,255,.95);color:#111;border-color:transparent}
+/* Tools row */
+#sc-te-tools{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:0;background:rgba(28,28,30,.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:10px 10px 10px}
+.sc-te-tool{width:44px;height:44px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:10px;transition:opacity .12s;flex:1;max-width:56px}
+.sc-te-tool:active{opacity:.5}
+/* Keyboard spacer so toolbar stays above keyboard */
+#sc-te-kbspacer{height:0px;transition:height .28s cubic-bezier(.4,0,.2,1)}
 /* Delete button on selected text — only show when text element has content */
 ._sc-del-btn{display:none!important}
 
@@ -1488,16 +1516,61 @@ body {
       </div>
       <span id="sc-size-label">36</span>
     </div>
+    <!-- Tap to type hint -->
+    <div id="sc-tap-hint">Tap to type</div>
+    <!-- Instagram-style text editor overlay -->
+    <div id="sc-text-editor">
+      <!-- Done button -->
+      <button id="sc-te-done" onclick="_scTeDone()">Done</button>
+      <!-- Left vertical size slider -->
+      <div id="sc-vslider-wrap">
+        <span id="sc-vslider-aa" style="font-size:9px;opacity:.7">A</span>
+        <div id="sc-vslider-track" ontouchstart="_scVSliderTouch(event)" ontouchmove="_scVSliderTouch(event)" ontouchend="_scVSliderTouchEnd()">
+          <div id="sc-vslider-fill"></div>
+          <div id="sc-vslider-thumb"></div>
+        </div>
+        <span id="sc-vslider-aa2" style="color:rgba(255,255,255,.7);font-size:17px;font-family:'Inter',sans-serif;font-weight:700">A</span>
+      </div>
+      <!-- Bottom: font strip + tools -->
+      <div id="sc-te-bottom">
+        <div id="sc-te-fonts"></div>
+        <div id="sc-te-tools">
+          <!-- Aa size pill -->
+          <button class="sc-te-tool" id="sc-te-tool-aa" title="Size" style="pointer-events:none">
+            <span style="color:#fff;font-size:19px;font-family:'Inter',sans-serif;font-weight:700;line-height:1">Aa</span>
+          </button>
+          <!-- Color wheel -->
+          <button class="sc-te-tool" onclick="_scTeCycleColor()" title="Color">
+            <svg width="28" height="28" viewBox="0 0 28 28"><defs><radialGradient id="cwg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff"/><stop offset="40%" stop-color="#FFFC00"/><stop offset="60%" stop-color="#FF3B30"/><stop offset="75%" stop-color="#AF52DE"/><stop offset="90%" stop-color="#007AFF"/><stop offset="100%" stop-color="#34C759"/></radialGradient></defs><circle cx="14" cy="14" r="13" fill="url(#cwg)" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/></svg>
+          </button>
+          <!-- Italic/style toggle -->
+          <button class="sc-te-tool" id="sc-te-tool-italic" onclick="_scTeToggleItalic()" title="Italic">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+          </button>
+          <!-- Text alignment -->
+          <button class="sc-te-tool" id="sc-te-tool-align" onclick="_scTeToggleAlign()" title="Alignment">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" id="sc-te-align-icon"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <!-- Background box toggle -->
+          <button class="sc-te-tool" id="sc-te-tool-bg" onclick="_scTeToggleBg()" title="Text background">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="#fff" stroke-width="2"/><text x="12" y="16" text-anchor="middle" font-family="Arial" font-size="10" font-weight="800" fill="#fff">A</text></svg>
+          </button>
+        </div>
+        <div id="sc-te-kbspacer"></div>
+      </div>
+      <!-- Inline editable text element (lives in overlay during edit) -->
+      <div id="sc-te-live" contenteditable="true" spellcheck="false" autocorrect="off" autocapitalize="sentences" style="position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);min-width:64px;max-width:88%;padding:8px 14px;border-radius:10px;font-size:40px;line-height:1.3;word-break:break-word;white-space:pre-wrap;text-align:center;color:#fff;outline:none;-webkit-user-select:text;user-select:text;z-index:55;cursor:text;width:max-content;font-family:'Inter',sans-serif;font-weight:700"></div>
+    </div>
   </div>
   <div id="sc-top">
     <button class="sc-tbtn" onclick="closeCreator()" title="Close" style="margin-top:max(0px,env(safe-area-inset-top))">
       <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <div id="sc-right-panel">
-      <button class="sc-rpbtn" onclick="scFontToggle()" title="Font style">
+      <button class="sc-rpbtn" onclick="_scOpenTextEditor()" title="Font style">
         <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
       </button>
-      <button class="sc-rpbtn" id="sc-addtext-btn" onclick="scActivateText()" title="Add text">
+      <button class="sc-rpbtn" id="sc-addtext-btn" onclick="_scOpenTextEditor()" title="Add text">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><text x="12" y="18" text-anchor="middle" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#fff">A</text></svg>
       </button>
       <button class="sc-rpbtn" id="sc-sticker-btn" onclick="scOpenStickers()" title="Stickers">
@@ -2347,12 +2420,14 @@ function loadVerificationState(){
 
 var SC_SW=['#FFFFFF','#F9E74B','#FF6B6B','#4ECDC4','#A855F7','#FF9F1C','#06D6A0','#FF6FAB'];
 var SC_FONTS=[
-  {l:'Sans',ff:'Inter,sans-serif',fs:'normal',fw:'400'},
-  {l:'Italic',ff:'Playfair Display,serif',fs:'italic',fw:'400'},
-  {l:'Bold',ff:'Inter,sans-serif',fs:'normal',fw:'700'},
-  {l:'Mono',ff:'monospace',fs:'normal',fw:'400'},
-  {l:'Script',ff:'Georgia,serif',fs:'italic',fw:'700'},
-  {l:'Light',ff:'Inter,sans-serif',fs:'normal',fw:'300'},
+  {l:'Modern',   ff:'Inter,sans-serif',              fs:'normal', fw:'700'},
+  {l:'Classic',  ff:'Georgia,serif',                 fs:'normal', fw:'700'},
+  {l:'Signature',ff:'Palatino Linotype,Palatino,Georgia,serif', fs:'italic', fw:'400'},
+  {l:'Editor',   ff:'Courier New,monospace',         fs:'normal', fw:'700'},
+  {l:'Poster',   ff:'Impact,Arial Black,sans-serif', fs:'normal', fw:'900'},
+  {l:'Bubble',   ff:'Arial Rounded MT Bold,Arial,sans-serif', fs:'normal', fw:'700'},
+  {l:'Neon',     ff:'Inter,sans-serif',              fs:'normal', fw:'900'},
+  {l:'Light',    ff:'Inter,sans-serif',              fs:'normal', fw:'300'},
 ];
 var TAB_IDX={today:0,clips:1,talk:2,me:3};
 var IC={
@@ -5532,6 +5607,16 @@ function openCreator(){
   var colorDot=document.getElementById('sc-color-cycle');
   if(colorDot)colorDot.style.background=SC_BG_COLORS[0];
   _scUpdateCircles();
+  // Reset Instagram text editor state
+  _scTeOpen=false;_scTeFI=0;_scTeSize=40;_scTeAlign='center';_scTeBgMode=0;_scTeIsItalic=false;_scTeColor='#FFFFFF';_scTeColorIdx=0;
+  var ed=document.getElementById('sc-text-editor');
+  if(ed){ed.classList.remove('on');ed.style.display='none';}
+  var live=document.getElementById('sc-te-live');
+  if(live){live.textContent='';live.style.background='none';live.style.fontSize='40px';}
+  _scVSliderHide();
+  // Show tap hint
+  var hint=document.getElementById('sc-tap-hint');
+  if(hint){hint.style.opacity='1';}
   var cr=document.getElementById('story-creator');cr.style.display='flex';
   history.pushState({_fade:'story-creator'},'');
   requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';});});
@@ -5613,6 +5698,13 @@ function _scDoClose(){
   _scHideSizeSlider();
   scFontOpen=false;
   _scActiveTextEl=null;_scIsTyping=false;_scActiveFilter='none';
+  // Close Instagram text editor if open
+  _scTeOpen=false;
+  var ed=document.getElementById('sc-text-editor');
+  if(ed){ed.classList.remove('on');ed.style.display='none';}
+  var live=document.getElementById('sc-te-live');
+  if(live){live.blur();live.textContent='';}
+  _scVSliderHide();
   var ln=document.getElementById('_sc-snap-line');if(ln)ln.remove();
   var dz=document.getElementById('sc-delete-zone');if(dz)dz.remove();
   _scDeleteZone=null;_scDeleteActive=false;
@@ -5888,18 +5980,19 @@ function _scAttachTextHandlers(el){
     var isEditing=el.classList.contains('editing');
     var isSelected=el.classList.contains('selected');
 
-    // Tap on already-selected (non-editing) text → re-enter edit immediately
+    // Tap on already-selected (non-editing) text → open Instagram editor pre-filled
     if(isSelected&&!isEditing){
       _lastTap=0;
-      _scCommitText();
-      _scActiveTextEl=el;
-      el.contentEditable='true';
-      el.classList.add('editing','selected');
-      _scIsTyping=true;
-      _scUpdateCircles();
-      _scShowSizeSlider();
-      var _tx=t.clientX,_ty=t.clientY;
-      requestAnimationFrame(function(){el.focus();_scPlaceCursorAt(el,_tx,_ty);});
+      var _existingTxt2=_scGetElText(el);
+      if(el.parentNode)el.parentNode.removeChild(el);
+      _scActiveTextEl=null;
+      _scTeOpen=false;
+      _scOpenTextEditor();
+      requestAnimationFrame(function(){
+        var live=document.getElementById('sc-te-live');
+        if(live&&_existingTxt2){live.textContent=_existingTxt2;
+          try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}}
+      });
       e.preventDefault();
       return;
     }
@@ -5959,16 +6052,21 @@ function _scAttachTextHandlers(el){
       el.style.opacity='0';
       setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},160);
     } else if(!_didDrag){
-      // Simple tap with no drag: enter edit mode at tap position
-      var _tapX=t.clientX,_tapY=t.clientY;
-      _scCommitText();
-      _scActiveTextEl=el;
-      el.contentEditable='true';
-      el.classList.add('editing','selected');
-      _scIsTyping=true;
-      _scUpdateCircles();
-      _scShowSizeSlider();
-      requestAnimationFrame(function(){el.focus();_scPlaceCursorAt(el,_tapX,_tapY);});
+      // Simple tap with no drag: open Instagram-style editor pre-filled with this element's text
+      var _existingTxt=_scGetElText(el);
+      // Remove this element — user will re-commit from editor
+      if(_scActiveTextEl===el)_scActiveTextEl=null;
+      el.style.transition='opacity .12s';el.style.opacity='0';
+      var _elRef=el;
+      setTimeout(function(){if(_elRef.parentNode)_elRef.parentNode.removeChild(_elRef);},130);
+      // Pre-fill editor with existing text
+      _scTeOpen=false; // allow open
+      _scOpenTextEditor();
+      requestAnimationFrame(function(){
+        var live=document.getElementById('sc-te-live');
+        if(live&&_existingTxt){live.textContent=_existingTxt;// move cursor to end
+          try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}}
+      });
     } else {
       // Settled after drag — keep selected, show delete button
       _scActiveTextEl=el;
@@ -6106,6 +6204,288 @@ function applyFont(){
     _scActiveTextEl.style.fontWeight=f.fw;
   }
 }
+
+// ── INSTAGRAM-STYLE CANVAS TEXT EDITOR ───────────────────────────────────────
+// State
+var _scTeOpen=false;
+var _scTeSize=40;
+var _scTeAlign='center'; // 'left','center','right'
+var _scTeBgMode=0; // 0=none, 1=dark pill, 2=colored pill
+var _scTeIsItalic=false;
+var _scTeFI=0; // font index
+var _scTeColor='#FFFFFF';
+var _scTeColorIdx=0;
+
+// Open the Instagram-style editor (triggered by tapping canvas)
+function _scOpenTextEditor(){
+  if(_scTeOpen)return;
+  _scTeOpen=true;
+  // Hide tap hint
+  var hint=document.getElementById('sc-tap-hint');
+  if(hint)hint.style.opacity='0';
+  // Show editor overlay
+  var ed=document.getElementById('sc-text-editor');
+  if(ed){ed.style.display='flex';}
+  requestAnimationFrame(function(){
+    if(ed)ed.classList.add('on');
+  });
+  // Reset live element
+  var live=document.getElementById('sc-te-live');
+  if(live){
+    live.textContent='';
+    _scTeApplyStyle(live);
+    // Focus
+    requestAnimationFrame(function(){
+      live.focus();
+      try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}
+    });
+  }
+  // Build font strip
+  _scTeBuildFonts();
+  // Show size slider
+  _scVSliderShow();
+  // Watch keyboard
+  _scTeWatchKeyboard();
+}
+
+// Close / commit editor: spawn text element on canvas
+function _scTeDone(){
+  if(!_scTeOpen)return;
+  var live=document.getElementById('sc-te-live');
+  var txt=live?live.textContent.trim():'';
+  // Hide editor
+  var ed=document.getElementById('sc-text-editor');
+  if(ed){ed.classList.remove('on');ed.style.display='none';}
+  // Show tap hint if no content remains
+  var canvas=_scGetCanvas();
+  var hasExisting=canvas&&canvas.querySelectorAll('._sc-te').length>0;
+  if(txt){
+    // Spawn as draggable element on canvas
+    _scTeSpawn(txt);
+  }
+  _scTeResetHint();
+  _scTeOpen=false;
+  _scVSliderHide();
+  // Blur
+  if(live){live.blur();live.textContent='';}
+}
+
+// Spawn a committed text element on the canvas
+function _scTeSpawn(txt){
+  var canvas=_scGetCanvas();if(!canvas)return;
+  _scCommitText(); // commit any existing
+  var f=SC_FONTS[_scTeFI]||SC_FONTS[0];
+  var el=document.createElement('div');
+  el.className='_sc-te selected';
+  el.contentEditable='false';
+  el.spellcheck=false;
+  el.style.cssText=[
+    'left:50%;top:46%;',
+    'font-size:'+_scTeSize+'px;',
+    'color:'+_scTeColor+';',
+    'font-family:'+f.ff+';font-style:'+(f.fs==='italic'||_scTeIsItalic?'italic':'normal')+';font-weight:'+f.fw+';',
+    'text-align:'+_scTeAlign+';',
+    'width:max-content;max-width:88%;'
+  ].join('');
+  // Apply bg mode
+  _scTeApplyBgToEl(el);
+  el.textContent=txt;
+  el._rot=0; el._scale=_scTeSize;
+  el.style.animation='_scTeIn .22s cubic-bezier(.34,1.4,.64,1) both';
+  canvas.appendChild(el);
+  _scActiveTextEl=el;
+  _scAttachTextHandlers(el);
+  // Immediately deselect so it sits cleanly
+  setTimeout(function(){
+    if(_scActiveTextEl===el){
+      el.classList.remove('selected');
+      _scActiveTextEl=null;
+    }
+  },600);
+}
+
+function _scTeApplyBgToEl(el){
+  if(_scTeBgMode===0){el.style.background='none';el.style.padding='6px 12px';}
+  else if(_scTeBgMode===1){el.style.background='rgba(0,0,0,.6)';el.style.padding='8px 16px';el.style.borderRadius='10px';}
+  else{el.style.background=_scTeColor==='#FFFFFF'?'rgba(255,255,255,.2)':'rgba(255,255,255,.15)';el.style.padding='8px 16px';el.style.borderRadius='10px';}
+}
+
+function _scTeResetHint(){
+  var canvas=_scGetCanvas();
+  var hasContent=canvas&&(canvas.querySelectorAll('._sc-te').length>0||canvas.querySelector('._sc-sticker'));
+  var hint=document.getElementById('sc-tap-hint');
+  if(hint)hint.style.opacity=hasContent?'0':'1';
+}
+
+// Apply current style to the live element
+function _scTeApplyStyle(live){
+  if(!live)return;
+  var f=SC_FONTS[_scTeFI]||SC_FONTS[0];
+  live.style.fontFamily=f.ff;
+  live.style.fontStyle=(f.fs==='italic'||_scTeIsItalic)?'italic':'normal';
+  live.style.fontWeight=f.fw;
+  live.style.fontSize=_scTeSize+'px';
+  live.style.color=_scTeColor;
+  live.style.textAlign=_scTeAlign;
+  // bg mode
+  if(_scTeBgMode===0){live.style.background='none';}
+  else if(_scTeBgMode===1){live.style.background='rgba(0,0,0,.6)';live.style.padding='8px 16px';live.style.borderRadius='10px';}
+  else{live.style.background='rgba(255,255,255,.15)';live.style.padding='8px 16px';live.style.borderRadius='10px';}
+}
+
+// Build font strip chips
+function _scTeBuildFonts(){
+  var row=document.getElementById('sc-te-fonts');if(!row)return;
+  row.innerHTML='';
+  SC_FONTS.forEach(function(f,i){
+    var chip=document.createElement('div');
+    chip.className='sc-te-font'+(i===_scTeFI?' sel':'');
+    chip.textContent=f.l;
+    chip.style.fontFamily=f.ff;
+    chip.style.fontStyle=f.fs;
+    chip.style.fontWeight=f.fw;
+    function pick(){
+      _scTeFI=i;
+      row.querySelectorAll('.sc-te-font').forEach(function(c,j){c.classList.toggle('sel',j===i);});
+      var live=document.getElementById('sc-te-live');
+      _scTeApplyStyle(live);
+      requestAnimationFrame(function(){if(live)live.focus();});
+    }
+    chip.addEventListener('touchend',function(ev){ev.preventDefault();pick();},{passive:false});
+    chip.onclick=pick;
+    row.appendChild(chip);
+  });
+}
+
+// Color cycle for text editor
+function _scTeCycleColor(){
+  _scTeColorIdx=(_scTeColorIdx+1)%SC_TEXT_COLORS.length;
+  _scTeColor=SC_TEXT_COLORS[_scTeColorIdx];
+  var live=document.getElementById('sc-te-live');
+  _scTeApplyStyle(live);
+  requestAnimationFrame(function(){if(live)live.focus();});
+}
+
+// Italic toggle
+function _scTeToggleItalic(){
+  _scTeIsItalic=!_scTeIsItalic;
+  var btn=document.getElementById('sc-te-tool-italic');
+  if(btn)btn.style.opacity=_scTeIsItalic?'1':'0.6';
+  var live=document.getElementById('sc-te-live');
+  _scTeApplyStyle(live);
+  requestAnimationFrame(function(){if(live)live.focus();});
+}
+
+// Alignment cycle: left→center→right→left
+function _scTeToggleAlign(){
+  var aligns=['center','left','right'];
+  var idx=aligns.indexOf(_scTeAlign);
+  _scTeAlign=aligns[(idx+1)%aligns.length];
+  // Update icon
+  var icon=document.getElementById('sc-te-align-icon');
+  if(icon){
+    if(_scTeAlign==='left')icon.innerHTML='<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/>';
+    else if(_scTeAlign==='center')icon.innerHTML='<line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>';
+    else icon.innerHTML='<line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/>';
+  }
+  var live=document.getElementById('sc-te-live');
+  _scTeApplyStyle(live);
+  requestAnimationFrame(function(){if(live)live.focus();});
+}
+
+// Background box cycle: none→dark→light
+function _scTeToggleBg(){
+  _scTeBgMode=(_scTeBgMode+1)%3;
+  var btn=document.getElementById('sc-te-tool-bg');
+  if(btn)btn.style.opacity=_scTeBgMode>0?'1':'0.6';
+  var live=document.getElementById('sc-te-live');
+  _scTeApplyStyle(live);
+  requestAnimationFrame(function(){if(live)live.focus();});
+}
+
+// ── VERTICAL SIZE SLIDER ─────────────────────────────────────────────────────
+var _scVSliderDragging=false;
+var _scVSliderTrackRect=null;
+
+function _scVSliderShow(){
+  var wrap=document.getElementById('sc-vslider-wrap');
+  if(wrap)wrap.classList.add('on');
+  _scVSliderUpdate();
+}
+function _scVSliderHide(){
+  var wrap=document.getElementById('sc-vslider-wrap');
+  if(wrap)wrap.classList.remove('on');
+}
+function _scVSliderUpdate(){
+  var track=document.getElementById('sc-vslider-track');
+  var fill=document.getElementById('sc-vslider-fill');
+  var thumb=document.getElementById('sc-vslider-thumb');
+  if(!track||!fill||!thumb)return;
+  var min=14,max=100;
+  var pct=(_scTeSize-min)/(max-min);
+  pct=Math.max(0,Math.min(1,pct));
+  var trackH=180;
+  var thumbPx=pct*trackH;
+  fill.style.height=thumbPx+'px';
+  thumb.style.bottom=(thumbPx-11)+'px';
+}
+function _scVSliderTouch(e){
+  e.preventDefault();e.stopPropagation();
+  var track=document.getElementById('sc-vslider-track');
+  if(!track)return;
+  var rect=track.getBoundingClientRect();
+  var t=e.touches[0];
+  var y=t.clientY-rect.top;
+  var trackH=rect.height;
+  var pct=1-(y/trackH);
+  pct=Math.max(0,Math.min(1,pct));
+  var min=14,max=100;
+  _scTeSize=Math.round(min+pct*(max-min));
+  _scVSliderUpdate();
+  var live=document.getElementById('sc-te-live');
+  if(live)live.style.fontSize=_scTeSize+'px';
+}
+function _scVSliderTouchEnd(){_scVSliderDragging=false;}
+
+// ── KEYBOARD AWARENESS FOR TEXT EDITOR ───────────────────────────────────────
+var _scTeKbWatching=false;
+function _scTeWatchKeyboard(){
+  if(_scTeKbWatching)return;
+  if(!window.visualViewport)return;
+  _scTeKbWatching=true;
+  function onVV(){
+    var sp=document.getElementById('sc-te-kbspacer');
+    var ed=document.getElementById('sc-text-editor');
+    if(!sp||!ed||!_scTeOpen)return;
+    var vvH=window.visualViewport.height;
+    var fullH=window.innerHeight;
+    var kbH=Math.max(0,fullH-vvH);
+    sp.style.height=(kbH>60?kbH:0)+'px';
+  }
+  window.visualViewport.addEventListener('resize',onVV);
+  window.visualViewport.addEventListener('scroll',onVV);
+}
+
+// ── CANVAS TAP TO OPEN EDITOR ────────────────────────────────────────────────
+// Attach tap listener on canvas to open text editor when not in edit mode
+(function(){
+  document.addEventListener('DOMContentLoaded',function(){
+    var canvas=document.getElementById('sc-canvas');
+    if(!canvas)return;
+    canvas.addEventListener('touchend',function(e){
+      var cr=document.getElementById('story-creator');
+      if(!cr||cr.style.display==='none')return;
+      if(_scTeOpen)return;
+      if(_scActiveTextEl)return;
+      // Don't trigger on toolbar, sticker, or text element taps
+      var t=e.target;
+      if(t.closest&&(t.closest('#sc-top')||t.closest('#sc-bar')||t.closest('._sc-te')||t.closest('._sc-sticker')||t.closest('#sc-text-editor')))return;
+      // Tap on canvas: open text editor
+      e.preventDefault();
+      _scOpenTextEditor();
+    },{passive:false});
+  });
+})();
 
 // ── PINCH-TO-RESIZE + TWO-FINGER ROTATE (text elements + stickers) ───────────
 // Snap angles for the guide line (0°, 45°, 90°, 135°, 180°)
@@ -6646,11 +7026,16 @@ function scPhoto(e){
   _scIsPhoto=true;_scIsTyping=false;
   // Commit any active text, hide font strip and size slider
   _scCommitText();
+  // Close text editor if open
+  if(_scTeOpen){_scTeDone();}
   scFontOpen=false;
   var fontsEl=document.getElementById('sc-fonts');
   if(fontsEl)fontsEl.classList.remove('on');
   _scHideSizeSlider();
   _scUpdateCircles();
+  // Hide tap hint when photo loaded
+  var hint=document.getElementById('sc-tap-hint');
+  if(hint)hint.style.opacity='0';
   _scBuildFilterStrip();
 }
 var _scActiveFilter='none';
