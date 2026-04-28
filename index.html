@@ -186,7 +186,10 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 
 /* ── INSTAGRAM-STYLE TEXT EDITOR OVERLAY ── */
 #sc-text-editor{display:none;position:absolute;inset:0;z-index:50;flex-direction:column;pointer-events:none}
-#sc-text-editor.on{display:flex;pointer-events:auto}
+#sc-text-editor.on{display:flex}
+/* everything inside the overlay is pointer-events:none by default,
+   only specific children opt-in */
+#sc-te-done,#sc-te-bottom,#sc-vslider-wrap.on,#sc-te-live,#sc-te-mention-picker{pointer-events:auto}
 /* Tap-to-type hint on canvas */
 #sc-tap-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:rgba(255,255,255,.5);font-size:21px;font-family:'Inter',sans-serif;font-weight:500;pointer-events:none;z-index:5;transition:opacity .18s;letter-spacing:-.1px}
 /* Done button — plain text top right, Instagram position */
@@ -211,40 +214,40 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 /* Hide the right-panel buttons while text editor is open (Done replaces them) */
 #story-creator.sc-editing #sc-right-panel{opacity:0;pointer-events:none}
 #story-creator.sc-editing #sc-top .sc-tbtn{opacity:0;pointer-events:none}
-/* Left vertical size slider — Instagram style */
+/* Left vertical size slider — Instagram style, left side only */
 #sc-vslider-wrap{
   position:absolute;
-  left:0;top:0;bottom:0;
-  width:56px;
-  z-index:60;
+  left:0;
+  /* sit between top-bar (~80px) and bottom toolbar (~220px) */
+  top:80px;
+  bottom:220px;
+  width:52px;
+  z-index:65;
   opacity:0;
   transition:opacity .2s;
   pointer-events:none;
   display:flex;
   align-items:center;
   justify-content:center;
+  /* do NOT have background — fully transparent */
 }
 #sc-vslider-wrap.on{opacity:1;pointer-events:auto}
-/* The visible track: thin line centered in the touch area */
+/* The visible track: thin 3px line */
 #sc-vslider-track{
   position:relative;
   width:3px;
-  height:55%;
-  max-height:240px;
-  min-height:120px;
-  background:rgba(255,255,255,.22);
+  height:min(55%,200px);
+  background:rgba(255,255,255,.25);
   border-radius:3px;
   touch-action:none;
 }
-/* Active fill (bottom portion = smaller text, top = bigger) */
 #sc-vslider-fill{
   position:absolute;
   bottom:0;left:0;right:0;
-  background:rgba(255,255,255,.55);
+  background:rgba(255,255,255,.6);
   border-radius:3px;
   pointer-events:none;
 }
-/* White dot thumb */
 #sc-vslider-thumb{
   position:absolute;
   left:50%;
@@ -253,9 +256,8 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
   width:22px;height:22px;
   background:#fff;
   border-radius:50%;
-  box-shadow:0 2px 10px rgba(0,0,0,.55);
+  box-shadow:0 2px 10px rgba(0,0,0,.6);
   pointer-events:none;
-  transition:transform .06s;
 }
 /* Bottom toolbar area */
 #sc-te-bottom{position:absolute;bottom:0;left:0;right:0;z-index:60;display:flex;flex-direction:column;gap:0}
@@ -6108,6 +6110,7 @@ function _scAttachTextHandlers(el){
     sx=t.clientX; sy=t.clientY;
     _moved=false; _didDrag=false;
     dragging=true;
+    window._scAnyDragActive=true;
     _scActiveTextEl=el;
     el.classList.add('selected');
     _scShowDeleteZone();
@@ -6141,6 +6144,8 @@ function _scAttachTextHandlers(el){
   el.addEventListener('touchend',function(e){
     if(!dragging){return;}
     dragging=false;
+    // Clear global drag flag after a tick so canvas touchend doesn't fire editor open
+    setTimeout(function(){window._scAnyDragActive=false;},80);
     delete el.dataset.snapped;
     var t=e.changedTouches[0];
     if(_didDrag&&_scCheckDeleteZone(t,el)){
@@ -6671,6 +6676,8 @@ function _scTeWatchKeyboard(){
       if(!cr||cr.style.display==='none')return;
       if(_scTeOpen)return;
       if(_scActiveTextEl)return;
+      // Don't open if any element drag just ended
+      if(window._scAnyDragActive)return;
       // Ignore taps on any overlay/toolbar/sticker/text
       var t=e.target;
       if(t.closest&&(
@@ -7121,6 +7128,7 @@ function _scPlaceSticker(stickerDef){
     el.style.transform='translate(-50%,-50%) scale('+sc+')';
     sx=t.clientX;sy=t.clientY;
     dragging=true;_moved=false;
+    window._scAnyDragActive=true;
     _scShowDeleteZone();
     e.preventDefault();
     e.stopPropagation();
@@ -7149,11 +7157,12 @@ function _scPlaceSticker(stickerDef){
       el.style.transition='transform .18s ease,opacity .18s ease';
       el.style.transform='translate(-50%,-50%) scale(0)';el.style.opacity='0';
       setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
-      _scHideDeleteZone();dragging=false;return;
+      _scHideDeleteZone();dragging=false;window._scAnyDragActive=false;return;
     }
     _lastTap=now;
     if(!dragging){_moved=false;return;}
     dragging=false;
+    setTimeout(function(){window._scAnyDragActive=false;},80);
     var t=e.changedTouches[0];
     if(_scCheckDeleteZone(t,el)){
       el.style.transition='transform .18s ease,opacity .18s ease';
