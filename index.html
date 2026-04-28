@@ -189,14 +189,74 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sc-text-editor.on{display:flex;pointer-events:auto}
 /* Tap-to-type hint on canvas */
 #sc-tap-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:rgba(255,255,255,.5);font-size:21px;font-family:'Inter',sans-serif;font-weight:500;pointer-events:none;z-index:5;transition:opacity .18s;letter-spacing:-.1px}
-/* Done button — top right, well clear of slider */
-#sc-te-done{position:absolute;top:max(18px,env(safe-area-inset-top));right:18px;color:#fff;font-size:17px;font-weight:600;font-family:'Inter',sans-serif;background:none;border:none;cursor:pointer;z-index:70;padding:8px 4px;letter-spacing:-.2px;pointer-events:auto}
-/* Left vertical size slider — Instagram exact style: thin line left edge, dot slides */
-#sc-vslider-wrap{position:absolute;left:20px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:center;gap:0;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;height:220px;justify-content:center}
+/* Done button — plain text top right, Instagram position */
+#sc-te-done{
+  position:absolute;
+  top:max(16px,env(safe-area-inset-top));
+  right:16px;
+  color:#fff;
+  font-size:17px;
+  font-weight:600;
+  font-family:'Inter',sans-serif;
+  background:none;
+  border:none;
+  cursor:pointer;
+  z-index:70;
+  padding:8px 2px;
+  letter-spacing:-.2px;
+  pointer-events:auto;
+  /* make sure it sits above the sc-top layer */
+  isolation:isolate;
+}
+/* Hide the right-panel buttons while text editor is open (Done replaces them) */
+#story-creator.sc-editing #sc-right-panel{opacity:0;pointer-events:none}
+#story-creator.sc-editing #sc-top .sc-tbtn{opacity:0;pointer-events:none}
+/* Left vertical size slider — Instagram style */
+#sc-vslider-wrap{
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:56px;
+  z-index:60;
+  opacity:0;
+  transition:opacity .2s;
+  pointer-events:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
 #sc-vslider-wrap.on{opacity:1;pointer-events:auto}
-#sc-vslider-track{width:2px;height:200px;background:rgba(255,255,255,.3);border-radius:2px;position:relative;touch-action:none}
-#sc-vslider-fill{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.7);border-radius:2px;pointer-events:none}
-#sc-vslider-thumb{position:absolute;left:50%;transform:translate(-50%,50%);width:20px;height:20px;background:#fff;border-radius:50%;box-shadow:0 1px 8px rgba(0,0,0,.5);pointer-events:none;bottom:0}
+/* The visible track: thin line centered in the touch area */
+#sc-vslider-track{
+  position:relative;
+  width:3px;
+  height:55%;
+  max-height:240px;
+  min-height:120px;
+  background:rgba(255,255,255,.22);
+  border-radius:3px;
+  touch-action:none;
+}
+/* Active fill (bottom portion = smaller text, top = bigger) */
+#sc-vslider-fill{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  background:rgba(255,255,255,.55);
+  border-radius:3px;
+  pointer-events:none;
+}
+/* White dot thumb */
+#sc-vslider-thumb{
+  position:absolute;
+  left:50%;
+  bottom:0;
+  transform:translate(-50%,50%);
+  width:22px;height:22px;
+  background:#fff;
+  border-radius:50%;
+  box-shadow:0 2px 10px rgba(0,0,0,.55);
+  pointer-events:none;
+  transition:transform .06s;
+}
 /* Bottom toolbar area */
 #sc-te-bottom{position:absolute;bottom:0;left:0;right:0;z-index:60;display:flex;flex-direction:column;gap:0}
 /* Font style strip */
@@ -221,8 +281,37 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .sc-te-mrow{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .1s}
 .sc-te-mrow:active{background:rgba(255,255,255,.08)}
 .sc-te-mav{width:36px;height:36px;border-radius:50%;background:#333;object-fit:cover;flex-shrink:0}
-/* Keyboard spacer */
-#sc-te-kbspacer{height:0px;transition:height .25s cubic-bezier(.4,0,.2,1)}
+/* ── STORY CREATOR DELETE ZONE ── */
+#sc-delete-zone{
+  position:absolute;
+  bottom:48px;
+  left:50%;
+  transform:translateX(-50%) translateY(24px);
+  z-index:100;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  opacity:0;
+  transition:opacity .18s ease, transform .22s cubic-bezier(.34,1.2,.64,1);
+  pointer-events:none;
+}
+#sc-delete-zone.on{opacity:1;transform:translateX(-50%) translateY(0)}
+/* The bare trash SVG wrapper — no circle */
+#sc-dz-icon-wrap{
+  width:44px;height:44px;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s cubic-bezier(.34,1.2,.64,1);
+}
+#sc-dz-icon-wrap.active{transform:scale(1.3)}
+/* Lid animation reuses same .trash-lid-g class */
+#sc-dz-icon-wrap .trash-lid-g{
+  transform-box:fill-box;
+  transform-origin:50% 100%;
+  transition:transform .28s cubic-bezier(.25,.46,.45,.94);
+}
+#sc-dz-icon-wrap.active .trash-lid-g{transform:rotate(-52deg)}
+#sc-dz-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.5px;text-transform:uppercase}
 /* Delete button on selected text — only show when text element has content */
 ._sc-del-btn{display:none!important}
 
@@ -1533,8 +1622,8 @@ body {
     <!-- Instagram-style text editor overlay -->
     <div id="sc-text-editor">
       <button id="sc-te-done" onclick="_scTeDone()">Done</button>
-      <div id="sc-vslider-wrap">
-        <div id="sc-vslider-track" ontouchstart="_scVSliderTouch(event)" ontouchmove="_scVSliderTouch(event)" ontouchend="_scVSliderTouchEnd(event)">
+      <div id="sc-vslider-wrap" ontouchstart="_scVSliderTouch(event)" ontouchmove="_scVSliderTouch(event)" ontouchend="_scVSliderTouchEnd(event)">
+        <div id="sc-vslider-track">
           <div id="sc-vslider-fill"></div>
           <div id="sc-vslider-thumb"></div>
         </div>
@@ -5626,7 +5715,7 @@ function openCreator(){
   // Show tap hint
   var hint=document.getElementById('sc-tap-hint');
   if(hint){hint.style.opacity='1';}
-  var cr=document.getElementById('story-creator');cr.style.display='flex';
+  var cr=document.getElementById('story-creator');cr.style.display='flex';cr.classList.remove('sc-editing');
   history.pushState({_fade:'story-creator'},'');
   requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';});});
 }
@@ -5709,6 +5798,7 @@ function _scDoClose(){
   _scActiveTextEl=null;_scIsTyping=false;_scActiveFilter='none';
   // Close Instagram text editor if open
   _scTeOpen=false;
+  var cr2=document.getElementById('story-creator');if(cr2)cr2.classList.remove('sc-editing');
   var ed=document.getElementById('sc-text-editor');
   if(ed){ed.classList.remove('on');ed.style.display='none';}
   var live=document.getElementById('sc-te-live');
@@ -6239,6 +6329,9 @@ function _scOpenTextEditor(){
   var ss=document.getElementById('sc-sticker-sheet');
   if(ss&&ss.style.display!=='none')return;
   _scTeOpen=true;
+  // Hide right-panel A/sticker buttons while editor open
+  var cr=document.getElementById('story-creator');
+  if(cr)cr.classList.add('sc-editing');
   var hint=document.getElementById('sc-tap-hint');
   if(hint)hint.style.opacity='0';
   var ed=document.getElementById('sc-text-editor');
@@ -6270,8 +6363,6 @@ function _scOpenTextEditor(){
 function _scTeDone(){
   if(!_scTeOpen)return;
   var live=document.getElementById('sc-te-live');
-  var txt=live?live.innerHTML.trim():'';
-  // Convert innerHTML to plain text (preserve @mentions as text)
   var plain=live?live.textContent.trim():'';
   var ed=document.getElementById('sc-text-editor');
   if(ed){ed.classList.remove('on');ed.style.display='none';}
@@ -6281,6 +6372,9 @@ function _scTeDone(){
   _scTeResetHint();
   _scTeOpen=false;
   _scVSliderHide();
+  // Restore right-panel buttons
+  var cr=document.getElementById('story-creator');
+  if(cr)cr.classList.remove('sc-editing');
   if(live){live.blur();live.textContent='';}
 }
 
@@ -6529,18 +6623,18 @@ function _scVSliderUpdate(){
   var min=14,max=100;
   var pct=(_scTeSize-min)/(max-min);
   pct=Math.max(0,Math.min(1,pct));
-  var trackH=track.offsetHeight||200;
+  var trackH=track.offsetHeight||180;
   var px=pct*trackH;
   fill.style.height=px+'px';
-  // thumb positioned from bottom: pct=1 → bottom=trackH-10, pct=0 → bottom=-10
-  thumb.style.bottom=(px-10)+'px';
+  thumb.style.bottom=(px-11)+'px';
 }
 function _scVSliderTouch(e){
   e.preventDefault();e.stopPropagation();
   var track=document.getElementById('sc-vslider-track');if(!track)return;
   var rect=track.getBoundingClientRect();
   var touch=e.touches[0];
-  var y=touch.clientY-rect.top;
+  // clamp y to track bounds
+  var y=Math.max(0,Math.min(touch.clientY-rect.top,rect.height));
   var pct=1-(y/rect.height);
   pct=Math.max(0,Math.min(1,pct));
   var min=14,max=100;
@@ -6923,56 +7017,64 @@ function _scShowDeleteZone(){
   var canvas=document.getElementById('sc-canvas');if(!canvas)return;
   var dz=document.createElement('div');
   dz.id='sc-delete-zone';
-  dz.style.cssText='position:absolute;bottom:60px;left:50%;transform:translateX(-50%) translateY(20px);z-index:100;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;transition:opacity .2s ease,transform .2s cubic-bezier(.34,1.2,.64,1);pointer-events:none;';
-  dz.innerHTML='<div id="sc-dz-circle" style="width:52px;height:52px;border-radius:50%;background:rgba(20,20,22,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1.5px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;transition:transform .2s cubic-bezier(.34,1.2,.64,1);">'+
-    '<svg id="sc-dz-icon" width="22" height="22" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>'+
+  // No inline style — driven by CSS classes
+  dz.innerHTML=
+    '<div id="sc-dz-icon-wrap">'+
+      '<svg id="sc-dz-svg" width="32" height="32" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">'+
+        '<g class="trash-lid-g"><line x1="3" y1="6" x2="21" y2="6"/><path d="M9 6V4h6v2"/></g>'+
+        '<path d="M5 6l1 14a2 2 0 002 2h8a2 2 0 002-2l1-14"/>'+
+        '<line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>'+
+      '</svg>'+
     '</div>'+
-    '<span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;">Delete</span>';
+    '<span id="sc-dz-label">Delete</span>';
   canvas.appendChild(dz);
   _scDeleteZone=dz;
-  requestAnimationFrame(function(){
-    dz.style.opacity='1';
-    dz.style.transform='translateX(-50%) translateY(0)';
-  });
+  // Trigger CSS transition
+  requestAnimationFrame(function(){requestAnimationFrame(function(){dz.classList.add('on');});});
 }
 function _scHideDeleteZone(){
   if(!_scDeleteZone)return;
   var dz=_scDeleteZone;
-  dz.style.opacity='0';
-  dz.style.transform='translateX(-50%) translateY(20px)';
-  setTimeout(function(){if(dz.parentNode)dz.parentNode.removeChild(dz);},220);
+  dz.classList.remove('on');
+  setTimeout(function(){if(dz.parentNode)dz.parentNode.removeChild(dz);},240);
   _scDeleteZone=null;
   _scDeleteActive=false;
 }
 function _scCheckDeleteZone(t,el){
   if(!_scDeleteZone)return false;
-  var dz=document.getElementById('sc-dz-circle');if(!dz)return false;
+  // Hit zone: the whole dz area (generous 60px radius from centre)
+  var dz=_scDeleteZone;
   var r=dz.getBoundingClientRect();
-  var pad=18;
-  var inside=t.clientX>=r.left-pad&&t.clientX<=r.right+pad&&t.clientY>=r.top-pad&&t.clientY<=r.bottom+pad;
+  var cx=r.left+r.width/2, cy=r.top+r.height/2;
+  var dist=Math.sqrt(Math.pow(t.clientX-cx,2)+Math.pow(t.clientY-cy,2));
+  var inside=dist<60;
+  var wrap=document.getElementById('sc-dz-icon-wrap');
+  var svg=document.getElementById('sc-dz-svg');
   if(inside&&!_scDeleteActive){
     _scDeleteActive=true;
-    // Only icon turns red — circle bg stays dark
-    var icon=document.getElementById('sc-dz-icon');if(icon)icon.style.stroke='#FF3B30';
-    dz.style.transform='scale(1.18)';
+    if(wrap)wrap.classList.add('active');
+    // Icon turns red
+    if(svg)svg.style.stroke='#FF3B30';
     try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}
+    // Element shrinks toward trash
     if(el){
       var rot0=el._rot||el._curRot||0;
-      el.style.transition='transform .2s cubic-bezier(.34,1,.64,1),opacity .2s ease';
-      el.style.transform='translate(-50%,-50%) rotate('+rot0+'deg) scale(0.3)';
-      el.style.opacity='0.3';
+      el.style.transition='transform .25s cubic-bezier(.34,1,.64,1),opacity .2s';
+      el.style.transform='translate(-50%,-50%) rotate('+rot0+'deg) scale(0.28)';
+      el.style.opacity='0.25';
     }
   } else if(!inside&&_scDeleteActive){
     _scDeleteActive=false;
-    var icon=document.getElementById('sc-dz-icon');if(icon)icon.style.stroke='rgba(255,255,255,.6)';
-    dz.style.transform='scale(1)';
+    if(wrap)wrap.classList.remove('active');
+    if(svg)svg.style.stroke='rgba(255,255,255,.75)';
+    // Restore element
     if(el){
-      var sc=el._curScale||(el._scale?1:null)||parseFloat(el.dataset.scale||'1');
+      var sc=el._curScale||parseFloat(el.dataset.scale||'1')||1;
       var rot=el._rot||el._curRot||0;
-      el.style.transition='transform .28s cubic-bezier(.34,1.4,.64,1),opacity .2s ease';
+      el.style.transition='transform .3s cubic-bezier(.34,1.4,.64,1),opacity .2s';
       el.style.opacity='1';
       el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale('+sc+')';
-      setTimeout(function(){if(el)el.style.transition='';},300);
+      setTimeout(function(){if(el)el.style.transition='';},320);
     }
   }
   return inside;
