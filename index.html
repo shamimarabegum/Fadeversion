@@ -214,14 +214,14 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 /* Hide the right-panel buttons while text editor is open (Done replaces them) */
 #story-creator.sc-editing #sc-right-panel{opacity:0;pointer-events:none}
 #story-creator.sc-editing #sc-top .sc-tbtn{opacity:0;pointer-events:none}
-/* ── INSTAGRAM VERTICAL SIZE SLIDER ── */
-/* Full left-edge touch column - invisible, just catches touches */
+/* ── INSTAGRAM VERTICAL SIZE SLIDER — exact match ── */
 #sc-vslider-wrap{
   position:absolute;
   left:0;
+  /* starts below safe area, ends above font strip */
   top:0;
   bottom:0;
-  width:60px;
+  width:52px;
   z-index:65;
   opacity:0;
   transition:opacity .18s;
@@ -229,43 +229,32 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 }
 #sc-vslider-wrap.on{opacity:1;pointer-events:auto}
 
-/* The track: fixed thin line on left edge, full available height */
+/* The visible track — fixed position, does NOT go into toolbar */
 #sc-vslider-track{
   position:absolute;
-  left:14px;
-  /* from just below safe-area top to just above toolbar */
-  top:max(56px,env(safe-area-inset-top));
-  bottom:0;
-  width:2.5px;
-  background:rgba(255,255,255,.18);
+  left:16px;
+  width:2px;
+  top:max(52px, env(safe-area-inset-top));
+  /* stop above font strip + tools + pills (~155px) */
+  bottom:155px;
+  background:rgba(255,255,255,.35);
   border-radius:2px;
   pointer-events:none;
 }
 
-/* The growing fill = the "line" Instagram shows - grows upward from dot */
-#sc-vslider-fill{
-  position:absolute;
-  bottom:0;
-  left:0;right:0;
-  background:rgba(255,255,255,.85);
-  border-radius:2px;
-  pointer-events:none;
-  /* starts at 0, JS sets height based on font size */
-  height:0%;
-}
+/* No fill element needed — track is single color */
+#sc-vslider-fill{ display:none }
 
-/* The dot/thumb - sits at TOP of the fill (= bottom of remaining track) */
+/* The dot — slides along the track; JS sets 'top' as % */
 #sc-vslider-thumb{
   position:absolute;
   left:50%;
-  /* JS will set 'bottom' to match fill height */
-  bottom:0;
-  transform:translate(-50%, 50%);
-  width:20px;
-  height:20px;
+  top:60%; /* JS overrides this */
+  transform:translate(-50%, -50%);
+  width:21px;height:21px;
   background:#fff;
   border-radius:50%;
-  box-shadow:0 1px 8px rgba(0,0,0,.55);
+  box-shadow:0 1px 6px rgba(0,0,0,.5);
   pointer-events:none;
 }
 /* Bottom toolbar area */
@@ -6659,26 +6648,24 @@ function _scVSliderHide(){
   if(wrap)wrap.classList.remove('on');
 }
 function _scVSliderUpdate(){
-  var fill=document.getElementById('sc-vslider-fill');
   var thumb=document.getElementById('sc-vslider-thumb');
   var track=document.getElementById('sc-vslider-track');
-  if(!fill||!thumb||!track)return;
+  if(!thumb||!track)return;
   var min=14,max=100;
-  var pct=(_scTeSize-min)/(max-min);
+  var pct=(_scTeSize-min)/(max-min); // 0=small, 1=big
   pct=Math.max(0,Math.min(1,pct));
-  // fill grows upward from bottom — height is % of track
-  fill.style.height=(pct*100)+'%';
-  // thumb sits at the top of the fill
-  thumb.style.bottom=(pct*100)+'%';
+  // big text (pct=1) → dot near TOP (top=0%)
+  // small text (pct=0) → dot near BOTTOM (top=100%)
+  var topPct=(1-pct)*100;
+  thumb.style.top=topPct+'%';
 }
 function _scVSliderTouch(e){
   e.preventDefault();e.stopPropagation();
   var track=document.getElementById('sc-vslider-track');if(!track)return;
   var rect=track.getBoundingClientRect();
   var touch=e.touches[0];
-  // clamp touch y to track bounds
   var y=Math.max(0,Math.min(touch.clientY-rect.top,rect.height));
-  // pct=1 when at top (y=0), pct=0 when at bottom (y=height)
+  // y=0 → top → pct=1 (big). y=height → bottom → pct=0 (small)
   var pct=1-(y/rect.height);
   pct=Math.max(0,Math.min(1,pct));
   var min=14,max=100;
