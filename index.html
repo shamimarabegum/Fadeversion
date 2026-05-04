@@ -6068,81 +6068,64 @@ function _scPlaceCursorAt(el, x, y){
 
 function _scAttachTextHandlers(el){
   var canvas=_scGetCanvas();
-  var dragging=false,sx,sy,ox,oy,_moved=false,_lastTap=0,_didDrag=false;
-  var _touchStartTime=0;
+  var dragging=false,sx,sy,ox,oy,_moved=false,_lastTap=0;
 
   function _haptic(ms){try{if(navigator.vibrate)navigator.vibrate(ms||8);}catch(e_){}}
 
-  function _resolveCenter(){
-    var cr=canvas.getBoundingClientRect();
-    var er=el.getBoundingClientRect();
-    return{x:er.left+er.width/2-cr.left, y:er.top+er.height/2-cr.top};
-  }
-
   function _openEditorFromEl(){
-    // Restore editor state from the element before removing it
-    var _existingTxt=_scGetElText(el);
-    var _existingSize=parseFloat(el.style.fontSize)||40;
-    var _existingColor=el.style.color||'#FFFFFF';
-    var _existingAlign=el.style.textAlign||'center';
+    var txt=_scGetElText(el);
+    var size=parseFloat(el.style.fontSize)||40;
+    var color=el.style.color||'#FFFFFF';
+    var align=el.style.textAlign||'center';
+    var rot=el._rot||0;
+    // Find matching font
+    var fi=0;
+    SC_FONTS.forEach(function(f,i){
+      if(el.style.fontFamily&&el.style.fontFamily.indexOf(f.ff.split(',')[0])>=0)fi=i;
+    });
     // Remove element
     if(_scActiveTextEl===el)_scActiveTextEl=null;
-    el.style.transition='opacity .1s';
-    el.style.opacity='0';
-    var _elRef=el;
-    setTimeout(function(){if(_elRef.parentNode)_elRef.parentNode.removeChild(_elRef);},110);
+    if(el.parentNode)el.parentNode.removeChild(el);
     // Restore editor state
-    _scTeSize=_existingSize;
-    _scTeColor=_existingColor;
-    _scTeAlign=_existingAlign;
-    // Find matching font index
-    var foundFI=0;
-    SC_FONTS.forEach(function(f,i){if(el.style.fontFamily.indexOf(f.ff.split(',')[0])>=0)foundFI=i;});
-    _scTeFI=foundFI;
+    _scTeSize=size; _scTeColor=color; _scTeAlign=align; _scTeFI=fi;
+    _scTeColorIdx=SC_TEXT_COLORS.indexOf(color);
+    if(_scTeColorIdx<0)_scTeColorIdx=0;
     _scTeOpen=false;
     _scOpenTextEditor();
     requestAnimationFrame(function(){
       var live=document.getElementById('sc-te-live');
-      if(live&&_existingTxt){
-        live.textContent=_existingTxt;
-        live.style.fontSize=_existingSize+'px';
+      if(live&&txt){
+        live.textContent=txt;
+        live.style.fontSize=size+'px';
         _scVSliderUpdate();
+        _scTeUpdateColorDot();
         try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}
       }
     });
   }
 
-  el.addEventListener('blur',function(){
-    setTimeout(function(){
-      if(_scActiveTextEl!==el)return;
-      if(!_scGetElText(el)){
-        _scCommitText();return;
-      }
-      el.contentEditable='false';
-      el.classList.remove('editing');
-      el.classList.add('selected');
-      el.style.marginTop='';
-      _scIsTyping=false;
-      _scUpdateCircles();
-    },150);
-  });
-
   el.addEventListener('touchstart',function(e){
-    if(e.touches.length!==1)return;
-    var now=Date.now();
+    if(e.touches.length!==1){
+      // Multi-touch starting — abort drag cleanly
+      if(dragging){dragging=false;_scHideDeleteZone();window._scAnyDragActive=false;}
+      return;
+    }
+    if(dragging)return;
     var t=e.touches[0];
-    var isEditing=el.classList.contains('editing');
-    var isSelected=el.classList.contains('selected');
-    _touchStartTime=now;
-
-    if(isEditing){return;}
-
-    // Start drag tracking — don't open editor yet
-    var c=_resolveCenter();
-    ox=c.x; oy=c.y;
+    var cr=canvas.getBoundingClientRect();
+    var er=el.getBoundingClientRect();
+    // Resolve center in canvas coords from actual layout
+    ox=er.left+er.width/2-cr.left;
+    oy=er.top+er.height/2-cr.top;
+    // Sync style to actual position so drag starts cleanly
+    el.style.left=ox+'px';
+    el.style.top=oy+'px';
+    el.style.animation='';
+    // Apply current rotation (scale is always 1 for text — size via fontSize)
+    var rot=el._rot||0;
+    el.style.transform='translate(-50%,-50%) rotate('+rot+'deg)';
     sx=t.clientX; sy=t.clientY;
-    _moved=false; _didDrag=false;
-    dragging=true;
+    dragging=true; _moved=false;
     window._scAnyDragActive=true;
     _scActiveTextEl=el;
     el.classList.add('selected');
@@ -6154,49 +6137,54 @@ function _scAttachTextHandlers(el){
   el.addEventListener('touchmove',function(e){
     if(!dragging||e.touches.length!==1)return;
     var t=e.touches[0];
-    var dx=t.clientX-sx, dy=t.clientY-sy;
-    if(!_moved&&Math.hypot(dx,dy)<6)return;
-    _moved=true; _didDrag=true;
-    var cr2=canvas.getBoundingClientRect();
-    var newLeft=ox+dx, newTop=oy+dy;
-    var hw=el.offsetWidth/2||80,hh=el.offsetHeight/2||30;
-    newLeft=Math.max(hw*0.2,Math.min(cr2.width-hw*0.2,newLeft));
-    newTop=Math.max(hh*0.3,Math.min(cr2.height-hh*0.3,newTop));
-    var snapR=cr2.width*0.055;
-    if(Math.abs(newLeft-cr2.width/2)<snapR){
-      newLeft=cr2.width/2;
-      if(!el.dataset.snapped){el.dataset.snapped='1';_haptic(5);}
-    } else {delete el.dataset.snapped;}
-    el.style.left=newLeft+'px'; el.style.top=newTop+'px';
+    _moved=true;
+    var cr=canvas.getBoundingClientRect();
+    var newLeft=ox+(t.clientX-sx);
+    var newTop=oy+(t.clientY-sy);
+    // Clamp within canvas
+    newLeft=Math.max(0,Math.min(cr.width,newLeft));
+    newTop=Math.max(0,Math.min(cr.height,newTop));
+    el.style.left=newLeft+'px';
+    el.style.top=newTop+'px';
     _scCheckDeleteZone(t,el);
     e.preventDefault();
   },{passive:false});
 
   el.addEventListener('touchend',function(e){
-    if(!dragging){return;}
-    dragging=false;
-    setTimeout(function(){window._scAnyDragActive=false;},80);
-    delete el.dataset.snapped;
-    var t=e.changedTouches[0];
-    if(_didDrag&&_scCheckDeleteZone(t,el)){
-      // Dragged into trash — delete
-      if(_scActiveTextEl===el)_scActiveTextEl=null;
-      el.style.transition='transform .15s ease,opacity .15s ease';
+    var now=Date.now();
+    // Double-tap delete
+    if(!_moved&&now-_lastTap<320){
+      el.style.transition='transform .18s ease,opacity .18s ease';
       var rot=el._rot||0;
       el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale(0)';
       el.style.opacity='0';
-      setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},160);
-    } else if(_didDrag){
-      // Settled after drag — restore full size, keep selected
-      el.style.transition='transform .25s cubic-bezier(.34,1.4,.64,1),opacity .2s';
-      el.style.opacity='1';
+      setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
+      _scHideDeleteZone(); dragging=false; window._scAnyDragActive=false; return;
+    }
+    _lastTap=now;
+    if(!dragging){_moved=false;return;}
+    dragging=false;
+    setTimeout(function(){window._scAnyDragActive=false;},80);
+    var t=e.changedTouches[0];
+    if(_moved&&_scCheckDeleteZone(t,el)){
+      // Dragged into trash — delete with shrink animation
+      if(_scActiveTextEl===el)_scActiveTextEl=null;
+      el.style.transition='transform .18s ease,opacity .18s ease';
+      var rot=el._rot||0;
+      el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale(0)';
+      el.style.opacity='0';
+      setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
+    } else if(_moved){
+      // Settled after drag — restore transform, keep selected
       var rot2=el._rot||0;
-      el.style.transform='translate(-50%,-50%) rotate('+rot2+'deg) scale(1)';
-      setTimeout(function(){if(el)el.style.transition='';},280);
+      el.style.transition='transform .12s ease';
+      el.style.transform='translate(-50%,-50%) rotate('+rot2+'deg)';
+      el.style.opacity='1';
+      setTimeout(function(){el.style.transition='';},150);
       _scActiveTextEl=el;
       el.classList.add('selected');
     } else {
-      // Pure tap (no drag) → open editor pre-filled
+      // Pure tap — open editor pre-filled
       _openEditorFromEl();
     }
     _scHideDeleteZone();
@@ -6204,13 +6192,11 @@ function _scAttachTextHandlers(el){
   });
 
   el.addEventListener('touchcancel',function(){
-    dragging=false;_moved=false;
+    dragging=false; _moved=false;
     window._scAnyDragActive=false;
     var rot=el._rot||0;
-    el.style.transition='transform .2s ease';
-    el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale(1)';
+    el.style.transform='translate(-50%,-50%) rotate('+rot+'deg)';
     el.style.opacity='1';
-    setTimeout(function(){if(el)el.style.transition='';},220);
     _scHideDeleteZone();
   },{passive:true});
 }
@@ -6359,6 +6345,8 @@ function _scOpenTextEditor(){
   var ss=document.getElementById('sc-sticker-sheet');
   if(ss&&ss.style.display!=='none')return;
   _scTeOpen=true;
+  // Clear any active text element so stickers remain draggable
+  if(_scActiveTextEl){_scActiveTextEl.classList.remove('selected','editing');_scActiveTextEl=null;}
   // Hide right-panel A/sticker buttons while editor open
   var cr=document.getElementById('story-creator');
   if(cr)cr.classList.add('sc-editing');
@@ -7209,7 +7197,7 @@ function _scPlaceSticker(stickerDef){
     dragging=false;
     setTimeout(function(){window._scAnyDragActive=false;},80);
     var t=e.changedTouches[0];
-    if(_scCheckDeleteZone(t,el)){
+    if(_moved&&_scCheckDeleteZone(t,el)){
       el.style.transition='transform .18s ease,opacity .18s ease';
       el.style.transform='translate(-50%,-50%) scale(0)';
       el.style.opacity='0';
