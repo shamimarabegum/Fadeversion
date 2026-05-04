@@ -156,9 +156,9 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .heart-pop{animation:heartPop .35s ease forwards}
 
 /* STORY CREATOR */
-#story-creator{display:none;position:fixed;inset:0;z-index:400;flex-direction:column;background:#000;opacity:0;transition:opacity .25s ease}
+#story-creator{display:none;position:fixed;inset:0;z-index:400;flex-direction:column;background:#0D0D14;opacity:0;transition:opacity .25s ease}
 #story-creator.on{display:flex}
-#sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#1C1C1E;transition:background .2s ease}
+#sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(145deg,#1A1028 0%,#0E1A2E 50%,#0D1F1A 100%);transition:background .3s ease}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #sc-canvas-img.on{display:block}
 #sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:36px;line-height:1.35;word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;-webkit-user-select:none;user-select:none;width:88%;max-width:88%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px;display:none;left:50%;top:50%;transform:translate(-50%,-50%);margin-left:0;will-change:transform;cursor:default}
@@ -1686,7 +1686,7 @@ body {
     </div>
   </div>
   <div id="sc-top">
-    <div style="pointer-events:auto;margin-top:max(0px,env(safe-area-inset-top))"><!-- close btn removed --></div>
+    <div style="margin-top:max(0px,env(safe-area-inset-top))"></div>
     <div id="sc-right-panel" style="pointer-events:auto">
       <button class="sc-rpbtn" id="sc-addtext-btn" onclick="_scOpenTextEditor()" title="Add text">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><text x="12" y="18" text-anchor="middle" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#fff">A</text></svg>
@@ -5817,7 +5817,7 @@ function _scDoClose(){
   if(canvas){
     canvas.querySelectorAll('._sc-te').forEach(function(t){t.remove();});
     canvas.querySelectorAll('._sc-sticker').forEach(function(s){s.remove();});
-    canvas.style.background=SC_BG_COLORS[0]; // reset bg
+    canvas.style.background=SC_BG_COLORS[0];canvas.style.backgroundSize='cover'; // reset bg
   }
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();
   var fontsEl=document.getElementById('sc-fonts');
@@ -5849,7 +5849,7 @@ var _scColorIdx=0,_scBgIdx=0;
 // Text colors
 var SC_TEXT_COLORS=['#FFFFFF','#000000','#FFFC00','#FF3B30','#FF9500','#34C759','#007AFF','#AF52DE','#FF2D55','#5AC8FA'];
 // Background colors (text-only post)
-var SC_BG_COLORS=['#1C1C1E','#FFFC00','#FF3B30','#FF9500','#34C759','#007AFF','#AF52DE','#FF2D55','#5856D6','#FFFFFF'];
+var SC_BG_COLORS=['linear-gradient(145deg,#1A1028 0%,#0E1A2E 50%,#0D1F1A 100%)','linear-gradient(160deg,#1C0A2E 0%,#0A0A1E 100%)','linear-gradient(145deg,#0D1F2D 0%,#1A2A1C 100%)','linear-gradient(135deg,#1A1A2E 0%,#16213E 50%,#0F3460 100%)','#FFFC00','#FF3B30','#FF9500','#34C759','#007AFF','#AF52DE','#FF2D55','#FFFFFF'];
 function _scInitColorCycle(){
   _scColorIdx=0;_scBgIdx=0;
   // Don't touch display here -- _scUpdateCircles handles that
@@ -6147,13 +6147,11 @@ function _scAttachTextHandlers(el){
   el.addEventListener('touchmove',function(e){
     if(!dragging||e.touches.length!==1)return;
     var t=e.touches[0];
-    // 6px threshold — prevents iOS tap wobble from counting as a drag
     if(!_moved&&Math.abs(t.clientX-sx)<6&&Math.abs(t.clientY-sy)<6)return;
     _moved=true;
     var cr=canvas.getBoundingClientRect();
     var newLeft=ox+(t.clientX-sx);
     var newTop=oy+(t.clientY-sy);
-    // Clamp: keep element fully within canvas
     var elr=el.getBoundingClientRect();
     var hw=Math.max(elr.width/2,24),hh=Math.max(elr.height/2,24);
     newLeft=Math.max(hw,Math.min(cr.width-hw,newLeft));
@@ -6372,6 +6370,28 @@ function _scOpenTextEditor(){
   var live=document.getElementById('sc-te-live');
   if(live){
     live.textContent='';
+    // Pick vertical position that avoids existing text elements
+    var canvas=_scGetCanvas();
+    var topPct=50; // default: centre
+    if(canvas){
+      var existingTops=[];
+      canvas.querySelectorAll('._sc-te').forEach(function(t){
+        var tp=parseFloat(t.style.top)||0;
+        var ch=canvas.getBoundingClientRect().height||1;
+        existingTops.push(Math.round(tp/ch*100));
+      });
+      if(existingTops.length>0){
+        // Try slots: 25%, 40%, 55%, 70%, 15%, 80%
+        var slots=[25,40,55,70,15,80];
+        for(var si=0;si<slots.length;si++){
+          var slot=slots[si];
+          var clash=existingTops.some(function(et){return Math.abs(et-slot)<18;});
+          if(!clash){topPct=slot;break;}
+        }
+      }
+    }
+    live.style.top=topPct+'%';
+    live.style.transform='translate(-50%,-50%)';
     _scTeApplyStyle(live);
     requestAnimationFrame(function(){
       live.focus();
@@ -6727,6 +6747,7 @@ function _scTeWatchKeyboard(){
       if(!cr||cr.style.display==='none')return;
       if(_scTeOpen)return;
       if(window._scAnyDragActive)return;
+      if(window._scPinchJustEnded)return;
       // Ignore taps on any overlay/toolbar/sticker/text
       var tgt=e.target;
       if(tgt.closest&&(
@@ -6852,26 +6873,31 @@ function _scNearestSnapAngle(a){
       savedEl.style.transition='none';
       savedEl.style.opacity='1';
       savedEl.style.transform='translate(-50%,-50%) scale('+rs+') rotate('+rr+'deg)';
-      // Sync left/top to px so next drag reads correct position
-      if(_pCv){var _pc=_pCv.getBoundingClientRect();var _pe=savedEl.getBoundingClientRect();savedEl.style.left=(_pe.left+_pe.width/2-_pc.left)+'px';savedEl.style.top=(_pe.top+_pe.height/2-_pc.top)+'px';}
+      // Sync left/top to actual px so next drag starts correctly
+      if(_pCv){var _pc=_pCv.getBoundingClientRect();var _pe=savedEl.getBoundingClientRect();
+        savedEl.style.left=(_pe.left+_pe.width/2-_pc.left)+'px';
+        savedEl.style.top=(_pe.top+_pe.height/2-_pc.top)+'px';}
     } else if(savedTarget==='text'&&savedEl){
       var ts=savedEl._scale||36,tr=savedEl._rot||0;
       savedEl.style.transition='none';
       savedEl.style.opacity='1';
       savedEl.style.transform='translate(-50%,-50%) rotate('+tr+'deg)';
       savedEl.style.fontSize=ts+'px';
-      // Sync left/top to px so next drag reads correct position
-      if(_pCv){var _pc2=_pCv.getBoundingClientRect();var _pe2=savedEl.getBoundingClientRect();savedEl.style.left=(_pe2.left+_pe2.width/2-_pc2.left)+'px';savedEl.style.top=(_pe2.top+_pe2.height/2-_pc2.top)+'px';}
+      // Sync left/top to actual px so next drag starts correctly
+      if(_pCv){var _pc2=_pCv.getBoundingClientRect();var _pe2=savedEl.getBoundingClientRect();
+        savedEl.style.left=(_pe2.left+_pe2.width/2-_pc2.left)+'px';
+        savedEl.style.top=(_pe2.top+_pe2.height/2-_pc2.top)+'px';}
     }
-    // Reset delete zone state so it doesn't stay "active" after pinch
+    // Reset delete zone
     _scDeleteActive=false;
     var wrap=document.getElementById('sc-dz-icon-wrap');
     var svg=document.getElementById('sc-dz-svg');
     if(wrap)wrap.classList.remove('active');
     if(svg)svg.style.stroke='rgba(255,255,255,.75)';
     _pinching=false;_pinchTarget=null;_pinchEl=null;_lastSnapFired=false;
-    // Keep drag flag active long enough so element touchend skips delete check
-    setTimeout(function(){window._scAnyDragActive=false;},200);
+    // Block editor from opening immediately after pinch ends
+    window._scPinchJustEnded=true;
+    setTimeout(function(){window._scAnyDragActive=false;window._scPinchJustEnded=false;},400);
     setTimeout(_scHideSnapLine,400);
   }
   document.addEventListener('touchend',_endPinch,{passive:true});
@@ -7194,13 +7220,11 @@ function _scPlaceSticker(stickerDef){
   el.addEventListener('touchmove',function(e){
     if(!dragging||e.touches.length!==1)return;
     var t=e.touches[0];
-    // 6px threshold — prevents iOS tap wobble from counting as a drag
     if(!_moved&&Math.abs(t.clientX-sx)<6&&Math.abs(t.clientY-sy)<6)return;
     _moved=true;
     var cr=canvas.getBoundingClientRect();
     var newLeft=ox+(t.clientX-sx);
     var newTop=oy+(t.clientY-sy);
-    // Clamp: keep element fully within canvas
     var elr=el.getBoundingClientRect();
     var hw=Math.max(elr.width/2,24),hh=Math.max(elr.height/2,24);
     newLeft=Math.max(hw,Math.min(cr.width-hw,newLeft));
