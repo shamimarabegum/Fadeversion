@@ -156,22 +156,22 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .heart-pop{animation:heartPop .35s ease forwards}
 
 /* STORY CREATOR */
-#story-creator{display:none;position:fixed;inset:0;z-index:400;flex-direction:column;background:#0D0D14;opacity:0;transition:opacity .25s ease}
+#story-creator{display:none;position:fixed;inset:0;z-index:400;flex-direction:column;background:#000;opacity:0;transition:opacity .25s ease}
 #story-creator.on{display:flex}
-#sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(145deg,#1A1028 0%,#0E1A2E 50%,#0D1F1A 100%);transition:background .3s ease}
+#sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #sc-canvas-img.on{display:block}
 #sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:36px;line-height:1.35;word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;-webkit-user-select:none;user-select:none;width:88%;max-width:88%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px;display:none;left:50%;top:50%;transform:translate(-50%,-50%);margin-left:0;will-change:transform;cursor:default}
 #sc-text-ov.active{display:block}
 /* Top-right panel */
-#sc-top{position:absolute;top:0;left:0;right:0;z-index:26;display:flex;align-items:flex-start;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 14px 0;pointer-events:none}
+#sc-top{position:absolute;top:0;left:0;right:0;z-index:26;display:flex;align-items:flex-start;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 14px 0}
 .sc-tbtn{background:rgba(0,0,0,.5);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.14)}
-#sc-right-panel{display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:2px}
-.sc-rpbtn{background:none;border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:transform .15s,opacity .15s;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
-.sc-rpbtn:active{transform:scale(.82);opacity:.6}
+#sc-right-panel{display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:2px}
+.sc-rpbtn{background:rgba(0,0,0,.45);border:none;border-radius:50%;width:46px;height:46px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .15s,opacity .15s;flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.3)}
+.sc-rpbtn:active{transform:scale(.88);opacity:.7}
 /* Single cycling color dot */
-#sc-color-cycle{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,.88);box-shadow:0 1px 4px rgba(0,0,0,.4),inset 0 0 0 1px rgba(0,0,0,.15);transition:background .18s,transform .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;display:block;background:#1A0A2E;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
-#sc-color-cycle:active{transform:scale(.82)}
+#sc-color-cycle{width:40px;height:40px;border-radius:50%;cursor:pointer;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.4),0 2px 8px rgba(0,0,0,.35);transition:background .18s,transform .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;display:block;background:#1C1C1E}
+#sc-color-cycle:active{transform:scale(.88)}
 #sc-bg-cycle{display:none}
 #sc-bar{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:10px 16px max(22px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;background:linear-gradient(transparent,rgba(0,0,0,.68))}
 .sc-fonts{display:none;flex-direction:row;gap:8px;overflow-x:auto}
@@ -181,137 +181,6 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .sc-acts{display:flex;align-items:center;gap:10px}
 .sc-pb{background:rgba(255,255,255,.12);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1.5px solid rgba(255,255,255,.3);border-radius:50%;width:46px;height:46px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
 .sc-share{background:rgba(255,255,255,.15);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:50px;height:46px;padding:0 26px;font-family:'Inter',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-left:auto;letter-spacing:-.1px}
-/* SIZE SLIDER — left edge, Instagram style */
-#sc-size-slider-wrap{display:none!important}
-
-/* ── INSTAGRAM-STYLE TEXT EDITOR OVERLAY ── */
-#sc-text-editor{display:none;position:absolute;inset:0;z-index:50;flex-direction:column;pointer-events:none}
-#sc-text-editor.on{display:flex}
-/* everything inside the overlay is pointer-events:none by default,
-   only specific children opt-in */
-#sc-te-done,#sc-te-bottom,#sc-vslider-wrap.on,#sc-te-live,#sc-te-mention-picker{pointer-events:auto}
-/* Tap-to-type hint on canvas */
-#sc-tap-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:rgba(255,255,255,.5);font-size:21px;font-family:'Inter',sans-serif;font-weight:500;pointer-events:none;z-index:5;transition:opacity .18s;letter-spacing:-.1px}
-/* Done button — plain text top right, Instagram position */
-#sc-te-done{
-  position:absolute;
-  top:max(16px,env(safe-area-inset-top));
-  right:16px;
-  color:#fff;
-  font-size:17px;
-  font-weight:600;
-  font-family:'Inter',sans-serif;
-  background:none;
-  border:none;
-  cursor:pointer;
-  z-index:70;
-  padding:8px 2px;
-  letter-spacing:-.2px;
-  pointer-events:auto;
-  /* make sure it sits above the sc-top layer */
-  isolation:isolate;
-}
-/* Hide the right-panel buttons while text editor is open (Done replaces them) */
-#story-creator.sc-editing #sc-right-panel{opacity:0;pointer-events:none}
-#story-creator.sc-editing #sc-top .sc-tbtn{opacity:0;pointer-events:none}
-/* ── INSTAGRAM VERTICAL SIZE SLIDER — exact match ── */
-#sc-vslider-wrap{
-  position:absolute;
-  left:0;
-  top:0;
-  bottom:0;
-  width:52px;
-  z-index:65;
-  opacity:0;
-  transition:opacity .18s;
-  pointer-events:none;
-}
-#sc-vslider-wrap.on{opacity:1;pointer-events:auto}
-
-/* Track: thin line, left edge, between status bar and toolbar */
-#sc-vslider-track{
-  position:absolute;
-  left:16px;
-  width:2px;
-  top:max(52px, env(safe-area-inset-top));
-  bottom:160px;
-  background:rgba(255,255,255,.32);
-  border-radius:2px;
-  pointer-events:none;
-  /* thumb is positioned inside THIS element */
-}
-
-#sc-vslider-fill{ display:none }
-
-/* Dot inside the track — JS sets top as px from track top */
-#sc-vslider-thumb{
-  position:absolute;
-  left:50%;
-  top:0; /* JS sets this in px */
-  transform:translate(-50%, -50%);
-  width:21px;height:21px;
-  background:#fff;
-  border-radius:50%;
-  box-shadow:0 1px 6px rgba(0,0,0,.5);
-  pointer-events:none;
-}
-/* Bottom toolbar area */
-#sc-te-bottom{position:absolute;bottom:0;left:0;right:0;z-index:60;display:flex;flex-direction:column;gap:0}
-/* Font style strip */
-#sc-te-fonts{display:flex;flex-direction:row;gap:0;overflow-x:auto;padding:8px 14px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-#sc-te-fonts::-webkit-scrollbar{display:none}
-.sc-te-font{padding:7px 16px;border-radius:22px;color:rgba(255,255,255,.65);white-space:nowrap;font-size:14px;cursor:pointer;flex-shrink:0;transition:background .15s,color .15s;border:none;background:none}
-.sc-te-font.sel{background:rgba(255,255,255,.95);color:#111}
-/* Tools row — exact Instagram dark bar */
-#sc-te-tools{display:flex;flex-direction:row;align-items:center;justify-content:space-around;background:rgba(22,22,24,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:11px 8px 11px}
-.sc-te-tool{width:48px;height:44px;border:none;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:10px;transition:opacity .12s;flex:1;max-width:60px;-webkit-tap-highlight-color:transparent}
-.sc-te-tool:active{opacity:.45}
-/* Solid color dot (shows current text color) */
-#sc-te-colordot{width:28px;height:28px;border-radius:50%;background:#fff;border:2.5px solid rgba(255,255,255,.6);box-shadow:0 0 0 1px rgba(0,0,0,.3);transition:background .15s,border-color .15s;flex-shrink:0}
-/* Mention + Location pills row */
-#sc-te-pills{display:flex;flex-direction:row;align-items:center;background:rgba(0,0,0,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid rgba(255,255,255,.08)}
-.sc-te-pill{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 8px;color:rgba(255,255,255,.75);font-size:14px;font-family:'Inter',sans-serif;font-weight:500;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .12s}
-.sc-te-pill:active{background:rgba(255,255,255,.08)}
-.sc-te-pill-div{width:1px;background:rgba(255,255,255,.12);align-self:stretch;margin:8px 0}
-/* Mention autocomplete picker in editor */
-#sc-te-mention-picker{display:none;position:absolute;bottom:100%;left:0;right:0;background:rgba(25,25,28,.96);backdrop-filter:blur(20px);max-height:220px;overflow-y:auto;border-radius:14px 14px 0 0;z-index:80}
-#sc-te-mention-picker.on{display:block}
-.sc-te-mrow{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .1s}
-.sc-te-mrow:active{background:rgba(255,255,255,.08)}
-.sc-te-mav{width:36px;height:36px;border-radius:50%;background:#333;object-fit:cover;flex-shrink:0}
-/* ── STORY CREATOR DELETE ZONE ── */
-#sc-delete-zone{
-  position:absolute;
-  bottom:48px;
-  left:50%;
-  transform:translateX(-50%) translateY(24px);
-  z-index:100;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:5px;
-  opacity:0;
-  transition:opacity .18s ease, transform .22s cubic-bezier(.34,1.2,.64,1);
-  pointer-events:none;
-}
-#sc-delete-zone.on{opacity:1;transform:translateX(-50%) translateY(0)}
-/* The bare trash SVG wrapper — no circle */
-#sc-dz-icon-wrap{
-  width:44px;height:44px;
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .2s cubic-bezier(.34,1.2,.64,1);
-}
-#sc-dz-icon-wrap.active{transform:scale(1.3)}
-/* Lid animation reuses same .trash-lid-g class */
-#sc-dz-icon-wrap .trash-lid-g{
-  transform-box:fill-box;
-  transform-origin:50% 100%;
-  transition:transform .28s cubic-bezier(.25,.46,.45,.94);
-}
-#sc-dz-icon-wrap.active .trash-lid-g{transform:rotate(-52deg)}
-#sc-dz-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.5px;text-transform:uppercase}
-/* Delete button on selected text — only show when text element has content */
-._sc-del-btn{display:none!important}
 
 /* STORY VIEWER */
 #sv{display:none;position:fixed;inset:0;z-index:300;background:#000;flex-direction:column;opacity:0;transition:opacity .22s ease}
@@ -370,30 +239,34 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sv-edit-img.on{display:block}
 #sv-edit-text-ov{position:absolute;z-index:10;width:80%;text-align:center;padding:12px;border-radius:12px;cursor:text;outline:none;min-height:40px;line-height:1.5;font-size:26px;color:#fff;-webkit-user-select:text;user-select:text}
 #sv-edit-text-ov:empty:before{content:attr(data-placeholder);opacity:.45}
-/* sv-edit toolbar — tabless design */
 #sv-edit-toolbar{flex-shrink:0;background:#000;padding:10px 0 max(20px,env(safe-area-inset-bottom))}
-#sv-edit-panel-text{padding:0}
-#sv-edit-panel-photo{padding:0}
-.sv-edit-fonts{display:flex;gap:8px;overflow-x:auto;padding:0 16px;-webkit-overflow-scrolling:touch}
+#sv-edit-tabs{display:flex;gap:0;padding:0 16px 10px}
+.sv-edit-tab{flex:1;padding:9px 0;text-align:center;color:rgba(255,255,255,.45);font-size:13px;font-weight:600;font-family:'Inter',sans-serif;border:none;background:none;cursor:pointer;transition:color .15s;border-bottom:2px solid transparent}
+.sv-edit-tab.on{color:#fff;border-bottom:2px solid #fff}
+#sv-edit-panel-text{padding:0 16px}
+#sv-edit-panel-photo{padding:0 16px}
+.sv-edit-fonts{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
 .sv-edit-fonts::-webkit-scrollbar{display:none}
-.sv-edit-fc{padding:8px 16px;border-radius:20px;border:1.5px solid rgba(255,255,255,.2);color:#fff;font-size:14px;cursor:pointer;flex-shrink:0;background:none;font-family:'Inter',sans-serif;transition:background .12s,border-color .12s}
+.sv-edit-fc{padding:8px 16px;border-radius:20px;border:1.5px solid rgba(255,255,255,.2);color:#fff;font-size:14px;cursor:pointer;flex-shrink:0;background:none;transition:background .12s,border-color .12s}
 .sv-edit-fc.sel{background:rgba(255,255,255,.18);border-color:#fff}
-#sv-edit-text-tools{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0}
-#sv-edit-colordot{width:30px;height:30px;border-radius:50%;background:#fff;border:2.5px solid rgba(255,255,255,.55);box-shadow:0 0 0 1px rgba(0,0,0,.35);cursor:pointer;flex-shrink:0;transition:background .15s}
-#sv-edit-done-btn{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;padding:8px 20px;border-radius:20px;cursor:pointer;transition:opacity .12s}
-#sv-edit-done-btn:active{opacity:.6}
-.sv-edit-filters{display:flex;gap:10px;overflow-x:auto;padding:0 16px;-webkit-overflow-scrolling:touch}
-.sv-edit-filters::-webkit-scrollbar{display:none}
-.sv-edit-filter-item{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0}
-.sv-edit-filter-thumb{width:60px;height:60px;border-radius:12px;overflow:hidden;border:2px solid transparent;transition:border-color .15s}
-.sv-edit-filter-thumb.sel{border-color:#fff}
-.sv-edit-filter-thumb img{width:100%;height:100%;object-fit:cover}
-.sv-edit-filter-lbl{color:rgba(255,255,255,.7);font-size:11px;font-weight:500;font-family:'Inter',sans-serif}
+.sv-edit-colors{display:flex;gap:10px;margin-top:12px;overflow-x:auto;padding-bottom:2px}
+.sv-edit-colors::-webkit-scrollbar{display:none}
+.sv-edit-sw{width:30px;height:30px;border-radius:50%;cursor:pointer;flex-shrink:0;transition:transform .12s;border:2px solid transparent}
+.sv-edit-sw:active{transform:scale(.88)}
+.sv-edit-sw.sel{border-color:#fff;transform:scale(1.12)}
+.sv-edit-photo-actions{display:flex;flex-direction:column;gap:10px}
 .sv-edit-photo-btn{display:flex;align-items:center;gap:14px;padding:13px 16px;background:rgba(255,255,255,.08);border-radius:14px;border:none;color:#fff;font-size:14.5px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;text-align:left;transition:background .12s;width:100%}
 .sv-edit-photo-btn:active{background:rgba(255,255,255,.15)}
-#sv-edit-dots{display:flex;justify-content:center;gap:5px;padding:6px 0 0;min-height:16px}
-.sv-edit-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.3);transition:background .2s,transform .2s}
-.sv-edit-dot.on{background:#fff;transform:scale(1.25)}
+.sv-edit-filters{display:flex;gap:10px;overflow-x:auto;margin-top:12px;padding-bottom:4px}
+.sv-edit-filters::-webkit-scrollbar{display:none}
+.sv-edit-filter-item{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;flex-shrink:0}
+.sv-edit-filter-thumb{width:58px;height:58px;border-radius:12px;overflow:hidden;border:2px solid transparent;transition:border-color .12s}
+.sv-edit-filter-thumb.sel{border-color:#fff}
+.sv-edit-filter-thumb img{width:100%;height:100%;object-fit:cover}
+.sv-edit-filter-thumb-plain{width:58px;height:58px;border-radius:12px;background:rgba(255,255,255,.1)}
+.sv-edit-filter-lbl{color:rgba(255,255,255,.7);font-size:11px;font-weight:500;font-family:'Inter',sans-serif}
+.sv-edit-crop-btn{display:flex;align-items:center;gap:14px;padding:13px 16px;background:rgba(255,255,255,.08);border-radius:14px;border:none;color:#fff;font-size:14.5px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;text-align:left;transition:background .12s;width:100%;margin-top:10px}
+.sv-edit-crop-btn:active{background:rgba(255,255,255,.15)}
 
 /* STORY SETTINGS SHEET */
 #sv-settings-bg{display:none;position:fixed;inset:0;z-index:640;align-items:flex-end}
@@ -1603,101 +1476,21 @@ body {
 
 <!-- STORY CREATOR -->
 <div id="story-creator">
-  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov"></div><textarea id="sc-text-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="sentences" style="position:fixed;left:-9999px;top:50%;width:1px;height:1px;opacity:0;pointer-events:none;border:none;outline:none;resize:none;font-size:16px;"></textarea>
-    <div id="sc-size-slider-wrap">
-      <span id="sc-size-aa">Aa</span>
-      <div id="sc-size-slider-track">
-        <input id="sc-size-slider" type="range" min="14" max="120" value="36" oninput="_scSliderChange(this.value)"/>
-      </div>
-      <span id="sc-size-label">36</span>
-    </div>
-    <!-- Tap to type hint -->
-    <div id="sc-tap-hint">Tap to type</div>
-    <!-- Instagram-style text editor overlay -->
-    <div id="sc-text-editor">
-      <button id="sc-te-done" onclick="_scTeDone()">Done</button>
-      <div id="sc-vslider-wrap" ontouchstart="_scVSliderTouch(event)" ontouchmove="_scVSliderTouch(event)" ontouchend="_scVSliderTouchEnd(event)">
-        <div id="sc-vslider-track">
-          <div id="sc-vslider-fill"></div>
-          <div id="sc-vslider-thumb"></div>
-        </div>
-      </div>
-      <div id="sc-te-mention-picker"></div>
-      <div id="sc-te-bottom">
-        <div id="sc-te-fonts"></div>
-        <div id="sc-te-tools">
-          <div class="sc-te-tool" style="pointer-events:none"><span style="color:#fff;font-size:18px;font-family:'Inter',sans-serif;font-weight:700;line-height:1">Aa</span></div>
-          <button class="sc-te-tool" onclick="_scTeCycleColor()" title="Color"><div id="sc-te-colordot"></div></button>
-          <button class="sc-te-tool" id="sc-te-tool-style" onclick="_scTeToggleStyle()" title="Text style">
-            <svg width="26" height="22" viewBox="0 0 26 22" fill="none"><text x="0" y="17" font-family="Arial" font-size="13" font-weight="900" fill="#fff">//</text><text x="15" y="17" font-family="Arial Black,Arial" font-size="15" font-weight="900" fill="#fff">A</text></svg>
-          </button>
-          <button class="sc-te-tool" id="sc-te-tool-outline" onclick="_scTeToggleStyle()" title="Outline">
-            <svg width="24" height="24" viewBox="0 0 24 24"><text x="12" y="19" text-anchor="middle" font-family="Arial Black,Arial" font-size="20" font-weight="900" fill="none" stroke="#fff" stroke-width="1.3" paint-order="stroke" id="sc-te-outline-text">A</text></svg>
-          </button>
-          <button class="sc-te-tool" id="sc-te-tool-align" onclick="_scTeToggleAlign()" title="Alignment">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" id="sc-te-align-icon"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          </button>
-          <button class="sc-te-tool" id="sc-te-tool-bg" onclick="_scTeToggleBg()" title="Background">
-            <svg width="26" height="26" viewBox="0 0 26 26" fill="none"><rect x="2" y="4" width="22" height="18" rx="4" id="sc-te-bg-rect" stroke="#fff" stroke-width="2" fill="none"/><text x="13" y="18" text-anchor="middle" font-family="Arial Black,Arial" font-size="12" font-weight="900" fill="#fff">A</text></svg>
-          </button>
-        </div>
-        <div id="sc-te-pills">
-          <div class="sc-te-pill" onclick="_scTeMention()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 006 0v-1a10 10 0 10-3.92 7.94"/></svg>
-            <span>Mention</span>
-          </div>
-          <div class="sc-te-pill-div"></div>
-          <div class="sc-te-pill" onclick="_scTeLocation()">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2.2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span>Location</span>
-          </div>
-        </div>
-        <div id="sc-te-kbspacer"></div>
-      </div>
-      <div id="sc-te-live" contenteditable="true" spellcheck="false" autocorrect="off" autocapitalize="sentences" style="
-        position:absolute;
-        left:50%;
-        top:50%;
-        transform:translate(-50%,-50%);
-        min-width:60px;
-        width:max-content;
-        max-width:80%;
-        padding:6px 12px;
-        border-radius:10px;
-        font-size:40px;
-        line-height:1.25;
-        word-break:break-word;
-        white-space:pre-wrap;
-        text-align:center;
-        color:#fff;
-        outline:none;
-        -webkit-user-select:text;
-        user-select:text;
-        z-index:55;
-        cursor:text;
-        font-family:'Inter',sans-serif;
-        font-weight:700;
-        pointer-events:auto;
-      "></div>
-    </div>
-  </div>
+  <div id="sc-canvas"><img id="sc-canvas-img" alt=""/><div id="sc-text-ov"></div><textarea id="sc-text-input" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="sentences" style="position:fixed;left:-9999px;top:50%;width:1px;height:1px;opacity:0;pointer-events:none;border:none;outline:none;resize:none;font-size:16px;"></textarea></div>
   <div id="sc-top">
-    <div style="margin-top:max(0px,env(safe-area-inset-top))"></div>
-    <div id="sc-right-panel" style="pointer-events:auto">
-      <button class="sc-rpbtn" id="sc-addtext-btn" onclick="_scOpenTextEditor()" title="Add text">
+    <div></div>
+    <div id="sc-right-panel">
+      <button class="sc-rpbtn" onclick="scFontToggle()" title="Font style">
+        <svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2.2" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+      </button>
+      <button class="sc-rpbtn" id="sc-addtext-btn" onclick="scActivateText()" title="Add text">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><text x="12" y="18" text-anchor="middle" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#fff">A</text></svg>
       </button>
+      <button class="sc-rpbtn" id="sc-align-btn" onclick="scCycleAlign()" title="Text alignment" style="display:none">
+        <svg id="sc-align-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <button class="sc-rpbtn" id="sc-sticker-btn" onclick="scOpenStickers()" title="Stickers">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Sticker shape: rounded square with peeling corner -->
-          <path d="M14 3H7C4.8 3 3 4.8 3 7v10c0 2.2 1.8 4 4 4h6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- Peeling flap -->
-          <path d="M14 21l7-7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
-          <path d="M14 21V14h7" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M21 14H14V21" fill="rgba(255,255,255,0.18)" stroke="none"/>
-          <!-- Star on sticker face -->
-          <path d="M10 7.5l.9 2.7h2.8l-2.3 1.7.9 2.7L10 12.9l-2.3 1.7.9-2.7L6.3 10.2h2.8z" fill="#fff"/>
-        </svg>
+        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.8"/><circle cx="9.2" cy="10.5" r="1.1" fill="#fff"/><circle cx="14.8" cy="10.5" r="1.1" fill="#fff"/><path d="M8.5 14.5c1 1.8 6 1.8 7 0" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M16 4.5C17.5 3 20 3.5 20.5 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
       </button>
       <div id="sc-color-cycle" onclick="scCycleColor()" onmousedown="event.preventDefault()" ontouchstart="_scDotTouch(event)" title="Color"></div>
     </div>
@@ -1714,17 +1507,14 @@ body {
 </div>
 
 <!-- STORY CREATOR DISCARD DIALOG -->
-<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:flex-end;justify-content:center">
-  <div id="sc-discard-dim" style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="scKeepEditing()"></div>
-  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;width:calc(100% - 32px);max-width:380px;margin-bottom:max(28px,env(safe-area-inset-bottom));border-radius:18px;overflow:hidden;transform:translateY(20px) scale(.97);opacity:0;transition:transform .22s cubic-bezier(.34,1.3,.64,1),opacity .18s ease">
-    <div style="background:rgba(28,28,30,.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:20px 20px 6px;text-align:center">
-      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px">Discard moment?</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.4);line-height:1.4">Your edits won't be saved.</div>
-    </div>
-    <div style="background:rgba(28,28,30,.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);display:flex;margin-top:1px">
-      <button onclick="scKeepEditing()" style="flex:1;padding:16px 0;border:none;background:none;color:rgba(255,255,255,.75);font-size:15px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border-right:1px solid rgba(255,255,255,.08)">Keep</button>
-      <button onclick="scConfirmDiscard()" style="flex:1;padding:16px 0;border:none;background:none;color:#FF453A;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer">Discard</button>
-    </div>
+<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:flex-end">
+  <div id="sc-discard-dim" style="position:absolute;inset:0;background:rgba(0,0,0,.6);animation:dimIn .2s ease"></div>
+  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;background:#1C1C1E;width:100%;border-radius:22px 22px 0 0;padding:24px 20px max(28px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.25,.46,.45,.94)">
+    <div style="width:34px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 20px"></div>
+    <div style="font-size:18px;font-weight:700;color:#fff;text-align:center;margin-bottom:8px">Discard moment?</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:24px;line-height:1.5">Your photo and edits will not be saved.</div>
+    <button onclick="scConfirmDiscard()" style="width:100%;padding:15px;border-radius:14px;border:none;background:#E8352A;color:#fff;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:10px;transition:opacity .12s">Discard</button>
+    <button onclick="scKeepEditing()" style="width:100%;padding:15px;border-radius:14px;border:1.5px solid rgba(255,255,255,.15);background:transparent;color:#fff;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s">Keep Editing</button>
   </div>
 </div>
 <div id="aud-bg" onclick="closeAudSheet()" style="display:none;position:fixed;inset:0;z-index:500;align-items:flex-end">
@@ -1771,13 +1561,15 @@ body {
     <div class="sv-edit-title">Edit Moment</div>
     <button class="sv-edit-save" onclick="svSaveEdit()">Save</button>
   </div>
-  <div id="sv-edit-dots"></div>
   <div id="sv-edit-canvas">
     <div id="sv-edit-img-wrap"><img id="sv-edit-img" alt=""/></div>
     <div id="sv-edit-text-ov" contenteditable="true" data-placeholder="Add text…" spellcheck="false"></div>
   </div>
-  <div id="sv-edit-photo-actions" style="display:none;flex-direction:column;gap:8px;padding:8px 12px 0;flex-shrink:0"></div>
   <div id="sv-edit-toolbar">
+    <div id="sv-edit-tabs">
+      <button class="sv-edit-tab on" onclick="svEditTab('text',this)">Text</button>
+      <button class="sv-edit-tab" onclick="svEditTab('photo',this)">Photo</button>
+    </div>
     <div id="sv-edit-panel-text"></div>
     <div id="sv-edit-panel-photo" style="display:none"></div>
   </div>
@@ -2311,7 +2103,7 @@ function setupRealtime(){
     .subscribe();
 }
 var S={pushNotifs:true,talkNotifs:true,private:false,hideLikes:false,cmtPerm:'everyone',storyAudience:'followers',activityVisible:'followers'};
-var scBg='#1C1C1E',scFontOpen=false,scFI=0,scAudience='followers';
+var scBg='#2C2C2C',scFontOpen=false,scFI=0,scAudience='followers';
 var scheduled=[],_schedListEl=null,_schedEditIdx=-1,_schedImgUrl=null;
 var soStack=[];
 var _profUser=null;
@@ -2544,14 +2336,12 @@ function loadVerificationState(){
 
 var SC_SW=['#FFFFFF','#F9E74B','#FF6B6B','#4ECDC4','#A855F7','#FF9F1C','#06D6A0','#FF6FAB'];
 var SC_FONTS=[
-  {l:'Modern',   ff:'Inter,sans-serif',              fs:'normal', fw:'700'},
-  {l:'Classic',  ff:'Georgia,serif',                 fs:'normal', fw:'700'},
-  {l:'Signature',ff:'Palatino Linotype,Palatino,Georgia,serif', fs:'italic', fw:'400'},
-  {l:'Editor',   ff:'Courier New,monospace',         fs:'normal', fw:'700'},
-  {l:'Poster',   ff:'Impact,Arial Black,sans-serif', fs:'normal', fw:'900'},
-  {l:'Bubble',   ff:'Arial Rounded MT Bold,Arial,sans-serif', fs:'normal', fw:'700'},
-  {l:'Neon',     ff:'Inter,sans-serif',              fs:'normal', fw:'900'},
-  {l:'Light',    ff:'Inter,sans-serif',              fs:'normal', fw:'300'},
+  {l:'Sans',ff:'Inter,sans-serif',fs:'normal',fw:'400'},
+  {l:'Italic',ff:'Playfair Display,serif',fs:'italic',fw:'400'},
+  {l:'Bold',ff:'Inter,sans-serif',fs:'normal',fw:'700'},
+  {l:'Mono',ff:'monospace',fs:'normal',fw:'400'},
+  {l:'Script',ff:'Georgia,serif',fs:'italic',fw:'700'},
+  {l:'Light',ff:'Inter,sans-serif',fs:'normal',fw:'300'},
 ];
 var TAB_IDX={today:0,clips:1,talk:2,me:3};
 var IC={
@@ -5705,43 +5495,35 @@ var _scIsPhoto=false; // true when a photo is loaded
 var _scIsTyping=false; // true when user is actively typing
 
 function openCreator(){
-  scFontOpen=false;scFI=0;scAudience=S.storyAudience||'followers';
+  scBg='#2C2C2C';scFontOpen=false;scFI=0;scAudience=S.storyAudience||'followers';
   _scColorIdx=0;_scBgIdx=0;_scIsPhoto=false;_scIsTyping=false;
-  scBg=SC_BG_COLORS[0];
-  _scTextSize=36;
-  var c=document.getElementById('sc-canvas');
-  c.style.background=scBg;
-  // Clear stickers and text elements from previous session
+  var c=document.getElementById('sc-canvas');c.style.background=scBg;
+  // -- Clear all stickers from previous session --
   c.querySelectorAll('._sc-sticker').forEach(function(s){s.remove();});
-  c.querySelectorAll('._sc-te').forEach(function(t){t.remove();});
   var ex=document.getElementById('sc-sticker-sheet');if(ex)ex.remove();
   var dz=document.getElementById('sc-delete-zone');if(dz)dz.remove();
-  var ln=document.getElementById('_sc-snap-line');if(ln)ln.remove();
   _scDeleteZone=null;_scDeleteActive=false;
-  _scActiveTextEl=null;_scIsTyping=false;
   var img=document.getElementById('sc-canvas-img');img.src='';img.classList.remove('on');
-  var ov=document.getElementById('sc-text-ov');if(ov){ov.textContent='';ov.style.display='none';}
-  var fontsEl=document.getElementById('sc-fonts');
-  if(fontsEl){fontsEl.classList.remove('on');fontsEl.innerHTML='';}
-  _scHideSizeSlider();
-  buildSwatches();
-  document.getElementById('sc-file').value='';
-  var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();_scActiveFilter='none';
-  // Set color dot to background color
+  var ov=document.getElementById('sc-text-ov');
+  ov.textContent='';var inp=document.getElementById('sc-text-input');if(inp){inp.value='';inp.style.pointerEvents='none';}ov.style.color=SC_TEXT_COLORS[0];_scTextSize=36;_scTextRot=0;
+  ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';
+  ov.style.textAlign='center';
+  ov.classList.remove('draggable','active');
+  _scTextAlign='center';
+  _scShowAlignBtn(false);
+  applyFont();
+  // Set dot colors first, then show correct one
   var colorDot=document.getElementById('sc-color-cycle');
-  if(colorDot)colorDot.style.background=SC_BG_COLORS[0];
+  if(colorDot) colorDot.style.background=SC_TEXT_COLORS[0];
+  var bgBtn=document.getElementById('sc-bg-cycle');
+  if(bgBtn) bgBtn.style.background=SC_BG_COLORS[0];
+  buildSwatches();buildFChips();
+  document.getElementById('sc-file').value='';
+  document.getElementById('sc-fonts').classList.remove('on');
+  var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();_scActiveFilter='none';
+  // Show correct circle for initial state (text-only idle = bg circle)
   _scUpdateCircles();
-  // Reset Instagram text editor state
-  _scTeOpen=false;_scTeFI=0;_scTeSize=40;_scTeAlign='center';_scTeBgMode=0;_scTeIsItalic=false;_scTeColor='#FFFFFF';_scTeColorIdx=0;
-  var ed=document.getElementById('sc-text-editor');
-  if(ed){ed.classList.remove('on');ed.style.display='none';}
-  var live=document.getElementById('sc-te-live');
-  if(live){live.textContent='';live.style.background='none';live.style.fontSize='40px';}
-  _scVSliderHide();
-  // Show tap hint
-  var hint=document.getElementById('sc-tap-hint');
-  if(hint){hint.style.opacity='1';}
-  var cr=document.getElementById('story-creator');cr.style.display='flex';cr.classList.remove('sc-editing');
+  var cr=document.getElementById('story-creator');cr.style.display='flex';
   history.pushState({_fade:'story-creator'},'');
   requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';});});
 }
@@ -5751,18 +5533,20 @@ function _scUpdateCircles(){
   var dot=document.getElementById('sc-color-cycle');
   if(!dot) return;
   dot.style.display='block';
-  var isTyping=_scActiveTextEl&&_scActiveTextEl.classList.contains('editing');
-  dot.style.background=isTyping ? SC_TEXT_COLORS[_scColorIdx] : SC_BG_COLORS[_scBgIdx];
+  // While typing: circle shows current TEXT color
+  // While idle: circle shows current BG color
+  dot.style.background=_scIsTyping ? SC_TEXT_COLORS[_scColorIdx] : SC_BG_COLORS[_scBgIdx];
 }
 function scCycleColor(){
   var dot=document.getElementById('sc-color-cycle');
-  var isTyping=_scActiveTextEl&&_scActiveTextEl.classList.contains('editing');
-  if(isTyping){
+  if(_scIsTyping){
+    // Cycle TEXT color
     _scColorIdx=(_scColorIdx+1)%SC_TEXT_COLORS.length;
     var c=SC_TEXT_COLORS[_scColorIdx];
     if(dot){dot.style.display='block';dot.style.background=c;}
-    if(_scActiveTextEl)_scActiveTextEl.style.color=c;
+    var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=c;
   } else {
+    // Cycle BG color
     _scBgIdx=(_scBgIdx+1)%SC_BG_COLORS.length;
     var c=SC_BG_COLORS[_scBgIdx];
     scBg=c;
@@ -5771,6 +5555,16 @@ function scCycleColor(){
   }
 }
 function scCycleBg(){ scCycleColor(); } // alias -- bg-cycle button calls same fn
+// Check if creator has any real content worth saving
+function _scHasContent(){
+  var img=document.getElementById('sc-canvas-img');
+  if(img&&img.classList.contains('on')&&img.src)return true;
+  var ov=document.getElementById('sc-text-ov');
+  if(ov&&ov.textContent.trim())return true;
+  var canvas=document.getElementById('sc-canvas');
+  if(canvas&&canvas.querySelector('._sc-sticker'))return true;
+  return false;
+}
 // Show discard dialog (used by x button + swipe-back)
 function _scTryClose(){
   if(_scHasContent()){
@@ -5783,19 +5577,20 @@ function _scShowDiscardDialog(){
   var bg=document.getElementById('sc-discard-bg');
   if(!bg)return;
   bg.style.display='flex';
-  requestAnimationFrame(function(){requestAnimationFrame(function(){
+  requestAnimationFrame(function(){
     var sheet=document.getElementById('sc-discard-sheet');
-    if(sheet){sheet.style.transform='translateY(0) scale(1)';sheet.style.opacity='1';}
+    if(sheet) sheet.style.transform='translateY(0)';
+    // Push extra history so swipe-back lands on our dialog, not leaves
     history.pushState({_fade:'sc-discard'},'');
-  });});
+  });
 }
 function _scHideDiscardDialog(){
   var sheet=document.getElementById('sc-discard-sheet');
-  if(sheet){sheet.style.transform='translateY(10px) scale(.97)';sheet.style.opacity='0';}
+  if(sheet) sheet.style.transform='translateY(100%)';
   setTimeout(function(){
     var bg=document.getElementById('sc-discard-bg');
     if(bg) bg.style.display='none';
-  },220);
+  },300);
 }
 function scKeepEditing(){
   _scHideDiscardDialog();
@@ -5807,36 +5602,16 @@ function scConfirmDiscard(){
   setTimeout(_scDoClose, 80);
 }
 function _scDoClose(){
-  _scCommitText&&_scCommitText();
   var cr=document.getElementById('story-creator');cr.style.opacity='0';
-  var canvas=document.getElementById('sc-canvas');
-  if(canvas){
-    canvas.querySelectorAll('._sc-te').forEach(function(t){t.remove();});
-    canvas.querySelectorAll('._sc-sticker').forEach(function(s){s.remove();});
-    canvas.style.background=SC_BG_COLORS[0];canvas.style.backgroundSize='cover'; // reset bg
-  }
+  var canvas=document.getElementById('sc-canvas');if(canvas)canvas.style.marginBottom='';
   var fs=document.getElementById('sc-filter-strip');if(fs)fs.remove();
-  var fontsEl=document.getElementById('sc-fonts');
-  if(fontsEl)fontsEl.classList.remove('on');
-  _scHideSizeSlider();
-  scFontOpen=false;
-  _scActiveTextEl=null;_scIsTyping=false;_scActiveFilter='none';
-  // Close Instagram text editor if open
-  _scTeOpen=false;
-  var cr2=document.getElementById('story-creator');if(cr2)cr2.classList.remove('sc-editing');
-  var ed=document.getElementById('sc-text-editor');
-  if(ed){ed.classList.remove('on');ed.style.display='none';}
-  var live=document.getElementById('sc-te-live');
-  if(live){live.blur();live.textContent='';}
-  _scVSliderHide();
-  var ln=document.getElementById('_sc-snap-line');if(ln)ln.remove();
-  var dz=document.getElementById('sc-delete-zone');if(dz)dz.remove();
-  _scDeleteZone=null;_scDeleteActive=false;
+  _scActiveFilter='none';
   setTimeout(function(){cr.style.display='none';},250);
 }
 function closeCreator(){
   _scTryClose();
 }
+function applyFont(){var f=SC_FONTS[scFI],ov=document.getElementById('sc-text-ov');ov.style.fontFamily=f.ff;ov.style.fontStyle=f.fs;ov.style.fontWeight=f.fw;}
 function buildSwatches(){
   // No-op -- bg color now via sc-bg-cycle button
 }
@@ -5845,1060 +5620,350 @@ var _scColorIdx=0,_scBgIdx=0;
 // Text colors
 var SC_TEXT_COLORS=['#FFFFFF','#000000','#FFFC00','#FF3B30','#FF9500','#34C759','#007AFF','#AF52DE','#FF2D55','#5AC8FA'];
 // Background colors (text-only post)
-var SC_BG_COLORS=['linear-gradient(145deg,#1A1028 0%,#0E1A2E 50%,#0D1F1A 100%)','linear-gradient(160deg,#1C0A2E 0%,#0A0A1E 100%)','linear-gradient(145deg,#0D1F2D 0%,#1A2A1C 100%)','linear-gradient(135deg,#1A1A2E 0%,#16213E 50%,#0F3460 100%)','#FFFC00','#FF3B30','#FF9500','#34C759','#007AFF','#AF52DE','#FF2D55','#FFFFFF'];
+var SC_BG_COLORS=['#1C1C1E','#FFFC00','#FF3B30','#FF9500','#34C759','#007AFF','#AF52DE','#FF2D55','#5856D6','#FFFFFF'];
 function _scInitColorCycle(){
   _scColorIdx=0;_scBgIdx=0;
+  var ov=document.getElementById('sc-text-ov');if(ov)ov.style.color=SC_TEXT_COLORS[0];
   // Don't touch display here -- _scUpdateCircles handles that
 }
-// ── NEW TEXT ENGINE ──────────────────────────────────────────────────────────
-// Each tap on "A" spawns an independent text node on the canvas.
-// No hidden textarea, no margin tricks. Keyboard is handled via visualViewport
-// nudging only the active element above the keyboard, canvas stays fixed.
-
-var _scActiveTextEl = null;   // the element currently being edited/selected
-var _scTextSize = 36;         // kept for pinch compat (per-element stored too)
-
-// Inject per-element styles once
-(function(){
-  if(document.getElementById('_sc-te-style'))return;
-  var s=document.createElement('style');
-  s.id='_sc-te-style';
-  s.textContent=[
-    '._sc-te{position:absolute;min-width:64px;max-width:88%;padding:6px 12px;border-radius:10px;',
-    'font-size:36px;line-height:1.35;word-break:break-word;white-space:pre-wrap;',
-    'text-align:center;color:#fff;touch-action:none;user-select:none;-webkit-user-select:none;',
-    'cursor:default;z-index:10;transform:translate(-50%,-50%);will-change:transform;',
-    'outline:none;-webkit-tap-highlight-color:transparent;width:max-content}',
-    '._sc-te.editing{user-select:text;-webkit-user-select:text;cursor:text}',
-    '._sc-te.selected{box-shadow:none}',
-    '@keyframes _scTeIn{from{opacity:0;transform:translate(-50%,-50%) scale(.7)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}',
-    // Snap guide line
-    '#_sc-snap-line{position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(255,220,0,.7);',
-    'pointer-events:none;z-index:50;opacity:0;transition:opacity .12s ease}',
-    '#_sc-snap-line.on{opacity:1}'
-  ].join('');
-  document.head.appendChild(s);
-})();
-
-function _scGetCanvas(){return document.getElementById('sc-canvas');}
-
-function _scGetSnapLine(){
-  var canvas=_scGetCanvas();if(!canvas)return null;
-  var ln=document.getElementById('_sc-snap-line');
-  if(!ln){ln=document.createElement('div');ln.id='_sc-snap-line';canvas.appendChild(ln);}
-  return ln;
-}
-
-var _scSnapTimer=null;
-function _scShowSnapLine(pct){
-  var ln=_scGetSnapLine();if(!ln)return;
-  ln.style.top=pct+'%';
-  ln.classList.add('on');
-  if(_scSnapTimer)clearTimeout(_scSnapTimer);
-  _scSnapTimer=setTimeout(function(){ln.classList.remove('on');},600);
-}
-function _scHideSnapLine(){
-  var ln=document.getElementById('_sc-snap-line');
-  if(ln)ln.classList.remove('on');
-  if(_scSnapTimer){clearTimeout(_scSnapTimer);_scSnapTimer=null;}
-}
-
-// Helper: get text content of a text element excluding the delete button
-function _scGetElText(el){
-  var delB=el.querySelector('._sc-del-btn');
-  if(!delB)return el.textContent.trim();
-  var clone=el.cloneNode(true);
-  var db=clone.querySelector('._sc-del-btn');if(db)db.remove();
-  return clone.textContent.trim();
-}
-
-// Deselect / commit current active text element
-function _scCommitText(){
-  if(!_scActiveTextEl)return;
-  var el=_scActiveTextEl;
-  _scActiveTextEl=null;
-  el.contentEditable='false';
-  el.classList.remove('editing','selected');
-  el.style.marginTop=''; // clear keyboard nudge offset
-  if(!_scGetElText(el)){
-    if(el.parentNode)el.parentNode.removeChild(el);
-  }
-  _scIsTyping=false;
-  _scUpdateCircles();
-  _scHideSnapLine();
-  _scHideSizeSlider();
-}
-
-// Keyboard nudge: moves active text el above keyboard, canvas stays put
+// -- KEYBOARD / VISUAL VIEWPORT HANDLER ---------------------------------------
 (function(){
   if(!window.visualViewport)return;
-  var _kbOffset=0;
-  function _onVV(){
+  function _onVVResize(){
     var cr=document.getElementById('story-creator');
     if(!cr||cr.style.display==='none')return;
-    if(!_scActiveTextEl||!_scActiveTextEl.classList.contains('editing'))return;
-    var canvas=_scGetCanvas();if(!canvas)return;
+    var canvas=document.getElementById('sc-canvas');
+    if(!canvas)return;
     var vvH=window.visualViewport.height;
     var fullH=window.innerHeight;
-    var kbH=Math.max(0,fullH-vvH);
-    var er=_scActiveTextEl.getBoundingClientRect();
-    var elBottom=er.bottom;
-    var safeBottom=fullH-kbH-16;
-    if(kbH<80){
-      // Keyboard gone — reset any offset applied
-      _scActiveTextEl.style.marginTop='';
-      _kbOffset=0;
-      return;
-    }
-    if(elBottom>safeBottom){
-      var over=elBottom-safeBottom;
-      // Use marginTop to nudge up (doesn't disrupt the stored top position)
-      var curMargin=parseFloat(_scActiveTextEl.style.marginTop)||0;
-      _scActiveTextEl.style.marginTop=(curMargin-over)+'px';
-    }
+    var kbH=Math.max(0,fullH-vvH-window.visualViewport.offsetTop);
+    canvas.style.marginBottom=kbH>80?kbH+'px':'';
   }
-  function _onKbGone(){
-    if(_scActiveTextEl){_scActiveTextEl.style.marginTop='';}
-    _kbOffset=0;
-  }
-  window.visualViewport.addEventListener('resize',function(){
-    var vvH=window.visualViewport.height;
-    var fullH=window.innerHeight;
-    var kbH=Math.max(0,fullH-vvH);
-    if(kbH<80)_onKbGone(); else _onVV();
-    // Reposition size slider to stay in visible canvas area
-    if(document.getElementById('sc-size-slider-wrap').classList.contains('on'))_scPositionSlider();
-  });
-  window.visualViewport.addEventListener('scroll',_onVV);
+  window.visualViewport.addEventListener('resize',_onVVResize);
+  window.visualViewport.addEventListener('scroll',_onVVResize);
 })();
 
-// Spawn a new text element at canvas center when user taps "A"
+// -- scActivateText ------------------------------------------------------------
 function scActivateText(){
-  var canvas=_scGetCanvas();if(!canvas)return;
-  // Commit any open element first
-  _scCommitText();
-  _scTextSize=36;
-  var f=SC_FONTS[scFI]||SC_FONTS[0];
-  var el=document.createElement('div');
-  el.className='_sc-te editing selected';
-  el.contentEditable='true';
-  el.spellcheck=false;
-  el.autocomplete='off';
-  var existingCount=canvas.querySelectorAll('._sc-te').length;
-  var topPct=Math.min(76,46+existingCount*12);
-  el.style.cssText=[
-    'left:50%;top:'+topPct+'%;',
-    'font-size:'+_scTextSize+'px;',
-    'color:'+SC_TEXT_COLORS[_scColorIdx]+';',
-    'font-family:'+f.ff+';font-style:'+f.fs+';font-weight:'+f.fw+';',
-    'width:max-content;max-width:88%;'
-  ].join('');
-  el.style.animation='_scTeIn .22s cubic-bezier(.34,1.4,.64,1) both';
-  el._rot=0; el._scale=_scTextSize;
-  // Add delete button
-  var delBtn=document.createElement('div');
-  delBtn.className='_sc-del-btn';
-  delBtn.innerHTML='&times;';
-  delBtn.addEventListener('touchend',function(ev){
-    ev.stopPropagation();ev.preventDefault();
-    if(_scActiveTextEl===el)_scActiveTextEl=null;
-    el.style.transition='transform .15s ease,opacity .15s ease';
-    el.style.opacity='0';
-    el.style.transform='translate(-50%,-50%) scale(0)';
-    setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},160);
-  },{passive:false});
-  el.appendChild(delBtn);
-  canvas.appendChild(el);
-  _scActiveTextEl=el;
   _scIsTyping=true;
+  var ov=document.getElementById('sc-text-ov');
+  var inp=document.getElementById('sc-text-input');
+  ov.classList.add('active','editing');
+  ov.classList.remove('draggable');
+  _scShowAlignBtn(true);
   _scUpdateCircles();
-  _scShowSizeSlider();
-
-  // Track whether element has content — drives delete button + selection outline
-  function _scUpdateHasText(){
-    var hasT=!!_scGetElText(el);
-    el.classList.toggle('_sc-has-text', hasT);
+  // Sync textarea value from display
+  if(inp){
+    inp.style.pointerEvents='auto';
+    inp.value=ov.textContent||'';
+    inp.focus();
+    inp.selectionStart=inp.selectionEnd=inp.value.length;
   }
-  el.addEventListener('input', _scUpdateHasText);
-  el.addEventListener('keyup', _scUpdateHasText);
-  // Focus after animation frame so iOS keyboard opens smoothly
-  requestAnimationFrame(function(){
-    el.focus();
-    // Place cursor at end
-    try{
-      var range=document.createRange();
-      var sel=window.getSelection();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }catch(e_){}
+}
+// -- TEXT ALIGNMENT TOGGLE -----------------------------------------------------
+var _scTextAlign = 'center';
+var _scAlignIcons = {
+  center: '<line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>',
+  left:   '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>',
+  right:  '<line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>'
+};
+function scCycleAlign(){
+  var order=['center','left','right'];
+  var i=order.indexOf(_scTextAlign);
+  _scTextAlign=order[(i+1)%3];
+  var ov=document.getElementById('sc-text-ov');
+  if(ov) ov.style.textAlign=_scTextAlign;
+  var icon=document.getElementById('sc-align-icon');
+  if(icon) icon.innerHTML=_scAlignIcons[_scTextAlign];
+}
+function _scShowAlignBtn(show){
+  var btn=document.getElementById('sc-align-btn');
+  if(btn) btn.style.display=show?'flex':'none';
+}
+
+// -- TEXTAREA → DISPLAY SYNC --------------------------------------------------
+(function(){
+  var inp=document.getElementById('sc-text-input');
+  if(!inp)return;
+
+  function _sync(){
+    var ov=document.getElementById('sc-text-ov');
+    if(!ov)return;
+    ov.textContent=inp.value;
+    // Keep font size applied
+    ov.style.fontSize=(_scTextSize||36)+'px';
+  }
+
+  inp.addEventListener('input',_sync);
+  inp.addEventListener('keydown',function(e){
+    // Allow all keys - no interception needed since it's a real input
+    setTimeout(_sync,0);
   });
-  _scAttachTextHandlers(el);
-}
 
-// Place cursor at the exact (x, y) screen coordinate inside a contentEditable element
-function _scPlaceCursorAt(el, x, y){
-  try {
-    var range, sel=window.getSelection();
-    if(!sel)return;
-    // Modern standard (Firefox)
-    if(document.caretPositionFromPoint){
-      var pos=document.caretPositionFromPoint(x,y);
-      if(pos){
-        range=document.createRange();
-        range.setStart(pos.offsetNode,pos.offset);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        return;
+  // When keyboard dismisses (blur on textarea)
+  inp.addEventListener('blur',function(){
+    var ov=document.getElementById('sc-text-ov');
+    var cr=document.getElementById('story-creator');
+    if(!ov||!cr||cr.style.display==='none')return;
+    inp.style.pointerEvents='none';
+    setTimeout(function(){
+      if(_scIsTyping)return; // still typing (e.g. tapped color dot)
+      if(ov.textContent.trim()){
+        ov.classList.remove('editing');
+        ov.classList.add('draggable');
+        _scShowAlignBtn(false);
       }
-    }
-    // WebKit / Chrome / Safari (iOS)
-    if(document.caretRangeFromPoint){
-      range=document.caretRangeFromPoint(x,y);
-      if(range){
-        sel.removeAllRanges();
-        sel.addRange(range);
-        return;
-      }
-    }
-    // Fallback: put cursor at end
-    range=document.createRange();
-    range.selectNodeContents(el);
-    range.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(range);
-  } catch(e_){}
-}
+      _scUpdateCircles();
+    },150);
+  });
+})();
 
-function _scAttachTextHandlers(el){
-  var canvas=_scGetCanvas();
-  var dragging=false,sx,sy,ox,oy,_moved=false,_lastTap=0;
+// -- DRAGGABLE TEXT (single-tap drags, double-tap re-edits, snap, haptics) ----
+(function(){
+  var dragging=false,startTouchX,startTouchY,origLeft,origTop;
+  var _tapTimer=null,_lastTapTime=0,_tapCount=0;
+  function getEl(){return document.getElementById('sc-text-ov');}
+  function getInp(){return document.getElementById('sc-text-input');}
+  function isDraggable(el){return el.classList.contains('draggable');}
 
-  function _haptic(ms){try{if(navigator.vibrate)navigator.vibrate(ms||8);}catch(e_){}}
+  function _haptic(ms){try{if(navigator.vibrate)navigator.vibrate(ms||8);}catch(e){}}
 
-  function _openEditorFromEl(){
-    var txt=_scGetElText(el);
-    var size=parseFloat(el.style.fontSize)||40;
-    var color=el.style.color||'#FFFFFF';
-    var align=el.style.textAlign||'center';
-    var rot=el._rot||0;
-    // Find matching font
-    var fi=0;
-    SC_FONTS.forEach(function(f,i){
-      if(el.style.fontFamily&&el.style.fontFamily.indexOf(f.ff.split(',')[0])>=0)fi=i;
-    });
-    // Remove element
-    if(_scActiveTextEl===el)_scActiveTextEl=null;
-    if(el.parentNode)el.parentNode.removeChild(el);
-    // Restore editor state
-    _scTeSize=size; _scTeColor=color; _scTeAlign=align; _scTeFI=fi;
-    _scTeColorIdx=SC_TEXT_COLORS.indexOf(color);
-    if(_scTeColorIdx<0)_scTeColorIdx=0;
-    _scTeOpen=false;
-    _scOpenTextEditor();
-    requestAnimationFrame(function(){
-      var live=document.getElementById('sc-te-live');
-      if(live&&txt){
-        live.textContent=txt;
-        live.style.fontSize=size+'px';
-        _scVSliderUpdate();
-        _scTeUpdateColorDot();
-        try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}
-      }
-    });
-  }
-
-  el.addEventListener('touchstart',function(e){
-    if(e.touches.length!==1){
-      // Multi-touch starting — abort drag, reset tap timer to prevent double-tap delete after pinch
-      if(dragging){dragging=false;_scHideDeleteZone(el);window._scAnyDragActive=false;}
-      _lastTap=0;
-      return;
-    }
-    if(dragging)return;
-    // Cancel any in-progress transition so getBoundingClientRect is accurate
-    el.style.transition='none';
-    var t=e.touches[0];
+  function _resolveCenter(el,canvas){
     var cr=canvas.getBoundingClientRect();
     var er=el.getBoundingClientRect();
-    // Resolve center in canvas coords from actual layout
-    ox=er.left+er.width/2-cr.left;
-    oy=er.top+er.height/2-cr.top;
-    // Sync style to actual position so drag starts cleanly
-    el.style.left=ox+'px';
-    el.style.top=oy+'px';
-    el.style.animation='';
-    // Apply current rotation (scale is always 1 for text — size via fontSize)
-    var rot=el._rot||0;
-    el.style.transform='translate(-50%,-50%) rotate('+rot+'deg)';
-    sx=t.clientX; sy=t.clientY;
-    dragging=true; _moved=false;
-    window._scAnyDragActive=true;
-    _scActiveTextEl=el;
-    el.classList.add('selected');
-    _scShowDeleteZone();
-    e.preventDefault();
-    e.stopPropagation();
-  },{passive:false});
+    return{left:er.left+er.width/2-cr.left,top:er.top+er.height/2-cr.top};
+  }
 
-  el.addEventListener('touchmove',function(e){
-    if(!dragging||e.touches.length!==1)return;
-    var t=e.touches[0];
-    if(!_moved&&Math.abs(t.clientX-sx)<6&&Math.abs(t.clientY-sy)<6)return;
-    _moved=true;
-    var cr=canvas.getBoundingClientRect();
-    var newLeft=ox+(t.clientX-sx);
-    var newTop=oy+(t.clientY-sy);
-    var elr=el.getBoundingClientRect();
-    var hw=Math.max(elr.width/2,24),hh=Math.max(elr.height/2,24);
-    newLeft=Math.max(hw,Math.min(cr.width-hw,newLeft));
-    newTop=Math.max(hh,Math.min(cr.height-hh,newTop));
-    el.style.left=newLeft+'px';
-    el.style.top=newTop+'px';
-    _scCheckDeleteZone(t,el);
-    e.preventDefault();
-  },{passive:false});
-
-  el.addEventListener('touchend',function(e){
-    var now=Date.now();
-    // Double-tap delete
-    if(!_moved&&now-_lastTap<320){
-      dragging=false;window._scAnyDragActive=false;
-      el.style.transition='transform .18s ease,opacity .18s ease';
-      var rot=el._rot||0;
-      el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale(0)';
-      el.style.opacity='0';
-      setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
-      _scHideDeleteZone(); return;
+  function _enterEditMode(el){
+    el.classList.remove('draggable','');
+    el.classList.add('editing');
+    _scIsTyping=true;
+    _scShowAlignBtn(true);
+    _scUpdateCircles();
+    var inp=getInp();
+    if(inp){
+      inp.style.pointerEvents='auto';
+      inp.value=el.textContent||'';
+      setTimeout(function(){
+        inp.focus();
+        inp.selectionStart=inp.selectionEnd=inp.value.length;
+      },30);
     }
-    _lastTap=now;
-    if(!dragging){_moved=false;return;}
-    dragging=false;
-    window._scAnyDragActive=false;
-    var t=e.changedTouches[0];
-    if(_moved&&_scCheckDeleteZone(t,el)){
-      // Dragged into trash — delete with shrink animation
-      if(_scActiveTextEl===el)_scActiveTextEl=null;
-      el.style.transition='transform .18s ease,opacity .18s ease';
-      var rot=el._rot||0;
-      el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale(0)';
-      el.style.opacity='0';
-      setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
-    } else if(_moved){
-      // Settled after drag — restore full opacity, keep selected
-      var rot2=el._rot||0;
-      el.style.transition='none';
-      el.style.transform='translate(-50%,-50%) rotate('+rot2+'deg)';
-      el.style.opacity='1';
-      _scActiveTextEl=el;
-      el.classList.add('selected');
-    } else {
-      // Pure tap — open editor pre-filled
-      _openEditorFromEl();
-    }
-    _scHideDeleteZone();
-    _moved=false;
-  });
-
-  el.addEventListener('touchcancel',function(){
-    dragging=false; _moved=false;
-    window._scAnyDragActive=false;
-    var rot=el._rot||0;
-    el.style.transform='translate(-50%,-50%) rotate('+rot+'deg)';
-    el.style.opacity='1';
-    _scHideDeleteZone();
-  },{passive:true});
-}
-
-// Tap outside any text element → commit/deselect
-document.addEventListener('touchstart',function(e){
-  var cr=document.getElementById('story-creator');
-  if(!cr||cr.style.display==='none')return;
-  if(!_scActiveTextEl)return;
-  var el=_scActiveTextEl;
-  if(e.target===el||el.contains(e.target))return;
-  // Not on a sticker, toolbar, or delete button
-  if(e.target.closest&&(e.target.closest('._sc-sticker')||e.target.closest('#sc-top')||e.target.closest('#sc-bar')||e.target.closest('._sc-del-btn')))return;
-  _scCommitText();
-},{passive:true});
-
-// Color dot: cycle text color of active element while keeping keyboard
-function _scDotTouch(e){
-  e.preventDefault(); e.stopPropagation();
-  var isTyping=_scActiveTextEl&&_scActiveTextEl.classList.contains('editing');
-  var isSelected=_scActiveTextEl&&_scActiveTextEl.classList.contains('selected');
-  if(isTyping||isSelected){
-    _scColorIdx=(_scColorIdx+1)%SC_TEXT_COLORS.length;
-    var c=SC_TEXT_COLORS[_scColorIdx];
-    var dot=document.getElementById('sc-color-cycle');
-    if(dot)dot.style.background=c;
-    _scActiveTextEl.style.color=c;
-    if(isTyping){requestAnimationFrame(function(){if(_scActiveTextEl)_scActiveTextEl.focus();});}
-  } else {
-    scCycleColor();
   }
-}
 
-// _scHasContent: check for any non-empty text el or sticker
-function _scHasContent(){
-  var canvas=_scGetCanvas();if(!canvas)return false;
-  var img=document.getElementById('sc-canvas-img');
-  if(img&&img.classList.contains('on')&&img.src)return true;
-  var tes=canvas.querySelectorAll('._sc-te');
-  for(var i=0;i<tes.length;i++){
-    if(_scGetElText(tes[i]))return true;
-  }
-  if(canvas.querySelector('._sc-sticker'))return true;
-  return false;
-}
-
-// (scShare and openCreator are defined/fixed directly below)
-
-// ── FONT SIZE SLIDER ─────────────────────────────────────────────────────────
-(function(){
-  // Isolate slider touch events from canvas pan/swipe after DOM ready
-  document.addEventListener('DOMContentLoaded',function(){
-    var sl=document.getElementById('sc-size-slider');
-    var track=document.getElementById('sc-size-slider-track');
-    if(sl){
-      sl.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:true});
-      sl.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:true});
-    }
-    if(track){
-      track.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:true});
-      track.addEventListener('touchmove',function(e){e.stopPropagation();},{passive:true});
-    }
-  });
-})();
-function _scPositionSlider(){
-  var wrap=document.getElementById('sc-size-slider-wrap');
-  var canvas=document.getElementById('sc-canvas');
-  if(!wrap||!canvas)return;
-  var vvH=window.visualViewport?window.visualViewport.height:window.innerHeight;
-  var cr=canvas.getBoundingClientRect();
-  // Visible canvas height above keyboard
-  var visibleBottom=Math.min(cr.bottom, vvH - 8);
-  var visibleTop=cr.top;
-  var visibleH=Math.max(0, visibleBottom - visibleTop);
-  // Center slider in visible portion of canvas
-  var sliderH=200; // Aa label + track + number label
-  var idealCenter=visibleTop + visibleH/2;
-  var topPx=idealCenter - cr.top - sliderH/2;
-  topPx=Math.max(8, Math.min(visibleH - sliderH - 8, topPx));
-  wrap.style.top=topPx+'px';
-  wrap.style.transform='none';
-}
-function _scShowSizeSlider(){
-  var wrap=document.getElementById('sc-size-slider-wrap');
-  if(!wrap)return;
-  wrap.classList.add('on');
-  var slider=document.getElementById('sc-size-slider');
-  var lbl=document.getElementById('sc-size-label');
-  var sz=(_scActiveTextEl&&_scActiveTextEl._scale)||_scTextSize||36;
-  sz=Math.min(120,Math.max(14,sz));
-  if(slider){slider.value=sz;}
-  if(lbl){lbl.textContent=sz;}
-  _scPositionSlider();
-}
-function _scHideSizeSlider(){
-  var wrap=document.getElementById('sc-size-slider-wrap');
-  if(wrap)wrap.classList.remove('on');
-}
-function _scSliderChange(val){
-  var sz=parseInt(val,10);
-  _scTextSize=sz;
-  var lbl=document.getElementById('sc-size-label');
-  if(lbl)lbl.textContent=sz;
-  if(_scActiveTextEl){
-    _scActiveTextEl._scale=sz;
-    _scActiveTextEl.style.fontSize=sz+'px';
-  }
-}
-
-// applyFont: apply to active text element
-function applyFont(){
-  var f=SC_FONTS[scFI];
-  // Legacy ov (keep for compat)
-  var ov=document.getElementById('sc-text-ov');
-  if(ov){ov.style.fontFamily=f.ff;ov.style.fontStyle=f.fs;ov.style.fontWeight=f.fw;}
-  // Active text element
-  if(_scActiveTextEl){
-    _scActiveTextEl.style.fontFamily=f.ff;
-    _scActiveTextEl.style.fontStyle=f.fs;
-    _scActiveTextEl.style.fontWeight=f.fw;
-  }
-}
-
-// ── INSTAGRAM-STYLE CANVAS TEXT EDITOR ───────────────────────────────────────
-var _scTeOpen=false;
-var _scTeSize=40;
-var _scTeAlign='center';
-var _scTeBgMode=0;   // 0=none 1=dark-pill 2=colored-pill
-var _scTeStyleMode=0;// 0=normal 1=outline 2=shadow
-var _scTeFI=0;
-var _scTeColor='#FFFFFF';
-var _scTeColorIdx=0;
-
-function _scTeUpdateColorDot(){
-  var dot=document.getElementById('sc-te-colordot');
-  if(!dot)return;
-  var c=_scTeColor;
-  dot.style.background=c;
-  // Border: dark for light colors, white for dark
-  dot.style.borderColor=(c==='#FFFFFF'||c==='#FFFC00')?'rgba(180,180,180,.7)':'rgba(255,255,255,.5)';
-}
-
-function _scOpenTextEditor(){
-  if(_scTeOpen)return;
-  // Don't open if sticker sheet is visible
-  var ss=document.getElementById('sc-sticker-sheet');
-  if(ss&&ss.style.display!=='none')return;
-  _scTeOpen=true;
-  // Clear any active text element so stickers remain draggable
-  if(_scActiveTextEl){_scActiveTextEl.classList.remove('selected','editing');_scActiveTextEl=null;}
-  // Hide right-panel A/sticker buttons while editor open
-  var cr=document.getElementById('story-creator');
-  if(cr)cr.classList.add('sc-editing');
-  var hint=document.getElementById('sc-tap-hint');
-  if(hint)hint.style.opacity='0';
-  var ed=document.getElementById('sc-text-editor');
-  if(ed){ed.style.display='flex';}
-  requestAnimationFrame(function(){if(ed)ed.classList.add('on');});
-  var live=document.getElementById('sc-te-live');
-  if(live){
-    live.textContent='';
-    // Pick vertical position that avoids existing text elements
-    var canvas=_scGetCanvas();
-    var topPct=50; // default: centre
-    if(canvas){
-      var existingTops=[];
-      canvas.querySelectorAll('._sc-te').forEach(function(t){
-        var tp=parseFloat(t.style.top)||0;
-        var ch=canvas.getBoundingClientRect().height||1;
-        existingTops.push(Math.round(tp/ch*100));
-      });
-      if(existingTops.length>0){
-        // Try slots: 25%, 40%, 55%, 70%, 15%, 80%
-        var slots=[25,40,55,70,15,80];
-        for(var si=0;si<slots.length;si++){
-          var slot=slots[si];
-          var clash=existingTops.some(function(et){return Math.abs(et-slot)<18;});
-          if(!clash){topPct=slot;break;}
-        }
-      }
-    }
-    live.style.top=topPct+'%';
-    live.style.transform='translate(-50%,-50%)';
-    _scTeApplyStyle(live);
-    requestAnimationFrame(function(){
-      live.focus();
-      try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}
-    });
-  }
-  _scTeUpdateColorDot();
-  _scTeBuildFonts();
-  _scVSliderShow();
-  _scTeWatchKeyboard();
-  // Hide mention picker
-  var mp=document.getElementById('sc-te-mention-picker');
-  if(mp){mp.classList.remove('on');mp.innerHTML='';}
-  // Watch live input for @ mention trigger
-  if(live&&!live._mentionWired){
-    live._mentionWired=true;
-    live.addEventListener('input',_scTeHandleMentionInput);
-  }
-}
-
-function _scTeDone(){
-  if(!_scTeOpen)return;
-  var live=document.getElementById('sc-te-live');
-  var plain=live?live.textContent.trim():'';
-  var ed=document.getElementById('sc-text-editor');
-  if(ed){ed.classList.remove('on');ed.style.display='none';}
-  var mp=document.getElementById('sc-te-mention-picker');
-  if(mp){mp.classList.remove('on');mp.innerHTML='';}
-  if(plain)_scTeSpawn(plain);
-  _scTeResetHint();
-  _scTeOpen=false;
-  _scVSliderHide();
-  // Restore right-panel buttons
-  var cr=document.getElementById('story-creator');
-  if(cr)cr.classList.remove('sc-editing');
-  if(live){live.blur();live.textContent='';}
-}
-
-function _scTeSpawn(txt){
-  var canvas=_scGetCanvas();if(!canvas)return;
-  _scCommitText();
-  var f=SC_FONTS[_scTeFI]||SC_FONTS[0];
-  var el=document.createElement('div');
-  el.className='_sc-te selected';
-  el.contentEditable='false';
-  el.spellcheck=false;
-  var styleStr=[
-    'left:50%;top:46%;',
-    'font-size:'+_scTeSize+'px;',
-    'color:'+_scTeColor+';',
-    'font-family:'+f.ff+';font-style:'+f.fs+';font-weight:'+f.fw+';',
-    'text-align:'+_scTeAlign+';',
-    'width:max-content;max-width:88%;'
-  ].join('');
-  // Text style
-  if(_scTeStyleMode===1){styleStr+='text-shadow:none;-webkit-text-stroke:1.5px '+_scTeColor+';color:transparent;';}
-  else if(_scTeStyleMode===2){styleStr+='text-shadow:2px 3px 8px rgba(0,0,0,.7);';}
-  el.style.cssText=styleStr;
-  _scTeApplyBgToEl(el);
-  el.textContent=txt;
-  el._rot=0;el._scale=_scTeSize;
-  el.style.animation='_scTeIn .22s cubic-bezier(.34,1.4,.64,1) both';
-  canvas.appendChild(el);
-  _scActiveTextEl=el;
-  _scAttachTextHandlers(el);
-  setTimeout(function(){if(_scActiveTextEl===el){el.classList.remove('selected');_scActiveTextEl=null;}},600);
-}
-
-function _scTeApplyBgToEl(el){
-  if(_scTeBgMode===0){el.style.background='none';el.style.padding='6px 10px';}
-  else if(_scTeBgMode===1){el.style.background='rgba(0,0,0,.65)';el.style.padding='8px 16px';el.style.borderRadius='10px';}
-  else{el.style.background=_scTeColor==='#FFFFFF'?'rgba(255,255,255,.22)':'rgba(0,0,0,.5)';el.style.padding='8px 16px';el.style.borderRadius='10px';}
-}
-
-function _scTeResetHint(){
-  var canvas=_scGetCanvas();
-  var has=canvas&&(canvas.querySelectorAll('._sc-te').length>0||canvas.querySelector('._sc-sticker'));
-  var img=document.getElementById('sc-canvas-img');
-  var hasImg=img&&img.classList.contains('on');
-  var hint=document.getElementById('sc-tap-hint');
-  if(hint)hint.style.opacity=(has||hasImg)?'0':'1';
-}
-
-function _scTeApplyStyle(live){
-  if(!live)return;
-  var f=SC_FONTS[_scTeFI]||SC_FONTS[0];
-  live.style.fontFamily=f.ff;
-  live.style.fontStyle=f.fs;
-  live.style.fontWeight=f.fw;
-  live.style.fontSize=_scTeSize+'px';
-  live.style.color=_scTeColor;
-  live.style.textAlign=_scTeAlign;
-  // Text style mode
-  if(_scTeStyleMode===1){live.style.webkitTextStroke='1.5px '+_scTeColor;live.style.color='transparent';live.style.textShadow='none';}
-  else if(_scTeStyleMode===2){live.style.webkitTextStroke='';live.style.color=_scTeColor;live.style.textShadow='2px 3px 8px rgba(0,0,0,.7)';}
-  else{live.style.webkitTextStroke='';live.style.color=_scTeColor;live.style.textShadow='none';}
-  // Background mode
-  if(_scTeBgMode===0){live.style.background='none';live.style.padding='8px 14px';}
-  else if(_scTeBgMode===1){live.style.background='rgba(0,0,0,.65)';live.style.padding='8px 16px';live.style.borderRadius='10px';}
-  else{live.style.background=_scTeColor==='#FFFFFF'?'rgba(255,255,255,.22)':'rgba(0,0,0,.5)';live.style.padding='8px 16px';live.style.borderRadius='10px';}
-}
-
-function _scTeBuildFonts(){
-  var row=document.getElementById('sc-te-fonts');if(!row)return;
-  row.innerHTML='';
-  SC_FONTS.forEach(function(f,i){
-    var chip=document.createElement('div');
-    chip.className='sc-te-font'+(i===_scTeFI?' sel':'');
-    chip.textContent=f.l;
-    chip.style.fontFamily=f.ff;chip.style.fontStyle=f.fs;chip.style.fontWeight=f.fw;
-    function pick(){
-      _scTeFI=i;
-      row.querySelectorAll('.sc-te-font').forEach(function(c,j){c.classList.toggle('sel',j===i);});
-      // Auto-scroll selected chip into view
-      chip.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
-      var live=document.getElementById('sc-te-live');
-      _scTeApplyStyle(live);
-      requestAnimationFrame(function(){if(live)live.focus();});
-    }
-    chip.addEventListener('touchend',function(ev){ev.preventDefault();pick();},{passive:false});
-    chip.onclick=pick;
-    row.appendChild(chip);
-  });
-}
-
-// Color dot: cycles through SC_TEXT_COLORS, dot shows current color
-function _scTeCycleColor(){
-  _scTeColorIdx=(_scTeColorIdx+1)%SC_TEXT_COLORS.length;
-  _scTeColor=SC_TEXT_COLORS[_scTeColorIdx];
-  _scTeUpdateColorDot();
-  var live=document.getElementById('sc-te-live');
-  _scTeApplyStyle(live);
-  requestAnimationFrame(function(){if(live)live.focus();});
-}
-
-// Text style cycle: normal → outline → shadow
-function _scTeToggleStyle(){
-  _scTeStyleMode=(_scTeStyleMode+1)%3;
-  var live=document.getElementById('sc-te-live');
-  _scTeApplyStyle(live);
-  // Visual feedback on the buttons
-  var s=document.getElementById('sc-te-tool-style');
-  var o=document.getElementById('sc-te-tool-outline');
-  if(s)s.style.opacity=_scTeStyleMode===0?'0.55':'1';
-  if(o)o.style.opacity=_scTeStyleMode===1?'1':'0.55';
-  requestAnimationFrame(function(){if(live)live.focus();});
-}
-
-function _scTeToggleAlign(){
-  var aligns=['center','left','right'];
-  _scTeAlign=aligns[(aligns.indexOf(_scTeAlign)+1)%3];
-  var icon=document.getElementById('sc-te-align-icon');
-  if(icon){
-    if(_scTeAlign==='left')icon.innerHTML='<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="17" y2="18"/>';
-    else if(_scTeAlign==='center')icon.innerHTML='<line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>';
-    else icon.innerHTML='<line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="7" y1="18" x2="21" y2="18"/>';
-  }
-  var live=document.getElementById('sc-te-live');
-  _scTeApplyStyle(live);
-  requestAnimationFrame(function(){if(live)live.focus();});
-}
-
-function _scTeToggleBg(){
-  _scTeBgMode=(_scTeBgMode+1)%3;
-  var rect=document.getElementById('sc-te-bg-rect');
-  if(rect){
-    if(_scTeBgMode===0){rect.style.fill='none';rect.style.stroke='#fff';}
-    else if(_scTeBgMode===1){rect.style.fill='rgba(0,0,0,.65)';rect.style.stroke='rgba(255,255,255,.3)';}
-    else{rect.style.fill='rgba(255,255,255,.2)';rect.style.stroke='rgba(255,255,255,.5)';}
-  }
-  var live=document.getElementById('sc-te-live');
-  _scTeApplyStyle(live);
-  requestAnimationFrame(function(){if(live)live.focus();});
-}
-
-// ── MENTION / LOCATION ───────────────────────────────────────────────────────
-function _scTeMention(){
-  var live=document.getElementById('sc-te-live');if(!live)return;
-  // Insert @ at cursor
-  live.focus();
-  try{
-    var sel=window.getSelection();
-    if(sel&&sel.rangeCount){
-      var range=sel.getRangeAt(0);
-      range.deleteContents();
-      var t=document.createTextNode('@');
-      range.insertNode(t);
-      range.setStartAfter(t);range.setEndAfter(t);
-      sel.removeAllRanges();sel.addRange(range);
-    } else {
-      live.textContent+='@';
-    }
-  }catch(e_){live.textContent+='@';}
-  _scTeShowMentionPicker('');
-}
-
-function _scTeHandleMentionInput(){
-  var live=document.getElementById('sc-te-live');if(!live)return;
-  var txt=live.textContent;
-  var atIdx=txt.lastIndexOf('@');
-  if(atIdx>=0){
-    var query=txt.slice(atIdx+1).replace(/\s.*/,'');
-    _scTeShowMentionPicker(query);
-  } else {
-    var mp=document.getElementById('sc-te-mention-picker');
-    if(mp){mp.classList.remove('on');mp.innerHTML='';}
-  }
-}
-
-function _scTeShowMentionPicker(query){
-  var mp=document.getElementById('sc-te-mention-picker');if(!mp)return;
-  // Pull candidates from svGroups (followed users) + profile
-  var candidates=[];
-  if(window.svGroups){
-    svGroups.forEach(function(g){
-      if(g.userId&&g.userId!==profile.id){
-        var name=(g.displayName||g.username||'').toLowerCase();
-        var uname=(g.username||'').toLowerCase();
-        var q=query.toLowerCase();
-        if(!q||name.startsWith(q)||uname.startsWith(q)){
-          candidates.push({id:g.userId,name:g.displayName||g.username||'User',username:g.username||'',avatar:g.avatarUrl||''});
-        }
-      }
-    });
-  }
-  if(!candidates.length&&!query){mp.classList.remove('on');mp.innerHTML='';return;}
-  mp.innerHTML='';
-  candidates.slice(0,6).forEach(function(u){
-    var row=document.createElement('div');
-    row.className='sc-te-mrow';
-    var av=u.avatar?'<img class="sc-te-mav" src="'+u.avatar+'" alt="">':'<div class="sc-te-mav" style="display:flex;align-items:center;justify-content:center;font-size:15px;color:#aaa">'+u.name[0].toUpperCase()+'</div>';
-    row.innerHTML=av+'<div><div style="color:#fff;font-size:14px;font-weight:600">'+E(u.name)+'</div><div style="color:rgba(255,255,255,.5);font-size:12px">@'+E(u.username)+'</div></div>';
-    function insertMention(){
-      var live=document.getElementById('sc-te-live');if(!live)return;
-      var txt=live.textContent;
-      var atIdx=txt.lastIndexOf('@');
-      var before=atIdx>=0?txt.slice(0,atIdx):'';
-      live.textContent=before+'@'+u.username+' ';
-      live.focus();
-      try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}
-      mp.classList.remove('on');mp.innerHTML='';
-    }
-    row.addEventListener('touchend',function(ev){ev.preventDefault();insertMention();},{passive:false});
-    row.onclick=insertMention;
-    mp.appendChild(row);
-  });
-  mp.classList.toggle('on',candidates.length>0);
-}
-
-function _scTeLocation(){
-  var live=document.getElementById('sc-te-live');if(!live)return;
-  live.focus();
-  // Insert 📍 placeholder — user types location after
-  try{
-    var sel=window.getSelection();
-    if(sel&&sel.rangeCount){
-      var range=sel.getRangeAt(0);range.deleteContents();
-      var t=document.createTextNode('📍 ');range.insertNode(t);
-      range.setStartAfter(t);range.setEndAfter(t);
-      sel.removeAllRanges();sel.addRange(range);
-    } else {live.textContent+='📍 ';}
-  }catch(e_){live.textContent+='📍 ';}
-}
-
-// ── VERTICAL SIZE SLIDER ─────────────────────────────────────────────────────
-var _scVSliderDragging=false;
-function _scVSliderShow(){
-  var wrap=document.getElementById('sc-vslider-wrap');
-  if(wrap)wrap.classList.add('on');
-  _scVSliderUpdate();
-}
-function _scVSliderHide(){
-  var wrap=document.getElementById('sc-vslider-wrap');
-  if(wrap)wrap.classList.remove('on');
-}
-function _scVSliderUpdate(){
-  var thumb=document.getElementById('sc-vslider-thumb');
-  var track=document.getElementById('sc-vslider-track');
-  if(!thumb||!track)return;
-  var min=14,max=100;
-  var pct=(_scTeSize-min)/(max-min);
-  pct=Math.max(0,Math.min(1,pct));
-  // pct=1(big)→dot at top(0px), pct=0(small)→dot at bottom(trackH px)
-  var trackH=track.offsetHeight;
-  var dotTop=(1-pct)*trackH;
-  thumb.style.top=dotTop+'px';
-}
-function _scVSliderTouch(e){
-  e.preventDefault();e.stopPropagation();
-  var track=document.getElementById('sc-vslider-track');if(!track)return;
-  var rect=track.getBoundingClientRect();
-  var touch=e.touches[0];
-  var y=Math.max(0,Math.min(touch.clientY-rect.top,rect.height));
-  var pct=1-(y/rect.height);
-  pct=Math.max(0,Math.min(1,pct));
-  var min=14,max=100;
-  _scTeSize=Math.round(min+pct*(max-min));
-  _scVSliderUpdate();
-  var live=document.getElementById('sc-te-live');
-  if(live)live.style.fontSize=_scTeSize+'px';
-}
-function _scVSliderTouchEnd(e){_scVSliderDragging=false;}
-
-// ── KEYBOARD AWARENESS ───────────────────────────────────────────────────────
-var _scTeKbWatching=false;
-function _scTeWatchKeyboard(){
-  if(_scTeKbWatching)return;
-  if(!window.visualViewport)return;
-  _scTeKbWatching=true;
-  function onVV(){
-    if(!_scTeOpen)return;
-    var sp=document.getElementById('sc-te-kbspacer');
-    var live=document.getElementById('sc-te-live');
-    var canvas=document.getElementById('sc-canvas');
-    if(!sp||!canvas)return;
-    var kbH=Math.max(0,window.innerHeight-window.visualViewport.height);
-    // Add spacer to push toolbar up
-    sp.style.height=(kbH>80?kbH:0)+'px';
-    // Reposition live text: center it in space above toolbar
-    if(live){
-      // Available canvas height above keyboard
-      var canvasH=canvas.offsetHeight;
-      // Toolbar approximate height (fonts+tools+pills)
-      var tbH=160+(kbH>80?kbH:0);
-      var availH=canvasH-tbH;
-      // Center text in available space
-      live.style.top=Math.max(20,(availH/2))+'px';
-      live.style.transform='translate(-50%,-50%)';
-      // Constrain max height so text never goes into toolbar
-      live.style.maxHeight=(availH-40)+'px';
-      live.style.overflowY='auto';
-    }
-    // Also update slider track bottom to match
-    var track=document.getElementById('sc-vslider-track');
-    if(track){
-      var tbActual=160+(kbH>80?kbH:0);
-      track.style.bottom=tbActual+'px';
-    }
-    _scVSliderUpdate();
-  }
-  window.visualViewport.addEventListener('resize',onVV);
-  window.visualViewport.addEventListener('scroll',onVV);
-  // Fire once immediately
-  setTimeout(onVV,100);
-}
-
-// ── CANVAS TAP → OPEN EDITOR ─────────────────────────────────────────────────
-(function(){
-  document.addEventListener('DOMContentLoaded',function(){
+  function startDrag(e){
+    var el=getEl();if(!el||!isDraggable(el))return;
+    if(!el.textContent.trim())return;
     var canvas=document.getElementById('sc-canvas');if(!canvas)return;
-    canvas.addEventListener('touchend',function(e){
-      var cr=document.getElementById('story-creator');
-      if(!cr||cr.style.display==='none')return;
-      if(_scTeOpen)return;
-      if(window._scAnyDragActive)return;
-      if(window._scPinchJustEnded)return;
-      // Ignore taps on any overlay/toolbar/sticker/text
-      var tgt=e.target;
-      if(tgt.closest&&(
-        tgt.closest('#sc-top')||
-        tgt.closest('#sc-bar')||
-        tgt.closest('._sc-te')||
-        tgt.closest('._sc-sticker')||
-        tgt.closest('#sc-text-editor')||
-        tgt.closest('#sc-sticker-sheet')||
-        tgt.closest('#sc-delete-zone')||
-        tgt.closest('#sc-filter-strip')
-      ))return;
-      // If a text element is selected, deselect it — don't open editor
-      if(_scActiveTextEl){
-        _scActiveTextEl.classList.remove('selected','editing');
-        _scActiveTextEl=null;
+    var center=_resolveCenter(el,canvas);
+    origLeft=center.left; origTop=center.top;
+    el.style.left=origLeft+'px'; el.style.top=origTop+'px';
+    el.style.transform='translate(-50%,-50%) rotate('+(_scTextRot||0)+'deg)';
+    var touch=e.touches[0];
+    startTouchX=touch.clientX; startTouchY=touch.clientY;
+    dragging=true;
+    _scShowDeleteZone();
+    e.preventDefault(); e.stopPropagation();
+  }
+
+  function onMove(e){
+    if(!dragging)return;
+    var el=getEl();if(!el)return;
+    var touch=e.touches[0];
+    var canvas=document.getElementById('sc-canvas');
+    var cr=canvas?canvas.getBoundingClientRect():{width:390,height:700};
+    var newLeft=origLeft+(touch.clientX-startTouchX);
+    var newTop=origTop+(touch.clientY-startTouchY);
+    var elW=el.offsetWidth||200; var elH=el.offsetHeight||60;
+    newLeft=Math.max(elW*0.1,Math.min(cr.width-elW*0.1,newLeft));
+    newTop=Math.max(elH*0.3,Math.min(cr.height-elH*0.3,newTop));
+    // Snap to horizontal center
+    var snapRange=cr.width*0.055;
+    if(Math.abs(newLeft-cr.width/2)<snapRange){
+      newLeft=cr.width/2;
+      if(!el.dataset.snapped){el.dataset.snapped='1';_haptic(6);}
+    } else {delete el.dataset.snapped;}
+    el.style.left=newLeft+'px'; el.style.top=newTop+'px';
+    _scCheckDeleteZone(touch,el);
+    e.preventDefault();
+  }
+
+  function onUp(e){
+    if(!dragging)return;
+    dragging=false;
+    var el=getEl();
+    if(el) delete el.dataset.snapped;
+    var t=e&&e.changedTouches?e.changedTouches[0]:null;
+    if(t&&el&&_scCheckDeleteZone(t,el)){
+      el.textContent=''; el.classList.remove('active','draggable','editing');
+      el.style.left='50%';el.style.top='50%';
+      el.style.transform='translate(-50%,-50%)';
+      _scShowAlignBtn(false);
+      var inp=getInp();if(inp){inp.value='';inp.style.pointerEvents='none';}
+    }
+    _scHideDeleteZone();
+  }
+
+  document.addEventListener('touchstart',function(e){
+    var el=getEl();if(!el)return;
+    var cr=document.getElementById('story-creator');
+    if(!cr||cr.style.display==='none')return;
+    var isOnText=e.target===el||el.contains(e.target);
+    if(!isOnText)return;
+
+    if(isDraggable(el)){
+      var now=Date.now();
+      var dt=now-_lastTapTime;
+      _lastTapTime=now;
+
+      if(dt<320){
+        // Double-tap: re-enter edit mode
+        _tapCount=0;
+        if(_tapTimer){clearTimeout(_tapTimer);_tapTimer=null;}
+        dragging=false; // cancel any drag that started on first tap
+        _enterEditMode(el);
+        _haptic(8);
+        e.preventDefault();
         return;
       }
-      e.preventDefault();
-      _scOpenTextEditor();
-    },{passive:false});
-  });
+
+      // First tap: start drag immediately (single finger, intent to move)
+      _tapCount=1;
+      startDrag(e);
+    }
+  },{passive:false});
+
+  document.addEventListener('touchmove',function(e){if(dragging)onMove(e);},{passive:false});
+  document.addEventListener('touchend',onUp,{passive:true});
+  document.addEventListener('touchcancel',function(){
+    if(!dragging)return;
+    dragging=false; _scHideDeleteZone();
+  },{passive:true});
+
+  // Tap anywhere outside text while in draggable mode → stays draggable (no auto-edit)
+  // Tap outside while editing → blur handled by textarea blur event above
+  document.addEventListener('touchstart',function(e){
+    var el=getEl();if(!el)return;
+    var cr=document.getElementById('story-creator');
+    if(!cr||cr.style.display==='none')return;
+    var isOnText=e.target===el||el.contains(e.target);
+    // If text is in EDIT mode and user taps outside → blur the textarea
+    if(!isOnText&&el.classList.contains('editing')){
+      _scIsTyping=false;
+      var inp=getInp();if(inp){inp.style.pointerEvents='none';inp.blur();}
+    }
+    // If text is draggable and user taps outside → keep draggable (no change)
+  },{passive:true});
 })();
 
-// ── PINCH-TO-RESIZE + TWO-FINGER ROTATE (text elements + stickers) ───────────
-// Snap angles for the guide line (0°, 45°, 90°, 135°, 180°)
-var _scSnapAngles=[0,45,90,135,180,-45,-90,-135,-180];
-function _scNearestSnapAngle(a){
-  var norm=((a%360)+360)%360; if(norm>180)norm-=360;
-  var best=null,bestD=999;
-  _scSnapAngles.forEach(function(s){var d=Math.abs(norm-s);if(d<bestD){bestD=d;best=s;}});
-  return{angle:best,dist:bestD};
+// Prevent text blur when tapping the color circle
+function _scDotTouch(e){
+  e.preventDefault();
+  e.stopPropagation();
+  // Keep textarea focused so keyboard stays open while changing color
+  var inp=document.getElementById("sc-text-input");
+  scCycleColor();
+  if(inp&&_scIsTyping)setTimeout(function(){inp.focus();},10);
 }
 
+var _scTextSize=36,_scTextRot=0;
+// -- PINCH-TO-RESIZE + TWO-FINGER ROTATE (text + stickers) --------------------
 (function(){
   var _pinching=false,_initDist=0,_initScale=1,_initAngle=0,_initRot=0,_pinchTarget=null;
-  var _pinchEl=null;
-  var _haptic=function(ms){try{if(navigator.vibrate)navigator.vibrate(ms||8);}catch(e_){}};
-  var _lastSnapFired=false;
 
   function dist(t){var dx=t[0].clientX-t[1].clientX,dy=t[0].clientY-t[1].clientY;return Math.sqrt(dx*dx+dy*dy);}
-  function ang(t){return Math.atan2(t[1].clientY-t[0].clientY,t[1].clientX-t[0].clientX)*180/Math.PI;}
+  function angle(t){return Math.atan2(t[1].clientY-t[0].clientY,t[1].clientX-t[0].clientX)*180/Math.PI;}
 
-  function _applySnapLine(rot){
-    var s=_scNearestSnapAngle(rot);
-    if(s.dist<5){_scShowSnapLine(50);if(!_lastSnapFired){_haptic(7);_lastSnapFired=true;}return true;}
-    _lastSnapFired=false;_scHideSnapLine();return false;
-  }
+  function _haptic(ms){try{if(navigator.vibrate)navigator.vibrate(ms||8);}catch(e){}}
 
   document.addEventListener('touchstart',function(e){
     var cr=document.getElementById('story-creator');
     if(!cr||cr.style.display==='none')return;
-    if(e.touches.length!==2)return;
-    var canvas=_scGetCanvas();if(!canvas)return;
-    var t1=e.touches[0],t2=e.touches[1];
-    var el1=document.elementFromPoint(t1.clientX,t1.clientY);
-    var el2=document.elementFromPoint(t2.clientX,t2.clientY);
-    var sticker=null;
-    [el1,el2].forEach(function(el){if(!sticker&&el){var s=el.closest?el.closest('._sc-sticker'):null;if(s&&canvas.contains(s))sticker=s;}});
-    var textEl=null;
-    [el1,el2].forEach(function(el){if(!textEl&&el){var te=el.closest?el.closest('._sc-te'):null;if(te&&canvas.contains(te))textEl=te;}});
-
-    if(sticker){
-      var cr2=canvas.getBoundingClientRect();var er=sticker.getBoundingClientRect();
-      sticker.style.left=(er.left+er.width/2-cr2.left)+'px';sticker.style.top=(er.top+er.height/2-cr2.top)+'px';
-      _pinchTarget='sticker';_pinchEl=sticker;
-      _initDist=dist(e.touches);_initAngle=ang(e.touches);
-      _initScale=sticker._curScale||parseFloat(sticker.dataset.scale||'1');_initRot=sticker._curRot||0;
-      sticker.dataset.pinching='1';sticker.style.animation='';
-      _pinching=true;window._scAnyDragActive=true;_haptic(6);
-    } else if(textEl){
-      var _tc=canvas.getBoundingClientRect();var _te=textEl.getBoundingClientRect();
-      textEl.style.transition='none';textEl.style.left=(_te.left+_te.width/2-_tc.left)+'px';textEl.style.top=(_te.top+_te.height/2-_tc.top)+'px';
-      _pinchTarget='text';_pinchEl=textEl;
-      _initDist=dist(e.touches);_initAngle=ang(e.touches);
-      _initScale=textEl._scale||parseFloat(textEl.style.fontSize)||36;_initRot=textEl._rot||0;
-      textEl.contentEditable='false';textEl.classList.remove('editing');_scIsTyping=false;
-      _pinching=true;window._scAnyDragActive=true;_haptic(6);
-    } else if(_scActiveTextEl){
-      var _tc2=canvas.getBoundingClientRect();var _te2=_scActiveTextEl.getBoundingClientRect();
-      _scActiveTextEl.style.transition='none';_scActiveTextEl.style.left=(_te2.left+_te2.width/2-_tc2.left)+'px';_scActiveTextEl.style.top=(_te2.top+_te2.height/2-_tc2.top)+'px';
-      _pinchTarget='text';_pinchEl=_scActiveTextEl;
-      _initDist=dist(e.touches);_initAngle=ang(e.touches);
-      _initScale=_scActiveTextEl._scale||parseFloat(_scActiveTextEl.style.fontSize)||36;_initRot=_scActiveTextEl._rot||0;
-      _scActiveTextEl.contentEditable='false';_scActiveTextEl.classList.remove('editing');_scIsTyping=false;
-      _pinching=true;window._scAnyDragActive=true;
-    } else if(canvas.contains(el1)||canvas.contains(el2)){
-      _pinching=false;
+    if(e.touches.length===2){
+      var canvas=document.getElementById('sc-canvas');
+      if(!canvas)return;
+      var t1=e.touches[0],t2=e.touches[1];
+      var el1=document.elementFromPoint(t1.clientX,t1.clientY);
+      var el2=document.elementFromPoint(t2.clientX,t2.clientY);
+      var sticker=null;
+      [el1,el2].forEach(function(el){
+        if(!sticker&&el){var s=el.closest?el.closest('._sc-sticker'):null;if(s&&canvas.contains(s))sticker=s;}
+      });
+      var textOv=document.getElementById('sc-text-ov');
+      if(sticker){
+        // Commit position from getBoundingClientRect before pinching
+        var cr2=canvas.getBoundingClientRect();
+        var er=sticker.getBoundingClientRect();
+        sticker.style.left=(er.left+er.width/2-cr2.left)+'px';
+        sticker.style.top=(er.top+er.height/2-cr2.top)+'px';
+        _pinchTarget='sticker';
+        _pinching=true;
+        _initDist=dist(e.touches);
+        _initAngle=angle(e.touches);
+        _initScale=sticker._curScale||parseFloat(sticker.dataset.scale||'1');
+        _initRot=sticker._curRot||0;
+        sticker.dataset.pinching='1';
+        sticker.style.animation='';
+        _haptic(6);
+      } else if(textOv&&textOv.classList.contains('draggable')){
+        _pinchTarget='text';
+        _pinching=true;
+        _initDist=dist(e.touches);
+        _initAngle=angle(e.touches);
+        _initScale=_scTextSize;
+        _initRot=_scTextRot;
+        _haptic(6);
+      } else if(canvas.contains(el1)||canvas.contains(el2)){
+        _pinchTarget='text';
+        _pinching=true;
+        _initDist=dist(e.touches);
+        _initAngle=angle(e.touches);
+        _initScale=_scTextSize;
+        _initRot=_scTextRot;
+      }
+      if(_pinching) e.preventDefault();
     }
-    if(_pinching)e.preventDefault();
   },{passive:false});
 
   document.addEventListener('touchmove',function(e){
     if(!_pinching||e.touches.length!==2)return;
-    var d=dist(e.touches),a=ang(e.touches);
-    var ratio=d/Math.max(_initDist,30),dAngle=a-_initAngle;
-    if(_pinchTarget==='sticker'&&_pinchEl){
-      var newScale=Math.min(6,Math.max(0.15,_initScale*ratio));
-      var newRot=_initRot+dAngle;
-      _pinchEl._curScale=newScale;_pinchEl._curRot=newRot;
-      _pinchEl.dataset.scale=String(newScale);
-      _pinchEl.style.transform='translate(-50%,-50%) scale('+newScale+') rotate('+newRot+'deg)';
-      _applySnapLine(newRot);
-    } else if(_pinchTarget==='text'&&_pinchEl){
-      var newSize=Math.min(120,Math.max(14,Math.round(_initScale*ratio)));
-      var newRot2=_initRot+dAngle;
-      _pinchEl._scale=newSize;_pinchEl._rot=newRot2;_scTextSize=newSize;
-      _pinchEl.style.fontSize=newSize+'px';
-      _pinchEl.style.transform='translate(-50%,-50%) rotate('+newRot2+'deg)';
-      _applySnapLine(newRot2);
+    var d=dist(e.touches);
+    var a=angle(e.touches);
+    var ratio=d/Math.max(_initDist,30);
+    var dAngle=a-_initAngle;
+    if(_pinchTarget==='sticker'){
+      var canvas=document.getElementById('sc-canvas');if(!canvas)return;
+      var sticker=canvas.querySelector('._sc-sticker[data-pinching="1"]');
+      if(sticker){
+        var newScale=Math.min(5,Math.max(0.2,_initScale*ratio));
+        var newRot=_initRot+dAngle;
+        sticker._curScale=newScale;
+        sticker._curRot=newRot;
+        sticker.dataset.scale=String(newScale);
+        sticker.style.transform='translate(-50%,-50%) scale('+newScale+') rotate('+newRot+'deg)';
+      }
+    } else {
+      var newSize=Math.min(160,Math.max(12,Math.round(_initScale*ratio)));
+      _scTextSize=newSize;
+      _scTextRot=_initRot+dAngle;
+      var ov=document.getElementById('sc-text-ov');
+      if(ov){ov.style.fontSize=newSize+'px';ov.style.transform='translate(-50%,-50%) rotate('+_scTextRot+'deg)';}
     }
     e.preventDefault();
   },{passive:false});
 
   function _endPinch(){
-    if(!_pinching)return;
-    var savedEl=_pinchEl, savedTarget=_pinchTarget;
-    var _pCv=_scGetCanvas();
-    if(savedTarget==='sticker'&&savedEl){
-      if(savedEl.dataset.scale)savedEl._curScale=parseFloat(savedEl.dataset.scale);
-      delete savedEl.dataset.pinching;
-      var rs=savedEl._curScale||1,rr=savedEl._curRot||0;
-      savedEl.style.transition='none';
-      savedEl.style.opacity='1';
-      savedEl.style.transform='translate(-50%,-50%) scale('+rs+') rotate('+rr+'deg)';
-      // Sync left/top to actual px so next drag starts correctly
-      if(_pCv){var _pc=_pCv.getBoundingClientRect();var _pe=savedEl.getBoundingClientRect();
-        savedEl.style.left=(_pe.left+_pe.width/2-_pc.left)+'px';
-        savedEl.style.top=(_pe.top+_pe.height/2-_pc.top)+'px';}
-    } else if(savedTarget==='text'&&savedEl){
-      var ts=savedEl._scale||36,tr=savedEl._rot||0;
-      savedEl.style.transition='none';
-      savedEl.style.opacity='1';
-      savedEl.style.transform='translate(-50%,-50%) rotate('+tr+'deg)';
-      savedEl.style.fontSize=ts+'px';
-      // Sync left/top to actual px so next drag starts correctly
-      if(_pCv){var _pc2=_pCv.getBoundingClientRect();var _pe2=savedEl.getBoundingClientRect();
-        savedEl.style.left=(_pe2.left+_pe2.width/2-_pc2.left)+'px';
-        savedEl.style.top=(_pe2.top+_pe2.height/2-_pc2.top)+'px';}
+    if(_pinchTarget==='sticker'){
+      var canvas2=document.getElementById('sc-canvas');
+      if(canvas2){
+        canvas2.querySelectorAll('._sc-sticker').forEach(function(s2){
+          if(s2.dataset.scale) s2._curScale=parseFloat(s2.dataset.scale);
+          if(!s2._curRot) s2._curRot=0;
+          delete s2.dataset.pinching;
+        });
+      }
     }
-    // Reset delete zone — restore opacity in case element was near trash during drag
-    if(savedEl){savedEl.style.opacity='1';}
-    _scDeleteActive=false;
-    var wrap=document.getElementById('sc-dz-icon-wrap');
-    var svg=document.getElementById('sc-dz-svg');
-    if(wrap)wrap.classList.remove('active');
-    if(svg)svg.style.stroke='rgba(255,255,255,.75)';
-    _pinching=false;_pinchTarget=null;_pinchEl=null;_lastSnapFired=false;
-    // Block editor from opening immediately after pinch ends
-    window._scPinchJustEnded=true;
-    setTimeout(function(){window._scAnyDragActive=false;window._scPinchJustEnded=false;},400);
-    setTimeout(_scHideSnapLine,400);
+    _pinching=false;_pinchTarget=null;
   }
   document.addEventListener('touchend',_endPinch,{passive:true});
   document.addEventListener('touchcancel',_endPinch,{passive:true});
@@ -7107,71 +6172,57 @@ function _scShowDeleteZone(){
   var canvas=document.getElementById('sc-canvas');if(!canvas)return;
   var dz=document.createElement('div');
   dz.id='sc-delete-zone';
-  // No inline style — driven by CSS classes
-  dz.innerHTML=
-    '<div id="sc-dz-icon-wrap">'+
-      '<svg id="sc-dz-svg" width="32" height="32" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">'+
-        '<g class="trash-lid-g"><line x1="3" y1="6" x2="21" y2="6"/><path d="M9 6V4h6v2"/></g>'+
-        '<path d="M5 6l1 14a2 2 0 002 2h8a2 2 0 002-2l1-14"/>'+
-        '<line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>'+
-      '</svg>'+
+  dz.style.cssText='position:absolute;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);z-index:100;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transition:opacity .2s ease,transform .2s cubic-bezier(.34,1.2,.64,1);pointer-events:none;';
+  dz.innerHTML='<div id="sc-dz-circle" style="width:56px;height:56px;border-radius:50%;background:rgba(30,30,30,.8);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1.5px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;transition:background .2s cubic-bezier(.34,1.2,.64,1),transform .2s cubic-bezier(.34,1.2,.64,1),border-color .2s;">'+
+    '<svg width="22" height="22" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>'+
     '</div>'+
-    '<span id="sc-dz-label">Delete</span>';
+    '<span style="font-size:10px;font-weight:600;color:rgba(255,255,255,.45);letter-spacing:.6px;text-transform:uppercase;margin-top:2px;">Delete</span>';
   canvas.appendChild(dz);
   _scDeleteZone=dz;
-  // Trigger CSS transition
-  requestAnimationFrame(function(){requestAnimationFrame(function(){dz.classList.add('on');});});
+  requestAnimationFrame(function(){
+    dz.style.opacity='1';
+    dz.style.transform='translateX(-50%) translateY(0)';
+  });
 }
-function _scHideDeleteZone(el){
+function _scHideDeleteZone(){
   if(!_scDeleteZone)return;
   var dz=_scDeleteZone;
-  dz.classList.remove('on');
-  setTimeout(function(){if(dz.parentNode)dz.parentNode.removeChild(dz);},240);
+  dz.style.opacity='0';
+  dz.style.transform='translateX(-50%) translateY(20px)';
+  setTimeout(function(){if(dz.parentNode)dz.parentNode.removeChild(dz);},220);
   _scDeleteZone=null;
   _scDeleteActive=false;
-  if(el){
-    var rot=el._rot||el._curRot||0;
-    el.style.transition='transform .25s cubic-bezier(.34,1.4,.64,1),opacity .2s';
-    el.style.opacity='1';
-    var sc=el._curScale!=null?el._curScale:null;
-    if(sc!=null){el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale('+sc+')';}
-    else{el.style.transform='translate(-50%,-50%) rotate('+rot+'deg)';}
-    setTimeout(function(){if(el)el.style.transition='';},280);
-  }
 }
 function _scCheckDeleteZone(t,el){
   if(!_scDeleteZone)return false;
-  // Hit zone: the whole dz area (generous 60px radius from centre)
-  var dz=_scDeleteZone;
+  var dz=document.getElementById('sc-dz-circle');if(!dz)return false;
   var r=dz.getBoundingClientRect();
-  var cx=r.left+r.width/2, cy=r.top+r.height/2;
-  var dist=Math.sqrt(Math.pow(t.clientX-cx,2)+Math.pow(t.clientY-cy,2));
-  var inside=dist<60;
-  var wrap=document.getElementById('sc-dz-icon-wrap');
-  var svg=document.getElementById('sc-dz-svg');
+  var pad=14;
+  var inside=t.clientX>=r.left-pad&&t.clientX<=r.right+pad&&t.clientY>=r.top-pad&&t.clientY<=r.bottom+pad;
   if(inside&&!_scDeleteActive){
     _scDeleteActive=true;
-    if(wrap)wrap.classList.add('active');
-    if(svg)svg.style.stroke='#FF3B30';
-    try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}
+    dz.style.background='rgba(220,38,38,.9)';
+    dz.style.transform='scale(1.2)';
+    dz.style.borderColor='rgba(220,38,38,.4)';
+    var svg=dz.querySelector('svg');if(svg)svg.style.stroke='#fff';
+    try{if(navigator.vibrate)navigator.vibrate([10,30,10]);}catch(e){}
     if(el){
-      var rot0=el._rot||el._curRot||0;
-      el.style.transition='transform .2s cubic-bezier(.34,1,.64,1),opacity .2s';
-      el.style.transform='translate(-50%,-50%) rotate('+rot0+'deg) scale(0.28)';
-      el.style.opacity='0.25';
+      el.style.transition='transform .22s cubic-bezier(.34,1,.64,1),opacity .22s ease';
+      el.style.transform='translate(-50%,-50%) scale(0.25)';
+      el.style.opacity='0.2';
     }
   } else if(!inside&&_scDeleteActive){
     _scDeleteActive=false;
-    if(wrap)wrap.classList.remove('active');
-    if(svg)svg.style.stroke='rgba(255,255,255,.75)';
+    dz.style.background='rgba(30,30,30,.8)';
+    dz.style.transform='scale(1)';
+    dz.style.borderColor='rgba(255,255,255,.15)';
+    var svg=dz.querySelector('svg');if(svg)svg.style.stroke='rgba(255,255,255,.55)';
     if(el){
-      var rot=el._rot||el._curRot||0;
-      el.style.transition='transform .3s cubic-bezier(.34,1.4,.64,1),opacity .2s';
+      var sc=el._curScale||parseFloat(el.dataset.scale||'1');
+      el.style.transition='transform .28s cubic-bezier(.34,1.4,.64,1),opacity .2s ease';
       el.style.opacity='1';
-      var sc2=el._curScale!=null?el._curScale:null;
-      if(sc2!=null){el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale('+sc2+')';}
-      else{el.style.transform='translate(-50%,-50%) rotate('+rot+'deg)';}
-      setTimeout(function(){if(el)el.style.transition='';},320);
+      el.style.transform='translate(-50%,-50%) scale('+sc+')';
+      setTimeout(function(){if(el)el.style.transition='';},300);
     }
   }
   return inside;
@@ -7199,30 +6250,25 @@ function _scPlaceSticker(stickerDef){
 
   el.addEventListener('touchstart',function(e){
     if(e.touches.length!==1){
-      // Multi-touch (pinch) starting — abort drag, reset tap timer
-      if(dragging){dragging=false;_scHideDeleteZone(el);window._scAnyDragActive=false;}
-      _lastTap=0; // prevent double-tap delete triggering after pinch
+      // Multi-touch (pinch) starting — abort any active drag cleanly
+      if(dragging){dragging=false;_scHideDeleteZone();}
       return;
     }
     if(dragging)return;
-    // Cancel any in-progress transition so getBoundingClientRect returns final position
-    el.style.transition='none';
+    // Always read from el._curScale — the pinch handler writes here
     var sc=el._curScale||1;
-    var rot=el._curRot||0;
     var t=e.touches[0];
     var cr=canvas.getBoundingClientRect();
     var er=el.getBoundingClientRect();
-    // Resolve center in canvas-relative px from actual layout
+    // Resolve center in canvas-relative px from actual layout (not style strings)
     ox=er.left+er.width/2-cr.left;
     oy=er.top+er.height/2-cr.top;
     el.style.left=ox+'px';
     el.style.top=oy+'px';
     el.style.animation='';
-    // Always preserve rotation in transform
-    el.style.transform='translate(-50%,-50%) scale('+sc+') rotate('+rot+'deg)';
+    el.style.transform='translate(-50%,-50%) scale('+sc+')';
     sx=t.clientX;sy=t.clientY;
     dragging=true;_moved=false;
-    window._scAnyDragActive=true;
     _scShowDeleteZone();
     e.preventDefault();
     e.stopPropagation();
@@ -7231,15 +6277,13 @@ function _scPlaceSticker(stickerDef){
   el.addEventListener('touchmove',function(e){
     if(!dragging||e.touches.length!==1)return;
     var t=e.touches[0];
-    if(!_moved&&Math.abs(t.clientX-sx)<6&&Math.abs(t.clientY-sy)<6)return;
     _moved=true;
     var cr=canvas.getBoundingClientRect();
     var newLeft=ox+(t.clientX-sx);
     var newTop=oy+(t.clientY-sy);
-    var elr=el.getBoundingClientRect();
-    var hw=Math.max(elr.width/2,24),hh=Math.max(elr.height/2,24);
-    newLeft=Math.max(hw,Math.min(cr.width-hw,newLeft));
-    newTop=Math.max(hh,Math.min(cr.height-hh,newTop));
+    // Clamp within canvas
+    newLeft=Math.max(0,Math.min(cr.width,newLeft));
+    newTop=Math.max(0,Math.min(cr.height,newTop));
     el.style.left=newLeft+'px';
     el.style.top=newTop+'px';
     _scCheckDeleteZone(t,el);
@@ -7250,18 +6294,16 @@ function _scPlaceSticker(stickerDef){
     var now=Date.now();
     // Double-tap delete
     if(!_moved&&now-_lastTap<320){
-      dragging=false;window._scAnyDragActive=false;
       el.style.transition='transform .18s ease,opacity .18s ease';
       el.style.transform='translate(-50%,-50%) scale(0)';el.style.opacity='0';
       setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
-      _scHideDeleteZone();return;
+      _scHideDeleteZone();dragging=false;return;
     }
     _lastTap=now;
     if(!dragging){_moved=false;return;}
     dragging=false;
-    window._scAnyDragActive=false;
     var t=e.changedTouches[0];
-    if(_moved&&_scCheckDeleteZone(t,el)){
+    if(_scCheckDeleteZone(t,el)){
       el.style.transition='transform .18s ease,opacity .18s ease';
       el.style.transform='translate(-50%,-50%) scale(0)';
       el.style.opacity='0';
@@ -7269,9 +6311,9 @@ function _scPlaceSticker(stickerDef){
     } else {
       var sc=el._curScale||1;
       var rot=el._curRot||0;
-      el.style.transition='none';
-      el.style.opacity='1';
+      el.style.transition='transform .12s ease';
       el.style.transform='translate(-50%,-50%) scale('+sc+') rotate('+rot+'deg)';
+      setTimeout(function(){el.style.transition='';},150);
     }
     _scHideDeleteZone();
     _moved=false;
@@ -7297,36 +6339,14 @@ function _scPlaceSticker(stickerDef){
 
 function buildFChips(){
   var row=document.getElementById('sc-fonts');row.innerHTML='';
-  SC_FONTS.forEach(function(f,i){
-    var chip=document.createElement('div');
-    chip.className='sc-fc'+(i===scFI?' sel':'');
-    chip.style.fontFamily=f.ff;chip.style.fontStyle=f.fs;chip.style.fontWeight=f.fw;
-    chip.textContent=f.l;
-    function selectFont(){
-      scFI=i;applyFont();
-      row.querySelectorAll('.sc-fc').forEach(function(c,j){c.classList.toggle('sel',j===i);});
-    }
-    chip.addEventListener('touchend',function(ev){ev.preventDefault();selectFont();},{passive:false});
-    chip.onclick=selectFont;
-    row.appendChild(chip);
-  });
+  SC_FONTS.forEach(function(f,i){var chip=document.createElement('div');chip.className='sc-fc'+(i===scFI?' sel':'');chip.style.fontFamily=f.ff;chip.style.fontStyle=f.fs;chip.style.fontWeight=f.fw;chip.textContent=f.l;chip.onclick=function(){scFI=i;applyFont();row.querySelectorAll('.sc-fc').forEach(function(c,j){c.classList.toggle('sel',j===i);});};row.appendChild(chip);});
 }
 function scFontToggle(){
   scFontOpen=!scFontOpen;
-  var fontsEl=document.getElementById('sc-fonts');
-  fontsEl.classList.toggle('on',scFontOpen);
+  document.getElementById('sc-fonts').classList.toggle('on',scFontOpen);
   if(scFontOpen){
-    buildFChips();
-    // Only spawn a new text element if nothing is already active
-    if(!_scActiveTextEl){
-      scActivateText();
-    } else {
-      _scShowSizeSlider();
-    }
-  } else {
-    _scHideSizeSlider();
-    // Commit (deselect) active text so it sits cleanly on canvas
-    _scCommitText();
+    var ov=document.getElementById('sc-text-ov');if(ov)ov.classList.add('active');
+    scActivateText();
   }
 }
 function scPhoto(e){
@@ -7337,18 +6357,14 @@ function scPhoto(e){
   img.style.filter='none';
   _scActiveFilter='none';
   _scIsPhoto=true;_scIsTyping=false;
-  // Commit any active text, hide font strip and size slider
-  _scCommitText();
-  // Close text editor if open
-  if(_scTeOpen){_scTeDone();}
+  // Reset text overlay -- hidden until user taps A
+  var ov=document.getElementById('sc-text-ov');
+  var inp2=document.getElementById('sc-text-input');if(inp2){inp2.value='';inp2.style.pointerEvents='none';}if(ov){ov.textContent='';ov.classList.remove('active','draggable','editing');ov.style.left='50%';ov.style.top='50%';ov.style.transform='translate(-50%,-50%)';}
+  // Hide font strip
   scFontOpen=false;
-  var fontsEl=document.getElementById('sc-fonts');
-  if(fontsEl)fontsEl.classList.remove('on');
-  _scHideSizeSlider();
+  var fonts=document.getElementById('sc-fonts');if(fonts)fonts.classList.remove('on');
+  // Update circles: photo idle = both hidden
   _scUpdateCircles();
-  // Hide tap hint when photo loaded
-  var hint=document.getElementById('sc-tap-hint');
-  if(hint)hint.style.opacity='0';
   _scBuildFilterStrip();
 }
 var _scActiveFilter='none';
@@ -7438,38 +6454,23 @@ function closeAudSheet(){
   setTimeout(function(){if(bg)bg.style.display='none';},320);
 }
 function scShare(){
-  // Commit any open text first
-  _scCommitText&&_scCommitText();
-  // Gather text from all text elements on canvas, excluding delete button children
-  var canvas=document.getElementById('sc-canvas');
-  var parts=[];
-  if(canvas)canvas.querySelectorAll('._sc-te').forEach(function(t){
-    var s=_scGetElText(t);if(s)parts.push(s);
-  });
-  var txt=parts.join(' ');
+  var ovEl=document.getElementById('sc-text-ov');
+  var txt=ovEl.textContent.trim();
   var pUrl=document.getElementById('sc-canvas-img');var photoUrl=(pUrl.src&&pUrl.classList.contains('on'))?pUrl.src:null;
   if(!txt&&!photoUrl)return T('Add text or a photo first');
   var filterCss=_scActiveFilter&&_scActiveFilter!=='none'?(_scFilters.find(function(f){return f.id===_scActiveFilter;})||{css:'none'}).css:'none';
   var tc=SC_TEXT_COLORS[_scColorIdx]||'#fff';
-  // Add locally FIRST before goTab so loadStories() doesn't race-wipe it
-  var _tempId='st'+Date.now();
-  _addStoryLocal({id:_tempId,text:txt,img:photoUrl,ts:new Date().toISOString(),bg:scBg,tc:tc,fi:scFI,imgFilter:filterCss});
-  SFX('drop');_scDoClose();goTab('today');T('Posting moment...');
+  SFX('drop');closeCreator();goTab('today');T('Posting moment...');
   function doInsert(imgUrl){
-    // Update local blob url to final CDN url if changed
-    if(imgUrl&&imgUrl!==photoUrl){
-      var _oi=getOwnGroupIndex();
-      if(_oi>=0){var _g=svGroups[_oi];var _loc=_g.items.find(function(s){return s.id===_tempId;});if(_loc){_loc.img=imgUrl;renderStrip();}}
-    }
-    if(!profile)return;
     _sb.from('stories').insert({user_id:profile.id,text:txt||null,img_url:imgUrl||null,bg:scBg,tc:tc,fi:scFI,audience:scAudience})
       .select('id,created_at').then(function(r){
-        if(r.error){console.error('[Fade] Story insert error:',r.error);T('DB error: '+((r.error&&r.error.message)||'unknown'));return;}
-        var row=r.data&&r.data[0];if(!row)return;
-        // Swap temp id for real DB id, clear from localStorage
-        _clearLocalStory(_tempId);
-        var _oi2=getOwnGroupIndex();
-        if(_oi2>=0){var _g2=svGroups[_oi2];var _loc2=_g2.items.find(function(s){return s.id===_tempId;});if(_loc2){_loc2.id=row.id;_loc2.ts=row.created_at;_loc2.img=imgUrl||null;}}
+        if(r.error){
+          _addStoryLocal({id:'st'+Date.now(),text:txt,img:imgUrl,ts:new Date().toISOString(),bg:scBg,tc:tc,fi:scFI,imgFilter:filterCss});
+          T('Moment added (local only -- set up stories table to share)');
+          return;
+        }
+        var row=r.data&&r.data[0];
+        _addStoryLocal({id:row.id,text:txt,img:imgUrl,ts:row.created_at,bg:scBg,tc:tc,fi:scFI,imgFilter:filterCss});
         T('Moment added');
       });
   }
@@ -7485,37 +6486,6 @@ function scShare(){
     doInsert(photoUrl);
   }
 }
-function _localStoriesKey(){return profile?'fade_stories_'+profile.id:null;}
-function _saveLocalStories(){
-  try{
-    var k=_localStoriesKey();if(!k)return;
-    var ownIdx=getOwnGroupIndex();
-    var items=ownIdx>=0?svGroups[ownIdx].items:[];
-    // Only persist temp (st...) items -- real DB items reload from Supabase
-    var pending=items.filter(function(s){return s.id.startsWith('st');});
-    // Exclude blob: urls which don't survive reload
-    pending=pending.map(function(s){return Object.assign({},s,{img:s.img&&!s.img.startsWith('blob:')?s.img:null});});
-    localStorage.setItem(k,JSON.stringify(pending));
-  }catch(e){}
-}
-function _loadLocalStories(){
-  try{
-    var k=_localStoriesKey();if(!k)return[];
-    var raw=localStorage.getItem(k);if(!raw)return[];
-    var items=JSON.parse(raw);
-    // Expire anything older than 24h
-    var now=Date.now();
-    return items.filter(function(s){return now-new Date(s.ts).getTime()<86400000;});
-  }catch(e){return[];}
-}
-function _clearLocalStory(id){
-  try{
-    var k=_localStoriesKey();if(!k)return;
-    var raw=localStorage.getItem(k);if(!raw)return;
-    var items=JSON.parse(raw).filter(function(s){return s.id!==id;});
-    localStorage.setItem(k,JSON.stringify(items));
-  }catch(e){}
-}
 function _addStoryLocal(item){
   var ownIdx=getOwnGroupIndex();
   if(ownIdx===-1){
@@ -7529,25 +6499,11 @@ function _addStoryLocal(item){
     svGroups[ownIdx].items.push(item);
   }
   svGroups[ownIdx].seen=false;
-  _saveLocalStories();
   renderStrip();
 }
 // -- LOAD STORIES FROM SUPABASE ------------------------------------------------
 function loadStories(){
   if(!profile)return renderStrip();
-  // Restore any pending local stories from localStorage (survive page reload)
-  var _pendingLocal=_loadLocalStories();
-  if(_pendingLocal.length){
-    var _pi=getOwnGroupIndex();
-    if(_pi===-1){
-      svGroups.unshift({user:{id:'demo',username:profile.username||'you',display_name:profile.display_name||'You',avatar_url:profPhotoUrl||profile.avatar_url||null},items:[],seen:false});
-      _pi=0;
-    }
-    _pendingLocal.forEach(function(s){
-      if(!svGroups[_pi].items.find(function(x){return x.id===s.id;}))svGroups[_pi].items.push(s);
-    });
-    renderStrip();
-  }
   // Step 1: get who the current user follows (for audience filtering)
   var since=new Date(Date.now()-86400000).toISOString();
   _sb.from('follows').select('following_id').eq('follower_id',profile.id).then(function(fRes){
@@ -7561,8 +6517,7 @@ function loadStories(){
         .gte('created_at',since)
         .order('created_at',{ascending:true})
         .then(function(res){
-          if(res.error){console.error('[Fade] loadStories error:',res.error);renderStrip();return;}
-          if(!res.data){renderStrip();return;}
+          if(res.error||!res.data){renderStrip();return;}
           // Rebuild svGroups preserving own 'demo' group marker
           var ownIdx=getOwnGroupIndex();
           var ownGroup=ownIdx>=0?svGroups[ownIdx]:null;
@@ -7572,19 +6527,18 @@ function loadStories(){
           var ownStories=res.data.filter(function(s){return s.user_id===profile.id;});
           if(ownStories.length>0||localOwnItems.length>0){
             var items=ownStories.map(function(s){return{id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:null};});
-            // Remove pending local items that are now confirmed in DB
-            localOwnItems.forEach(function(li){if(!items.find(function(i){return i.id===li.id;}))items.push(li);else _clearLocalStory(li.id);});
+            localOwnItems.forEach(function(li){if(!items.find(function(i){return i.id===li.id;}))items.push(li);});
             items.sort(function(a,b){return new Date(a.ts)-new Date(b.ts);});
             svGroups.push({user:{id:'demo',username:profile.username||'you',display_name:profile.display_name||'You',avatar_url:profPhotoUrl||profile.avatar_url||null},items:items,seen:ownGroup?ownGroup.seen:true});
           }
-          // Other users' stories: show stories from followed users (any audience),
-          // plus stories marked 'everyone'. If following nobody, show all stories.
+          // Other users' stories -- filter by audience setting
           var others=res.data.filter(function(s){
             if(s.user_id===profile.id)return false;
             var aud=s.audience||'followers';
             if(aud==='everyone')return true;
-            if(followingIds.length===0)return true; // new account sees all
-            return followingIds.indexOf(s.user_id)>=0;
+            if(aud==='followers')return followingIds.indexOf(s.user_id)>=0;
+            if(aud==='close_friends')return closeFriendIds.indexOf(s.user_id)>=0;
+            return false;
           });
           var groupMap={};var groupOrder=[];
           others.forEach(function(s){
@@ -7597,10 +6551,7 @@ function loadStories(){
             groupMap[uid].items.push({id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:null});
           });
           groupOrder.forEach(function(uid){svGroups.push(groupMap[uid]);});
-          // Render immediately -- don't wait for story_views
-          renderStrip();
-          // Only query story_views for real DB UUIDs (not temp st... ids)
-          var _allIds=[];svGroups.forEach(function(g){g.items.forEach(function(s){if(!s.id.startsWith('st'))_allIds.push(s.id);});});
+          var _allIds=[];svGroups.forEach(function(g){g.items.forEach(function(s){_allIds.push(s.id);});});
           if(_allIds.length&&profile){
             _sb.from('story_views').select('story_id').eq('user_id',profile.id).in('story_id',_allIds).then(function(vr){
               var _seen={};(vr.data||[]).forEach(function(r){_seen[r.story_id]=true;});
@@ -7610,7 +6561,7 @@ function loadStories(){
               });
               renderStrip();
             });
-          }
+          } else {renderStrip();}
         });
     }).catch(function(){
       // close_friends table may not exist yet -- proceed without it
@@ -7635,8 +6586,8 @@ function loadStories(){
             if(s.user_id===profile.id)return false;
             var aud=s.audience||'followers';
             if(aud==='everyone')return true;
-            if(followingIds.length===0)return true;
-            return followingIds.indexOf(s.user_id)>=0;
+            if(aud==='followers')return followingIds.indexOf(s.user_id)>=0;
+            return false;
           });
           var groupMap={};var groupOrder=[];
           others.forEach(function(s){
@@ -7645,8 +6596,7 @@ function loadStories(){
             groupMap[uid].items.push({id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:null});
           });
           groupOrder.forEach(function(uid){svGroups.push(groupMap[uid]);});
-          renderStrip();
-          var _allIds2=[];svGroups.forEach(function(g){g.items.forEach(function(s){if(!s.id.startsWith('st'))_allIds2.push(s.id);});});
+          var _allIds2=[];svGroups.forEach(function(g){g.items.forEach(function(s){_allIds2.push(s.id);});});
           if(_allIds2.length&&profile){
             _sb.from('story_views').select('story_id').eq('user_id',profile.id).in('story_id',_allIds2).then(function(vr){
               var _seen2={};(vr.data||[]).forEach(function(r){_seen2[r.story_id]=true;});
@@ -7656,7 +6606,7 @@ function loadStories(){
               });
               renderStrip();
             });
-          }
+          } else {renderStrip();}
         });
     });
   });
@@ -7888,108 +6838,28 @@ var _svEditFilters=[
   {id:'drama',label:'Drama',css:'contrast(1.3) saturate(1.2) brightness(0.95)'},
 ];
 var _svEditBg='#2C2C2C';
-var _svEditColorIdx=0;
-var SC_EDIT_COLORS=['#FFFFFF','#000000','#FFFC00','#FF3B30','#FF9500','#34C759','#007AFF','#AF52DE','#FF2D55'];
-function _svEditUpdateColorDot(){
-  var dot=document.getElementById('sv-edit-colordot');
-  if(dot){dot.style.background=SC_EDIT_COLORS[_svEditColorIdx];}
-  var ov=document.getElementById('sv-edit-text-ov');
-  if(ov){ov.style.color=SC_EDIT_COLORS[_svEditColorIdx];}
-}
-function _svEditCycleColor(){
-  _svEditColorIdx=(_svEditColorIdx+1)%SC_EDIT_COLORS.length;
-  _svEditUpdateColorDot();
-}
-function _svEditBuildDots(){
-  var g=svGroups[svGI];if(!g||!g.items)return;
-  var dotsEl=document.getElementById('sv-edit-dots');if(!dotsEl)return;
-  dotsEl.innerHTML='';
-  if(g.items.length<=1){return;}
-  g.items.forEach(function(_,i){
-    var d=document.createElement('div');d.className='sv-edit-dot'+(i===svII?' on':'');
-    dotsEl.appendChild(d);
-  });
-}
 function svOpenEdit(){
   var g=svGroups[svGI];var item=g&&g.items&&g.items[svII];if(!item)return;
   svPaused=true;clearTimeout(svTmr);_svEditFilter='none';
-  _svEditBg=item.bg||'#2C2C2C';
-  // Set color index from item's text color
-  var tcIdx=SC_EDIT_COLORS.indexOf(item.tc||'#FFFFFF');
-  _svEditColorIdx=tcIdx>=0?tcIdx:0;
+  // Set up canvas
   var img=document.getElementById('sv-edit-img');
   var textOv=document.getElementById('sv-edit-text-ov');
   var canvas=document.getElementById('sv-edit-canvas');
+  _svEditBg=item.bg||'#2C2C2C';
   canvas.style.background=_svEditBg;
   if(item.img){img.src=item.img;img.classList.add('on');img.style.filter='none';}
   else{img.src='';img.classList.remove('on');}
   var f=SC_FONTS[item.fi||1];
   textOv.style.fontFamily=f.ff;textOv.style.fontStyle=f.fs;textOv.style.fontWeight=f.fw;
-  textOv.style.color=SC_EDIT_COLORS[_svEditColorIdx];
+  textOv.style.color=item.tc||'#fff';
   textOv.textContent=item.text||'';
-  _svEditBuildDots();
-  var hasPhoto=!!item.img;
-  document.getElementById('sv-edit-panel-text').style.display=hasPhoto?'none':'';
-  document.getElementById('sv-edit-panel-photo').style.display=hasPhoto?'':'none';
-  var actionsEl=document.getElementById('sv-edit-photo-actions');
-  actionsEl.style.display=hasPhoto?'flex':'none';
-  if(hasPhoto){svEditBuildPhotoPanel(item);svEditBuildPhotoActions(item);}
-  else{svEditBuildTextPanel(item);}
-  // Swipe gesture on canvas
-  _svEditAttachSwipe();
+  // Build text panel
+  svEditBuildTextPanel(item);
+  // Build photo panel
+  svEditBuildPhotoPanel(item);
+  // Show edit screen
   var bg=document.getElementById('sv-edit-bg');bg.style.display='flex';
   requestAnimationFrame(function(){requestAnimationFrame(function(){bg.classList.add('on');});});
-}
-function _svEditLoadItem(){
-  var g=svGroups[svGI];var item=g&&g.items&&g.items[svII];if(!item)return;
-  _svEditFilter='none';_svEditBg=item.bg||'#2C2C2C';
-  var tcIdx=SC_EDIT_COLORS.indexOf(item.tc||'#FFFFFF');
-  _svEditColorIdx=tcIdx>=0?tcIdx:0;
-  var img=document.getElementById('sv-edit-img');
-  var textOv=document.getElementById('sv-edit-text-ov');
-  var canvas=document.getElementById('sv-edit-canvas');
-  canvas.style.background=_svEditBg;
-  // animate canvas slide
-  canvas.style.transition='opacity .22s ease';canvas.style.opacity='0';
-  setTimeout(function(){
-    if(item.img){img.src=item.img;img.classList.add('on');img.style.filter='none';}
-    else{img.src='';img.classList.remove('on');}
-    var f=SC_FONTS[item.fi||1];
-    textOv.style.fontFamily=f.ff;textOv.style.fontStyle=f.fs;textOv.style.fontWeight=f.fw;
-    textOv.style.color=SC_EDIT_COLORS[_svEditColorIdx];
-    textOv.textContent=item.text||'';
-    canvas.style.opacity='1';
-    _svEditBuildDots();
-    var hasPhoto=!!item.img;
-    document.getElementById('sv-edit-panel-text').style.display=hasPhoto?'none':'';
-    document.getElementById('sv-edit-panel-photo').style.display=hasPhoto?'':'none';
-    var actionsEl=document.getElementById('sv-edit-photo-actions');
-    actionsEl.style.display=hasPhoto?'flex':'none';
-    if(hasPhoto){svEditBuildPhotoPanel(item);svEditBuildPhotoActions(item);}
-    else{svEditBuildTextPanel(item);}
-  },120);
-}
-var _svEditSwipeAttached=false;
-function _svEditAttachSwipe(){
-  if(_svEditSwipeAttached)return;_svEditSwipeAttached=true;
-  var canvas=document.getElementById('sv-edit-canvas');if(!canvas)return;
-  var sx=0,sy=0,st=0,tracking=false;
-  canvas.addEventListener('touchstart',function(e){
-    sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();tracking=false;
-  },{passive:true});
-  canvas.addEventListener('touchmove',function(e){
-    var dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;
-    if(!tracking&&Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)*1.3){tracking=true;}
-  },{passive:true});
-  canvas.addEventListener('touchend',function(e){
-    if(!tracking)return;
-    var dx=e.changedTouches[0].clientX-sx;
-    var vel=Math.abs(dx)/Math.max(Date.now()-st,1);
-    if(Math.abs(dx)<40&&vel<0.3)return;
-    var g=svGroups[svGI];if(!g||!g.items||g.items.length<=1)return;
-    if(dx<0&&svII<g.items.length-1){svII++;_svEditLoadItem();}
-    else if(dx>0&&svII>0){svII--;_svEditLoadItem();}
-  },{passive:true});
 }
 function svEditBuildTextPanel(item){
   var panel=document.getElementById('sv-edit-panel-text');
@@ -8008,51 +6878,66 @@ function svEditBuildTextPanel(item){
     fontRow.appendChild(chip);
   });
   panel.appendChild(fontRow);
-  // Color dot + Done row
-  var toolsRow=document.createElement('div');toolsRow.id='sv-edit-text-tools';
-  var dot=document.createElement('div');dot.id='sv-edit-colordot';
-  dot.style.background=SC_EDIT_COLORS[_svEditColorIdx];
-  dot.onclick=function(){_svEditCycleColor();};
-  var doneBtn=document.createElement('button');doneBtn.id='sv-edit-done-btn';doneBtn.textContent='Done';
-  doneBtn.onclick=function(){document.getElementById('sv-edit-text-ov').blur();};
-  toolsRow.appendChild(dot);toolsRow.appendChild(doneBtn);
-  panel.appendChild(toolsRow);
+  // Color swatches
+  var colorRow=document.createElement('div');colorRow.className='sv-edit-colors';
+  var COLORS=['#2C2C2C','#111','#fff','#7C3AED','#E8352A','#F59E0B','#10B981','#3B82F6','#EC4899','#F97316'];
+  COLORS.forEach(function(c){
+    var sw=document.createElement('div');sw.className='sv-edit-sw'+(c===_svEditBg?' sel':'');
+    sw.style.background=c;
+    sw.onclick=function(){
+      _svEditBg=c;
+      document.getElementById('sv-edit-canvas').style.background=c;
+      colorRow.querySelectorAll('.sv-edit-sw').forEach(function(x){x.classList.toggle('sel',x.style.background===c||x.style.backgroundColor===c);});
+    };
+    colorRow.appendChild(sw);
+  });
+  panel.appendChild(colorRow);
 }
 function svEditBuildPhotoPanel(item){
   var panel=document.getElementById('sv-edit-panel-photo');
   panel.innerHTML='';
-  if(!item.img)return;
+  if(!item.img){
+    // No photo -- offer to add one
+    var addBtn=document.createElement('button');addBtn.className='sv-edit-photo-btn';
+    addBtn.innerHTML='<svg width="20" height="20" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Add Photo';
+    addBtn.onclick=function(){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(e){var f=e.target.files[0];if(!f)return;var url=URL.createObjectURL(f);var img=document.getElementById('sv-edit-img');img.src=url;img.classList.add('on');img.style.filter='none';};inp.click();};
+    panel.appendChild(addBtn);
+    return;
+  }
+  // Filters row
   var filtersWrap=document.createElement('div');filtersWrap.className='sv-edit-filters';
   _svEditFilters.forEach(function(fi){
-    var wrap=document.createElement('div');wrap.className='sv-edit-filter-item';
+    var item2=document.createElement('div');item2.className='sv-edit-filter-item';
     var thumb=document.createElement('div');thumb.className='sv-edit-filter-thumb'+(fi.id===_svEditFilter?' sel':'');
+    // mini canvas with filter
     if(fi.css!=='none'){thumb.style.filter=fi.css;}
     var thumbImg=document.createElement('img');
     thumbImg.src=document.getElementById('sv-edit-img').src;
     thumbImg.style.cssText='width:100%;height:100%;object-fit:cover';
     thumb.appendChild(thumbImg);
     var lbl=document.createElement('div');lbl.className='sv-edit-filter-lbl';lbl.textContent=fi.label;
-    wrap.appendChild(thumb);wrap.appendChild(lbl);
-    wrap.onclick=function(){
+    item2.appendChild(thumb);item2.appendChild(lbl);
+    item2.onclick=function(){
       _svEditFilter=fi.id;
       var img=document.getElementById('sv-edit-img');img.style.filter=fi.css==='none'?'none':fi.css;
       filtersWrap.querySelectorAll('.sv-edit-filter-thumb').forEach(function(t){t.classList.remove('sel');});
       thumb.classList.add('sel');
     };
-    filtersWrap.appendChild(wrap);
+    filtersWrap.appendChild(item2);
   });
   panel.appendChild(filtersWrap);
-}
-function svEditBuildPhotoActions(item){
-  var actionsEl=document.getElementById('sv-edit-photo-actions');
-  actionsEl.innerHTML='';
+  // Replace photo button
   var replBtn=document.createElement('button');replBtn.className='sv-edit-photo-btn';
+  replBtn.style.marginTop='12px';
   replBtn.innerHTML='<svg width="20" height="20" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Replace Photo';
-  replBtn.onclick=function(){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(e){var f=e.target.files[0];if(!f)return;var url=URL.createObjectURL(f);var img=document.getElementById('sv-edit-img');img.src=url;img.classList.add('on');_svEditFilter='none';img.style.filter='none';svEditBuildPhotoPanel({img:url});svEditBuildPhotoActions({img:url});};inp.click();};
+  replBtn.onclick=function(){var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(e){var f=e.target.files[0];if(!f)return;var url=URL.createObjectURL(f);var img=document.getElementById('sv-edit-img');img.src=url;img.classList.add('on');_svEditFilter='none';img.style.filter='none';svEditBuildPhotoPanel({img:url});};inp.click();};
+  panel.appendChild(replBtn);
+  // Remove photo button
   var rmBtn=document.createElement('button');rmBtn.className='sv-edit-photo-btn';
+  rmBtn.style.marginTop='8px';
   rmBtn.innerHTML='<svg width="20" height="20" fill="none" stroke="#E8352A" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg> <span style="color:#E8352A">Remove Photo</span>';
-  rmBtn.onclick=function(){var img=document.getElementById('sv-edit-img');img.src='';img.classList.remove('on');document.getElementById('sv-edit-photo-actions').style.display='none';document.getElementById('sv-edit-panel-photo').style.display='none';document.getElementById('sv-edit-panel-text').style.display='';var g=svGroups[svGI];var it=g&&g.items&&g.items[svII];svEditBuildTextPanel(it||{});};
-  actionsEl.appendChild(replBtn);actionsEl.appendChild(rmBtn);
+  rmBtn.onclick=function(){var img=document.getElementById('sv-edit-img');img.src='';img.classList.remove('on');svEditBuildPhotoPanel({});};
+  panel.appendChild(rmBtn);
 }
 function svEditTab(tab,el){
   document.querySelectorAll('.sv-edit-tab').forEach(function(t){t.classList.remove('on');});
@@ -8063,7 +6948,6 @@ function svEditTab(tab,el){
 function svCloseEdit(){
   var bg=document.getElementById('sv-edit-bg');bg.classList.remove('on');
   bg.style.opacity='0';
-  _svEditSwipeAttached=false;
   setTimeout(function(){bg.style.display='none';bg.style.opacity='';svPaused=false;startSVTmr();},240);
 }
 function svSaveEdit(){
@@ -8072,11 +6956,12 @@ function svSaveEdit(){
   var newText=textOv.textContent.trim();
   var img=document.getElementById('sv-edit-img');
   var newImg=img.classList.contains('on')?img.src:null;
+  // Detect font index from current style
   var fi=0;SC_FONTS.forEach(function(f,i){if(textOv.style.fontFamily.indexOf(f.ff.split(',')[0].replace(/'/g,'').trim())>=0)fi=i;});
   item.text=newText||null;item.img=newImg||null;item.bg=_svEditBg;item.fi=fi;
-  item.tc=SC_EDIT_COLORS[_svEditColorIdx]||'#fff';
+  // update Supabase if real id
   if(item.id&&item.id.indexOf('st')!==0){
-    var upd={text:item.text||null,img_url:item.img||null,bg:item.bg,fi:item.fi,tc:item.tc};
+    var upd={text:item.text||null,img_url:item.img||null,bg:item.bg,fi:item.fi};
     _sb.from('stories').update(upd).eq('id',item.id).then(function(){});
   }
   svCloseEdit();
