@@ -2406,31 +2406,10 @@ var _dobChanges=[],_emailChanges=[];
     });});
   };
 
-  // Track install state globally so settings page reads it fresh each render
-  window._pwaInstalled = isInStandalone;
-
-  // When user installs the PWA, mark installed and refresh settings if open
-  window.addEventListener('appinstalled', function(){
-    window._pwaInstalled = true;
-    window._a2hsDeferredPrompt = null;
-    var el = document.getElementById('so-body');
-    if(el && document.getElementById('so') && document.getElementById('so').classList.contains('on')){
-      if(typeof buildSettingsPage === 'function') buildSettingsPage(el);
-    }
-  });
-
   // Capture the native install prompt (Android Chrome)
-  // Also fires when PWA is removed -- meaning it's installable again
   window.addEventListener('beforeinstallprompt', function(e){
     e.preventDefault();
     window._a2hsDeferredPrompt = e;
-    // If previously thought installed but prompt fires again, user must have uninstalled
-    window._pwaInstalled = false;
-    // Refresh settings page if open so Install App row reappears
-    var el = document.getElementById('so-body');
-    if(el && document.getElementById('so') && document.getElementById('so').classList.contains('on')){
-      if(typeof buildSettingsPage === 'function') buildSettingsPage(el);
-    }
   });
 
   // Called after successful auth via initApp()
@@ -9750,20 +9729,6 @@ function buildStoryShareCard(p,isMine){
       openProf(authorUser3);
     });
     foot.appendChild(profBtn);
-
-    // Message button -- only if not their own story AND not current chat user
-    if(!isMine&&chatUser&&chatUser.id!==p.authorId&&authorUser3.id!==profile.id){
-      var msgBtn=document.createElement('button');
-      msgBtn.style.cssText='flex:1;background:var(--inp-bg);border:none;border-radius:10px;padding:8px 0;font-size:12px;font-weight:600;color:var(--text);font-family:Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px';
-      msgBtn.innerHTML='<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Message';
-      (function(au){
-        msgBtn.addEventListener('click',function(e){
-          e.stopPropagation();
-          openChat(au);
-        });
-      })(authorUser3);
-      foot.appendChild(msgBtn);
-    }
   }
 
   // Tap view label
@@ -11305,11 +11270,7 @@ function buildSRoot(){
     {title:'Privacy',items:[{ico:IC.shield,label:'Private Account',tog:'private'},{ico:IC.shield,label:'Hide Like Counts',tog:'hideLikes'},{ico:IC.star,label:'Close Friends',act:function(){soPush('Close Friends',buildCFPage);}},{ico:IC.chat,label:'Activity Status',right:function(){return'<span style="font-size:13px;color:var(--sub);margin-right:6px" id="activity-vis-lbl">'+({everyone:'Everyone',followers:'Followers',nobody:'Nobody'}[S.activityVisible]||'Everyone')+'</span>'+IC.chev;},act:function(){soPush('Activity Status',buildActivityPage);}}]},
     {title:'Notifications',items:[{ico:IC.bell,label:'Push Notifications',tog:'pushNotifs'},{ico:IC.chat,label:'Talk Notifications',tog:'talkNotifs'}]},
     {title:'Appearance',items:[{ico:IC.bell,label:'Sound Effects',togSnd:true},{ico:IC.moon,label:'Dark Mode',togDark:true}]},
-    {title:'Support',items:[
-      {ico:IC.help,label:'Report a Problem',act:function(){soPush('Report a Problem',buildReportPage);}},
-      // Only show Install App when not running as installed PWA
-      ...(window._pwaInstalled ? [] : [{ico:'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2v13M8 11l4 4 4-4"/><path d="M3 17v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"/></svg>',label:'Install App',sub:'Add Fade to your home screen',act:function(){if(window._a2hsDeferredPrompt){window._a2hsDeferredPrompt.prompt();window._a2hsDeferredPrompt.userChoice.then(function(){window._a2hsDeferredPrompt=null;});}else if(navigator.standalone===false||(!window.matchMedia('(display-mode: standalone)').matches&&/iPhone|iPad|iPod/.test(navigator.userAgent))){showToast('On Safari: tap the Share button, then "Add to Home Screen"');}else{showToast('Open in Safari or Chrome to install Fade');}}}])
-    ]},
+    {title:'Support',items:[{ico:IC.help,label:'Report a Problem',act:function(){soPush('Report a Problem',buildReportPage);}},{ico:'<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 2v13M8 11l4 4 4-4"/><path d="M3 17v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2"/></svg>',label:'Install App',sub:'Add Fade to your home screen',act:function(){if(window._a2hsDeferredPrompt){window._a2hsDeferredPrompt.prompt();window._a2hsDeferredPrompt.userChoice.then(function(){window._a2hsDeferredPrompt=null;});}else if(navigator.standalone===false||(!window.matchMedia('(display-mode: standalone)').matches&&/iPhone|iPad|iPod/.test(navigator.userAgent))){showToast('On Safari: tap the Share button, then "Add to Home Screen"');}else{showToast('Open in Safari or Chrome to install Fade');}}}]},
     {title:'',items:[{ico:IC.logout,label:'Log Out',act:function(){closeSettings();_sb.auth.signOut();}}]},
   ];
   // Admin section -- founder only, inserted at top
