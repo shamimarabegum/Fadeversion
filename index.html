@@ -5626,9 +5626,42 @@ function submitPost(){
 function getOwnGroupIndex(){
   return svGroups.findIndex(function(g){return g.user.id==='demo'||(profile&&g.user.id===profile.id);});
 }
+// Track render keys per uid so we only touch nodes that actually changed
+var _stripRenderedKeys={};
+
+function _stripItemKey(g){
+  var online=isActiveNow(g.user.id)&&canSeeActivity(g.user.id);
+  return (g.seen?'1':'0')+':'+g.items.length+':'+(online?'1':'0')+':'+(g.user.avatar_url||'');
+}
+
+function _buildStripOtherNode(g,gi){
+  var el=document.createElement('div');el.className='sitm';
+  el.dataset.uid=g.user.id;
+  var rd=document.createElement('div');
+  rd.className='sring '+(g.seen?'sring-seen':'sring-active');
+  if(!g.seen)rd.classList.add('anim-ring-pulse');
+  rd.style.cssText='width:66px;height:66px';
+  var id2=document.createElement('div');id2.className='sinner';
+  id2.style.cssText='width:100%;height:100%;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--card)';
+  if(g.user.avatar_url){id2.innerHTML='<img src="'+g.user.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>';}
+  else{id2.innerHTML='<span style="font-size:22px;font-weight:700;color:#fff;width:100%;height:100%;border-radius:50%;background:'+nc(g.user.display_name)+';display:flex;align-items:center;justify-content:center">'+nl(g.user.display_name)+'</span>';}
+  rd.appendChild(id2);
+  if(isActiveNow(g.user.id)&&canSeeActivity(g.user.id)){
+    var odot=document.createElement('div');
+    odot.style.cssText='position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#22C55E;border:2px solid var(--card);z-index:3';
+    rd.style.position='relative';rd.appendChild(odot);
+  }
+  var ne=document.createElement('span');ne.className='sname on';ne.textContent=g.user.display_name;
+  el.appendChild(rd);el.appendChild(ne);
+  (function(idx){el.onclick=function(){openSV(idx);};})(gi);
+  return el;
+}
+
 function renderStrip(){
-  var strip=document.getElementById('strip');strip.innerHTML='';
+  var strip=document.getElementById('strip');
+  // Expire old items
   svGroups.forEach(function(g){g.items=g.items.filter(function(s){return Date.now()-new Date(s.ts).getTime()<86400000;});});
+
   var ownIdx=getOwnGroupIndex();
   var ownGroup=ownIdx>=0?svGroups[ownIdx]:null;
   var hasOwn=!!(ownGroup&&ownGroup.items.length>0);
@@ -5636,62 +5669,85 @@ function renderStrip(){
   var myPhotoUrl=profPhotoUrl||profile&&profile.avatar_url||null;
   var myName=profile&&profile.display_name||'You';
 
-  var addEl=document.createElement('div');addEl.className='sitm';
-  addEl.classList.add('anim-fade-in','delay-0');
-  var ringDiv=document.createElement('div');
-  if(hasOwn){
-    ringDiv.className='sring '+(ownSeen?'sring-seen':'sring-active');
-    ringDiv.style.cssText='width:66px;height:66px;position:relative';
-    var innerDiv=document.createElement('div');innerDiv.className='sinner';
-    if(myPhotoUrl){innerDiv.innerHTML='<img src="'+myPhotoUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>';}
-    else{innerDiv.style.cssText='width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;background:'+nc(myName);innerDiv.innerHTML='<span style="font-size:22px;font-weight:700;color:#fff">'+nl(myName)+'</span>';}
-    var badge=document.createElement('div');badge.className='sadd';
-    badge.innerHTML='<svg width="8" height="8" fill="none" stroke="var(--card)" stroke-width="3" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
-    badge.onclick=function(e){e.stopPropagation();openCreator();};
-    ringDiv.appendChild(innerDiv);ringDiv.appendChild(badge);
-    ringDiv.onclick=function(e){if(e.target.closest('.sadd'))return;openSV(ownIdx);};
-  } else {
-    ringDiv.className='sring sring-none';
-    ringDiv.style.cssText='width:66px;height:66px;position:relative';
-    var innerDiv2=document.createElement('div');
-    if(myPhotoUrl){innerDiv2.style.cssText='width:100%;height:100%;border-radius:50%;overflow:hidden';innerDiv2.innerHTML='<img src="'+myPhotoUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>';}
-    else{innerDiv2.style.cssText='width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;background:'+nc(myName);innerDiv2.innerHTML='<span style="font-size:22px;font-weight:700;color:#fff">'+nl(myName)+'</span>';}
-    var badge2=document.createElement('div');badge2.className='sadd';
-    badge2.innerHTML='<svg width="8" height="8" fill="none" stroke="var(--card)" stroke-width="3" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
-    ringDiv.appendChild(innerDiv2);ringDiv.appendChild(badge2);
-    addEl.onclick=openCreator;
+  // ── OWN node (always first) ──────────────────────────────────────────────
+  var ownKey='own:'+(hasOwn?'1':'0')+':'+(ownSeen?'1':'0')+':'+(myPhotoUrl||'');
+  var existingOwn=strip.querySelector('[data-uid="__own"]');
+  if(!existingOwn||existingOwn.dataset.rkey!==ownKey){
+    var addEl=document.createElement('div');addEl.className='sitm';
+    addEl.dataset.uid='__own';addEl.dataset.rkey=ownKey;
+    var ringDiv=document.createElement('div');
+    if(hasOwn){
+      ringDiv.className='sring '+(ownSeen?'sring-seen':'sring-active');
+      ringDiv.style.cssText='width:66px;height:66px;position:relative';
+      var innerDiv=document.createElement('div');innerDiv.className='sinner';
+      if(myPhotoUrl){innerDiv.innerHTML='<img src="'+myPhotoUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>';}
+      else{innerDiv.style.cssText='width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;background:'+nc(myName);innerDiv.innerHTML='<span style="font-size:22px;font-weight:700;color:#fff">'+nl(myName)+'</span>';}
+      var badge=document.createElement('div');badge.className='sadd';
+      badge.innerHTML='<svg width="8" height="8" fill="none" stroke="var(--card)" stroke-width="3" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      badge.onclick=function(e){e.stopPropagation();openCreator();};
+      ringDiv.appendChild(innerDiv);ringDiv.appendChild(badge);
+      ringDiv.onclick=function(e){if(e.target.closest('.sadd'))return;openSV(ownIdx);};
+    } else {
+      ringDiv.className='sring sring-none';
+      ringDiv.style.cssText='width:66px;height:66px;position:relative';
+      var innerDiv2=document.createElement('div');
+      if(myPhotoUrl){innerDiv2.style.cssText='width:100%;height:100%;border-radius:50%;overflow:hidden';innerDiv2.innerHTML='<img src="'+myPhotoUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>';}
+      else{innerDiv2.style.cssText='width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;background:'+nc(myName);innerDiv2.innerHTML='<span style="font-size:22px;font-weight:700;color:#fff">'+nl(myName)+'</span>';}
+      var badge2=document.createElement('div');badge2.className='sadd';
+      badge2.innerHTML='<svg width="8" height="8" fill="none" stroke="var(--card)" stroke-width="3" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      ringDiv.appendChild(innerDiv2);ringDiv.appendChild(badge2);
+      addEl.onclick=openCreator;
+    }
+    var nameEl=document.createElement('span');nameEl.className='sname'+(hasOwn?' on':'');nameEl.textContent=hasOwn?'Your moment':'Add moment';
+    addEl.appendChild(ringDiv);addEl.appendChild(nameEl);
+    if(existingOwn){strip.replaceChild(addEl,existingOwn);}
+    else{strip.insertBefore(addEl,strip.firstChild);}
   }
-  var nameEl=document.createElement('span');nameEl.className='sname'+(hasOwn?' on':'');nameEl.textContent=hasOwn?'Your moment':'Add moment';
-  addEl.appendChild(ringDiv);addEl.appendChild(nameEl);strip.appendChild(addEl);
 
-  var si=1;
+  // ── Other users: surgical diff — only new/changed nodes animate ──────────
+  var wantOrder=[];
   svGroups.forEach(function(g,gi){
     if(g.user.id==='demo'||!g.items.length)return;
-    var el=document.createElement('div');el.className='sitm';
-    el.classList.add('anim-fade-in');
-    el.style.animationDelay=(Math.min(si,8)*35)+'ms';
-    si++;
-    var rd=document.createElement('div');
-    // unseen ring pulses
-    rd.className='sring '+(g.seen?'sring-seen':'sring-active');
-    if(!g.seen)rd.classList.add('anim-ring-pulse');
-    rd.style.cssText='width:66px;height:66px';
-    var id2=document.createElement('div');id2.className='sinner';
-    id2.style.cssText='width:100%;height:100%;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--card)';
-    if(g.user.avatar_url){id2.innerHTML='<img src="'+g.user.avatar_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>';}else{id2.innerHTML='<span style="font-size:22px;font-weight:700;color:#fff;width:100%;height:100%;border-radius:50%;background:'+nc(g.user.display_name)+';display:flex;align-items:center;justify-content:center">'+nl(g.user.display_name)+'</span>';}
-    rd.appendChild(id2);
-    // Online dot
-    if(isActiveNow(g.user.id)&&canSeeActivity(g.user.id)){
-      var odot=document.createElement('div');
-      odot.style.cssText='position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#22C55E;border:2px solid var(--card);z-index:3';
-      rd.style.position='relative';
-      rd.appendChild(odot);
-    }
-    var ne=document.createElement('span');ne.className='sname on';ne.textContent=g.user.display_name;
-    el.appendChild(rd);el.appendChild(ne);
-    (function(idx){el.onclick=function(){openSV(idx);};})(gi);
-    strip.appendChild(el);
+    wantOrder.push({g:g,gi:gi});
   });
+
+  // Remove stale nodes
+  var wantUids=wantOrder.map(function(x){return x.g.user.id;});
+  Array.prototype.forEach.call(strip.querySelectorAll('[data-uid]'),function(node){
+    if(node.dataset.uid==='__own')return;
+    if(wantUids.indexOf(node.dataset.uid)<0){node.remove();delete _stripRenderedKeys[node.dataset.uid];}
+  });
+
+  // Insert / update in order
+  var afterNode=strip.querySelector('[data-uid="__own"]');
+  wantOrder.forEach(function(obj){
+    var g=obj.g,gi=obj.gi;
+    var uid=g.user.id;
+    var key=_stripItemKey(g);
+    var existing=strip.querySelector('[data-uid="'+uid+'"]');
+    if(!existing){
+      // Truly new user appearing — animate only this avatar
+      var newNode=_buildStripOtherNode(g,gi);
+      newNode.dataset.rkey=key;
+      newNode.classList.add('anim-fade-in');
+      _stripRenderedKeys[uid]=key;
+      if(afterNode&&afterNode.nextSibling){strip.insertBefore(newNode,afterNode.nextSibling);}
+      else{strip.appendChild(newNode);}
+      afterNode=newNode;
+    } else if(existing.dataset.rkey!==key){
+      // Same user but ring state changed (seen/unseen, new story added) — patch silently
+      var updated=_buildStripOtherNode(g,gi);
+      updated.dataset.rkey=key;
+      _stripRenderedKeys[uid]=key;
+      strip.replaceChild(updated,existing);
+      afterNode=updated;
+    } else {
+      // Nothing changed — just refresh onclick index in case gi shifted
+      (function(idx,node){node.onclick=function(){openSV(idx);};})(gi,existing);
+      afterNode=existing;
+    }
+  });
+
   // Re-render talk list so story rings reflect current svGroups state
   if(typeof _renderTalkFromCache==='function')_renderTalkFromCache();
 }
@@ -8594,6 +8650,19 @@ function _renderTalkFromCache(){
         gdot.remove();
       }
 
+      // Story ring: patch seen/unseen state without rebuilding the row
+      var _pgi=storyGIForUser(uid);
+      var _phasStory=_pgi>=0;
+      var _pstorySeen=_phasStory&&svGroups[_pgi]&&svGroups[_pgi].seen;
+      var _pringEl=row.querySelector('[data-story-ring]');
+      if(_pringEl){
+        var _pwantBg=_phasStory?(_pstorySeen?'var(--border)':'var(--text)'):'';
+        if(_pringEl.getAttribute('data-ring-state')!==_pwantBg){
+          _pringEl.style.background=_pwantBg;
+          _pringEl.setAttribute('data-ring-state',_pwantBg);
+        }
+      }
+
       // Reorder if needed
       var refNode=l.children[circles.length+(circles.length&&convos.length?1:0)+i];
       if(refNode&&refNode!==row)l.insertBefore(row,refNode);
@@ -8615,6 +8684,8 @@ function _renderTalkFromCache(){
       avWrap.style.cssText='position:relative;width:58px;height:58px;min-width:58px;flex-shrink:0';
 
       var storyRing=document.createElement('div');
+      storyRing.setAttribute('data-story-ring','1');
+      var _initRingBg=hasStory?(storySeen?'var(--border)':'var(--text)'):'';storyRing.setAttribute('data-ring-state',_initRingBg);
       storyRing.style.cssText='width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;'+(hasStory?(storySeen?'background:var(--border)':'background:var(--text)'):'');
 
       var avPad=document.createElement('div');
