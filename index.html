@@ -4934,9 +4934,29 @@ function renderPhotoTray(){
     img.src=objUrl;
     img.style.cssText='border-radius:10px;width:100%;height:100%;object-fit:cover;filter:'+(cf.filter&&cf.filter!=='none'?(_scFilters.find(function(fl){return fl.id===cf.filter;})||{css:'none'}).css:'none');
     // Tap thumbnail -> open full-screen photo viewer with nav
+    // Use touchstart+touchend on the CHIP (not just img) with scroll detection.
+    // iOS safari swallows click events inside overflow-x:auto scroll containers.
     (function(idx2){
+      var _tStartX=0,_tStartY=0,_tMoved=false;
+      chip.addEventListener('touchstart',function(e){
+        if(e.target.closest('.photo-chip-rm'))return; // let remove button handle itself
+        _tStartX=e.touches[0].clientX;
+        _tStartY=e.touches[0].clientY;
+        _tMoved=false;
+      },{passive:true});
+      chip.addEventListener('touchmove',function(e){
+        var dx=Math.abs(e.touches[0].clientX-_tStartX);
+        var dy=Math.abs(e.touches[0].clientY-_tStartY);
+        if(dx>6||dy>6)_tMoved=true;
+      },{passive:true});
+      chip.addEventListener('touchend',function(e){
+        if(_tMoved)return; // was a scroll, not a tap
+        if(e.target.closest('.photo-chip-rm'))return;
+        e.preventDefault();
+        _openDropPhotoViewer(idx2);
+      },{passive:false});
+      // Fallback for desktop / non-touch
       img.addEventListener('click',function(e){e.stopPropagation();_openDropPhotoViewer(idx2);});
-      img.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();_openDropPhotoViewer(idx2);},{passive:false});
     })(i);
     // Edit icon bottom-left -- screenshot 5 style pencil icon
     var editIco=document.createElement('div');
