@@ -5981,14 +5981,19 @@ function scActivateText(){
   var canvas=_scGetCanvas();if(!canvas)return;
   // Commit any open element first
   _scCommitText();
+  // Always spawn new elements at the default size — don't inherit last pinch size
+  _scTextSize=36;
   var f=SC_FONTS[scFI]||SC_FONTS[0];
   var el=document.createElement('div');
   el.className='_sc-te editing selected';
   el.contentEditable='true';
   el.spellcheck=false;
   el.autocomplete='off';
+  // Offset Y so multiple text elements don't overlap each other
+  var existingCount=canvas.querySelectorAll('._sc-te').length;
+  var topPct=Math.min(75, 46 + existingCount * 12);
   el.style.cssText=[
-    'left:50%;top:46%;',
+    'left:50%;top:'+topPct+'%;',
     'font-size:'+_scTextSize+'px;',
     'color:'+SC_TEXT_COLORS[_scColorIdx]+';',
     'font-family:'+f.ff+';font-style:'+f.fs+';font-weight:'+f.fw+';',
@@ -6845,14 +6850,15 @@ function _scNearestSnapAngle(a){
     var d=dist(e.touches),a=ang(e.touches);
     var ratio=d/Math.max(_initDist,30),dAngle=a-_initAngle;
     if(_pinchTarget==='sticker'&&_pinchEl){
-      var newScale=Math.min(5,Math.max(0.2,_initScale*ratio));
+      var newScale=Math.min(3,Math.max(0.3,_initScale*ratio));
       var newRot=_initRot+dAngle;
       _pinchEl._curScale=newScale;_pinchEl._curRot=newRot;
       _pinchEl.dataset.scale=String(newScale);
+      _pinchEl.style.opacity='1';
       _pinchEl.style.transform='translate(-50%,-50%) scale('+newScale+') rotate('+newRot+'deg)';
       _applySnapLine(newRot);
     } else if(_pinchTarget==='text'&&_pinchEl){
-      var newSize=Math.min(160,Math.max(10,Math.round(_initScale*ratio)));
+      var newSize=Math.min(120,Math.max(14,Math.round(_initScale*ratio)));
       var newRot2=_initRot+dAngle;
       _pinchEl._scale=newSize;_pinchEl._rot=newRot2;_scTextSize=newSize;
       _pinchEl.style.fontSize=newSize+'px';
