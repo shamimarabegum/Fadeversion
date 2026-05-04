@@ -343,17 +343,16 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .sv-menu-sep{height:1px;background:var(--border);margin:0 22px}
 
 /* DELETE CONFIRM */
-#sv-del-bg{display:none;position:fixed;inset:0;z-index:650;align-items:flex-end}
+#sv-del-bg{display:none;position:fixed;inset:0;z-index:650;align-items:center;justify-content:center;padding:24px}
 #sv-del-bg.on{display:flex}
-#sv-del-dim{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:dimIn .2s ease}
-#sv-del-sheet{position:relative;background:var(--card);width:100%;border-radius:22px 22px 0 0;padding:22px 22px max(28px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94)}
-#sv-del-bg.on #sv-del-sheet{transform:translateY(0)}
-.sv-del-title{font-size:16px;font-weight:700;margin-bottom:5px;color:var(--text)}
-.sv-del-sub{font-size:14px;color:var(--sub);margin-bottom:22px;line-height:1.5}
-.sv-del-btn-del{width:100%;padding:15px;border-radius:14px;border:none;background:#E8352A;color:#fff;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:8px;transition:opacity .12s}
-.sv-del-btn-del:active{opacity:.7}
-.sv-del-btn-cancel{width:100%;padding:15px;border-radius:14px;border:none;background:var(--inp-bg);color:var(--sub);font-size:15px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s}
-.sv-del-btn-cancel:active{opacity:.6}
+#sv-del-dim{position:absolute;inset:0;background:rgba(0,0,0,.45);animation:dimIn .2s ease}
+#sv-del-sheet{position:relative;background:var(--card);width:100%;max-width:300px;border-radius:18px;overflow:hidden}
+.sv-del-title{font-size:16px;font-weight:700;text-align:center;color:var(--text)}
+.sv-del-sub{font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55}
+.sv-del-btn-del{flex:1;padding:15px;background:none;border:none;font-size:15px;font-weight:600;color:#E8352A;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .12s}
+.sv-del-btn-del:active{opacity:.5}
+.sv-del-btn-cancel{flex:1;padding:15px;background:none;border:none;border-right:1px solid var(--border);font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .12s}
+.sv-del-btn-cancel:active{opacity:.5}
 
 /* EDIT STORY SHEET */
 #sv-edit-bg{display:none;position:fixed;inset:0;z-index:640;background:#000;flex-direction:column;opacity:0;transition:opacity .22s ease}
@@ -1710,16 +1709,17 @@ body {
 </div>
 
 <!-- STORY CREATOR DISCARD DIALOG -->
-<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:flex-end;justify-content:center">
-  <div id="sc-discard-dim" style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="scKeepEditing()"></div>
-  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;width:calc(100% - 32px);max-width:380px;margin-bottom:max(28px,env(safe-area-inset-bottom));border-radius:18px;overflow:hidden;transform:translateY(20px) scale(.97);opacity:0;transition:transform .22s cubic-bezier(.34,1.3,.64,1),opacity .18s ease">
-    <div style="background:rgba(28,28,30,.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:20px 20px 6px;text-align:center">
-      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px">Discard moment?</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.4);line-height:1.4">Your edits won't be saved.</div>
+<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;padding:24px">
+  <div id="sc-discard-dim" style="position:absolute;inset:0;background:rgba(0,0,0,.45)" onclick="scKeepEditing()"></div>
+  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;width:calc(100% - 48px);max-width:300px;background:var(--card);border-radius:18px;overflow:hidden;transform:scale(.95);opacity:0;transition:transform .22s cubic-bezier(.34,1.3,.64,1),opacity .18s ease">
+    <div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center">
+      <div style="font-size:16px;font-weight:700;color:var(--text);text-align:center">Discard moment?</div>
+      <div style="font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55">Your edits won't be saved.</div>
     </div>
-    <div style="background:rgba(28,28,30,.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);display:flex;margin-top:1px">
-      <button onclick="scKeepEditing()" style="flex:1;padding:16px 0;border:none;background:none;color:rgba(255,255,255,.75);font-size:15px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border-right:1px solid rgba(255,255,255,.08)">Keep</button>
-      <button onclick="scConfirmDiscard()" style="flex:1;padding:16px 0;border:none;background:none;color:#FF453A;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer">Discard</button>
+    <div style="height:1px;background:var(--border)"></div>
+    <div style="display:flex">
+      <button onclick="scKeepEditing()" style="flex:1;padding:15px;border:none;border-right:1px solid var(--border);background:none;color:var(--text);font-size:15px;font-weight:400;font-family:'Inter',sans-serif;cursor:pointer">Keep</button>
+      <button onclick="scConfirmDiscard()" style="flex:1;padding:15px;border:none;background:none;color:#E8352A;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer">Discard</button>
     </div>
   </div>
 </div>
@@ -1753,10 +1753,15 @@ body {
 <div id="sv-del-bg" onclick="svCloseDelete()">
   <div id="sv-del-dim"></div>
   <div id="sv-del-sheet" onclick="event.stopPropagation()">
-    <div class="sv-del-title">Delete this moment?</div>
-    <div class="sv-del-sub">This moment will be permanently removed and can't be recovered.</div>
-    <button class="sv-del-btn-del" onclick="svConfirmDelete()">Delete</button>
-    <button class="sv-del-btn-cancel" onclick="svCloseDelete()">Cancel</button>
+    <div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center">
+      <div class="sv-del-title">Delete this moment?</div>
+      <div class="sv-del-sub">Once deleted it cannot be recovered.</div>
+    </div>
+    <div style="height:1px;background:var(--border)"></div>
+    <div style="display:flex">
+      <button class="sv-del-btn-cancel" onclick="svCloseDelete()">Cancel</button>
+      <button class="sv-del-btn-del" onclick="svConfirmDelete()">Delete</button>
+    </div>
   </div>
 </div>
 
@@ -4897,11 +4902,8 @@ function pickCI(e){
   var existing=cFiles.map(function(cf){var f=cf.file||cf;return f.name+'|'+f.size;});
   var newFiles=files.filter(function(f){return existing.indexOf(f.name+'|'+f.size)<0;});
   if(!newFiles.length){T('Already selected');return;}
-  var startIdx=cFiles.length; // index of first newly added photo
   newFiles.slice(0,remaining).forEach(function(f){cFiles.push({file:f,filter:'none'});});
   renderPhotoTray();
-  // Auto-open editor so user can filter/crop before returning to compose
-  _openDropPhotoViewer(startIdx);
 }
 function rmCI(idx){
   cFiles.splice(idx,1);
@@ -5784,13 +5786,13 @@ function _scShowDiscardDialog(){
   bg.style.display='flex';
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     var sheet=document.getElementById('sc-discard-sheet');
-    if(sheet){sheet.style.transform='translateY(0) scale(1)';sheet.style.opacity='1';}
+    if(sheet){sheet.style.transform='scale(1)';sheet.style.opacity='1';}
     history.pushState({_fade:'sc-discard'},'');
   });});
 }
 function _scHideDiscardDialog(){
   var sheet=document.getElementById('sc-discard-sheet');
-  if(sheet){sheet.style.transform='translateY(10px) scale(.97)';sheet.style.opacity='0';}
+  if(sheet){sheet.style.transform='scale(.95)';sheet.style.opacity='0';}
   setTimeout(function(){
     var bg=document.getElementById('sc-discard-bg');
     if(bg) bg.style.display='none';
@@ -8709,14 +8711,21 @@ function showConvoMenu(u,rowEl){
   // Remove any existing menu
   var ex=document.getElementById('convo-menu-overlay');if(ex)ex.remove();
   var ov=document.createElement('div');ov.id='convo-menu-overlay';
-  ov.style.cssText='position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.18)';
-  var sheet=document.createElement('div');
-  sheet.style.cssText='position:fixed;left:0;right:0;bottom:0;background:var(--card);border-radius:20px 20px 0 0;padding:8px 0 max(20px,env(safe-area-inset-bottom));z-index:951;animation:slideUp .22s ease';
-  var handle=document.createElement('div');handle.style.cssText='width:36px;height:4px;border-radius:2px;background:var(--border);margin:10px auto 16px';sheet.appendChild(handle);
-  var uname=document.createElement('div');uname.style.cssText='text-align:center;font-size:13px;color:var(--sub);margin-bottom:8px;padding:0 20px';uname.textContent=u.display_name||u.username;sheet.appendChild(uname);
+  ov.style.cssText='position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:24px';
+  var modal=document.createElement('div');
+  modal.style.cssText='background:var(--card);border-radius:18px;width:100%;max-width:300px;overflow:hidden';
+  var info=document.createElement('div');info.style.cssText='padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center';
+  var ttl=document.createElement('div');ttl.style.cssText='font-size:16px;font-weight:700;color:var(--text);text-align:center';ttl.textContent='Delete conversation?';
+  var sub=document.createElement('div');sub.style.cssText='font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55';sub.textContent='This will remove all messages. The other person won\'t be notified.';
+  info.appendChild(ttl);info.appendChild(sub);
+  var sep=document.createElement('div');sep.style.cssText='height:1px;background:var(--border)';
+  var row=document.createElement('div');row.style.cssText='display:flex';
+  var cancelBtn=document.createElement('button');
+  cancelBtn.style.cssText='flex:1;padding:15px;background:none;border:none;border-right:1px solid var(--border);font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:Inter,sans-serif';
+  cancelBtn.textContent='Cancel';cancelBtn.onclick=function(){ov.remove();};
   var delBtn=document.createElement('button');
-  delBtn.style.cssText='width:100%;padding:17px 20px;background:none;border:none;font-size:15px;font-weight:500;color:#E8352A;cursor:pointer;font-family:Inter,sans-serif;text-align:center;display:block';
-  delBtn.textContent='Delete Conversation';
+  delBtn.style.cssText='flex:1;padding:15px;background:none;border:none;font-size:15px;font-weight:600;color:#E8352A;cursor:pointer;font-family:Inter,sans-serif';
+  delBtn.textContent='Delete';
   delBtn.onclick=function(){
     ov.remove();
     var myId=profile.id;var theirId=u.id;
@@ -8729,13 +8738,9 @@ function showConvoMenu(u,rowEl){
     renderTalkList();
     T('Conversation deleted');
   };
-  var div=document.createElement('div');div.style.cssText='height:1px;background:var(--border);margin:0 20px';
-  var cancelBtn=document.createElement('button');
-  cancelBtn.style.cssText='width:100%;padding:17px 20px;background:none;border:none;font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:Inter,sans-serif;text-align:center;display:block';
-  cancelBtn.textContent='Cancel';
-  cancelBtn.onclick=function(){ov.remove();};
-  sheet.appendChild(delBtn);sheet.appendChild(div);sheet.appendChild(cancelBtn);
-  ov.appendChild(sheet);
+  row.appendChild(cancelBtn);row.appendChild(delBtn);
+  modal.appendChild(info);modal.appendChild(sep);modal.appendChild(row);
+  ov.appendChild(modal);
   ov.onclick=function(e){if(e.target===ov)ov.remove();};
   document.body.appendChild(ov);
 }
