@@ -166,12 +166,12 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 /* Top-right panel */
 #sc-top{position:absolute;top:0;left:0;right:0;z-index:26;display:flex;align-items:flex-start;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 14px 0}
 .sc-tbtn{background:rgba(0,0,0,.5);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.14)}
-#sc-right-panel{display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:2px}
-.sc-rpbtn{background:rgba(0,0,0,.45);border:none;border-radius:50%;width:46px;height:46px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .15s,opacity .15s;flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.3)}
-.sc-rpbtn:active{transform:scale(.88);opacity:.7}
+#sc-right-panel{display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:2px}
+.sc-rpbtn{background:none;border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:transform .15s,opacity .15s;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+.sc-rpbtn:active{transform:scale(.82);opacity:.6}
 /* Single cycling color dot */
-#sc-color-cycle{width:40px;height:40px;border-radius:50%;cursor:pointer;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.4),0 2px 8px rgba(0,0,0,.35);transition:background .18s,transform .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;display:block;background:#1C1C1E}
-#sc-color-cycle:active{transform:scale(.88)}
+#sc-color-cycle{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,.88);box-shadow:0 1px 4px rgba(0,0,0,.4),inset 0 0 0 1px rgba(0,0,0,.15);transition:background .18s,transform .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;display:block;background:#1A0A2E;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+#sc-color-cycle:active{transform:scale(.82)}
 #sc-bg-cycle{display:none}
 #sc-bar{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:10px 16px max(22px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;background:linear-gradient(transparent,rgba(0,0,0,.68))}
 .sc-fonts{display:none;flex-direction:row;gap:8px;overflow-x:auto}
@@ -1694,7 +1694,16 @@ body {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><text x="12" y="18" text-anchor="middle" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#fff">A</text></svg>
       </button>
       <button class="sc-rpbtn" id="sc-sticker-btn" onclick="scOpenStickers()" title="Stickers">
-        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.8"/><circle cx="9.2" cy="10.5" r="1.1" fill="#fff"/><circle cx="14.8" cy="10.5" r="1.1" fill="#fff"/><path d="M8.5 14.5c1 1.8 6 1.8 7 0" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M16 4.5C17.5 3 20 3.5 20.5 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Sticker shape: rounded square with peeling corner -->
+          <path d="M14 3H7C4.8 3 3 4.8 3 7v10c0 2.2 1.8 4 4 4h6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Peeling flap -->
+          <path d="M14 21l7-7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M14 21V14h7" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 14H14V21" fill="rgba(255,255,255,0.18)" stroke="none"/>
+          <!-- Star on sticker face -->
+          <path d="M10 7.5l.9 2.7h2.8l-2.3 1.7.9 2.7L10 12.9l-2.3 1.7.9-2.7L6.3 10.2h2.8z" fill="#fff"/>
+        </svg>
       </button>
       <div id="sc-color-cycle" onclick="scCycleColor()" onmousedown="event.preventDefault()" ontouchstart="_scDotTouch(event)" title="Color"></div>
     </div>
@@ -6078,51 +6087,53 @@ function _scAttachTextHandlers(el){
     var color=el.style.color||'#FFFFFF';
     var align=el.style.textAlign||'center';
     var rot=el._rot||0;
+    // Find matching font
     var fi=0;
     SC_FONTS.forEach(function(f,i){
       if(el.style.fontFamily&&el.style.fontFamily.indexOf(f.ff.split(',')[0])>=0)fi=i;
     });
+    // Remove element
     if(_scActiveTextEl===el)_scActiveTextEl=null;
     if(el.parentNode)el.parentNode.removeChild(el);
+    // Restore editor state
     _scTeSize=size; _scTeColor=color; _scTeAlign=align; _scTeFI=fi;
     _scTeColorIdx=SC_TEXT_COLORS.indexOf(color);
     if(_scTeColorIdx<0)_scTeColorIdx=0;
     _scTeOpen=false;
     _scOpenTextEditor();
-    // Focus synchronously here (still inside touch handler chain) to trigger iOS keyboard
-    var live=document.getElementById('sc-te-live');
-    if(live){
-      if(txt){live.textContent=txt;live.style.fontSize=size+'px';}
-      live.focus();
-    }
-    // Then in RAF: update UI state and place cursor at end
     requestAnimationFrame(function(){
-      var live2=document.getElementById('sc-te-live');
-      if(!live2)return;
-      _scVSliderUpdate();
-      _scTeUpdateColorDot();
-      live2.focus();
-      try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live2);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}
+      var live=document.getElementById('sc-te-live');
+      if(live&&txt){
+        live.textContent=txt;
+        live.style.fontSize=size+'px';
+        _scVSliderUpdate();
+        _scTeUpdateColorDot();
+        try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}
+      }
     });
   }
 
   el.addEventListener('touchstart',function(e){
     if(e.touches.length!==1){
+      // Multi-touch starting — abort drag, reset tap timer to prevent double-tap delete after pinch
       if(dragging){dragging=false;_scHideDeleteZone();window._scAnyDragActive=false;}
       _lastTap=0;
       return;
     }
     if(dragging)return;
-    // Cancel any in-flight transition so getBoundingClientRect returns final position
+    // Cancel any in-progress transition so getBoundingClientRect is accurate
     el.style.transition='none';
     var t=e.touches[0];
     var cr=canvas.getBoundingClientRect();
     var er=el.getBoundingClientRect();
+    // Resolve center in canvas coords from actual layout
     ox=er.left+er.width/2-cr.left;
     oy=er.top+er.height/2-cr.top;
+    // Sync style to actual position so drag starts cleanly
     el.style.left=ox+'px';
     el.style.top=oy+'px';
     el.style.animation='';
+    // Apply current rotation (scale is always 1 for text — size via fontSize)
     var rot=el._rot||0;
     el.style.transform='translate(-50%,-50%) rotate('+rot+'deg)';
     sx=t.clientX; sy=t.clientY;
@@ -6142,9 +6153,11 @@ function _scAttachTextHandlers(el){
     var cr=canvas.getBoundingClientRect();
     var newLeft=ox+(t.clientX-sx);
     var newTop=oy+(t.clientY-sy);
-    // Clamp within canvas
-    newLeft=Math.max(0,Math.min(cr.width,newLeft));
-    newTop=Math.max(0,Math.min(cr.height,newTop));
+    // Clamp center within canvas — keep element fully on screen
+    var elr=el.getBoundingClientRect();
+    var hw=Math.max(elr.width/2,24),hh=Math.max(elr.height/2,24);
+    newLeft=Math.max(hw,Math.min(cr.width-hw,newLeft));
+    newTop=Math.max(hh,Math.min(cr.height-hh,newTop));
     el.style.left=newLeft+'px';
     el.style.top=newTop+'px';
     _scCheckDeleteZone(t,el);
@@ -6169,6 +6182,7 @@ function _scAttachTextHandlers(el){
     window._scAnyDragActive=false;
     var t=e.changedTouches[0];
     if(_moved&&_scCheckDeleteZone(t,el)){
+      // Dragged into trash — delete with shrink animation
       if(_scActiveTextEl===el)_scActiveTextEl=null;
       el.style.transition='transform .18s ease,opacity .18s ease';
       var rot=el._rot||0;
@@ -6176,7 +6190,7 @@ function _scAttachTextHandlers(el){
       el.style.opacity='0';
       setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
     } else if(_moved){
-      // Instant settle — no transition so next touchstart reads correct rect immediately
+      // Settled after drag — restore full opacity, keep selected
       var rot2=el._rot||0;
       el.style.transition='none';
       el.style.transform='translate(-50%,-50%) rotate('+rot2+'deg)';
@@ -6359,10 +6373,7 @@ function _scOpenTextEditor(){
   if(live){
     live.textContent='';
     _scTeApplyStyle(live);
-    // Focus synchronously (inside touch handler chain) so iOS shows keyboard
-    live.focus();
     requestAnimationFrame(function(){
-      if(!live)return;
       live.focus();
       try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}
     });
@@ -6787,12 +6798,20 @@ function _scNearestSnapAngle(a){
       sticker.dataset.pinching='1';sticker.style.animation='';
       _pinching=true;window._scAnyDragActive=true;_haptic(6);
     } else if(textEl){
+      var _tcr=canvas.getBoundingClientRect();var _ter=textEl.getBoundingClientRect();
+      textEl.style.transition='none';
+      textEl.style.left=(_ter.left+_ter.width/2-_tcr.left)+'px';
+      textEl.style.top=(_ter.top+_ter.height/2-_tcr.top)+'px';
       _pinchTarget='text';_pinchEl=textEl;
       _initDist=dist(e.touches);_initAngle=ang(e.touches);
       _initScale=textEl._scale||parseFloat(textEl.style.fontSize)||36;_initRot=textEl._rot||0;
       textEl.contentEditable='false';textEl.classList.remove('editing');_scIsTyping=false;
       _pinching=true;window._scAnyDragActive=true;_haptic(6);
     } else if(_scActiveTextEl){
+      var _tacr=canvas.getBoundingClientRect();var _taer=_scActiveTextEl.getBoundingClientRect();
+      _scActiveTextEl.style.transition='none';
+      _scActiveTextEl.style.left=(_taer.left+_taer.width/2-_tacr.left)+'px';
+      _scActiveTextEl.style.top=(_taer.top+_taer.height/2-_tacr.top)+'px';
       _pinchTarget='text';_pinchEl=_scActiveTextEl;
       _initDist=dist(e.touches);_initAngle=ang(e.touches);
       _initScale=_scActiveTextEl._scale||parseFloat(_scActiveTextEl.style.fontSize)||36;_initRot=_scActiveTextEl._rot||0;
@@ -6828,30 +6847,47 @@ function _scNearestSnapAngle(a){
 
   function _endPinch(){
     if(!_pinching)return;
-    var el=_pinchEl, tgt=_pinchTarget;
-    if(tgt==='sticker'&&el){
-      if(el.dataset.scale)el._curScale=parseFloat(el.dataset.scale);
-      delete el.dataset.pinching;
-      // Restore full visibility in case _scCheckDeleteZone shrunk it
-      var rs=el._curScale||1, rr=el._curRot||0;
-      el.style.transition='none';
-      el.style.opacity='1';
-      el.style.transform='translate(-50%,-50%) scale('+rs+') rotate('+rr+'deg)';
-    } else if(tgt==='text'&&el){
-      var ts=el._scale||36, tr=el._rot||0;
-      el.style.transition='none';
-      el.style.opacity='1';
-      el.style.transform='translate(-50%,-50%) rotate('+tr+'deg)';
-      el.style.fontSize=ts+'px';
+    var savedEl=_pinchEl, savedTarget=_pinchTarget;
+    var _pinchCanvas=_scGetCanvas();
+    if(savedTarget==='sticker'&&savedEl){
+      if(savedEl.dataset.scale)savedEl._curScale=parseFloat(savedEl.dataset.scale);
+      delete savedEl.dataset.pinching;
+      // Always restore full visibility — delete zone may have shrunk it
+      var rs=savedEl._curScale||1,rr=savedEl._curRot||0;
+      savedEl.style.transition='none';
+      savedEl.style.opacity='1';
+      savedEl.style.transform='translate(-50%,-50%) scale('+rs+') rotate('+rr+'deg)';
+      // Sync left/top to actual px so next drag-start reads correct position
+      if(_pinchCanvas){
+        var _pcr=_pinchCanvas.getBoundingClientRect();
+        var _per=savedEl.getBoundingClientRect();
+        savedEl.style.left=(_per.left+_per.width/2-_pcr.left)+'px';
+        savedEl.style.top=(_per.top+_per.height/2-_pcr.top)+'px';
+      }
+    } else if(savedTarget==='text'&&savedEl){
+      // Always restore full visibility after pinch
+      var ts=savedEl._scale||36,tr=savedEl._rot||0;
+      savedEl.style.transition='none';
+      savedEl.style.opacity='1';
+      savedEl.style.transform='translate(-50%,-50%) rotate('+tr+'deg)';
+      savedEl.style.fontSize=ts+'px';
+      // Sync left/top to actual px so next drag-start reads correct position
+      if(_pinchCanvas){
+        var _pcr2=_pinchCanvas.getBoundingClientRect();
+        var _per2=savedEl.getBoundingClientRect();
+        savedEl.style.left=(_per2.left+_per2.width/2-_pcr2.left)+'px';
+        savedEl.style.top=(_per2.top+_per2.height/2-_pcr2.top)+'px';
+      }
     }
-    // Reset delete zone active state
+    // Reset delete zone state so it doesn't stay "active" after pinch
     _scDeleteActive=false;
     var wrap=document.getElementById('sc-dz-icon-wrap');
     var svg=document.getElementById('sc-dz-svg');
     if(wrap)wrap.classList.remove('active');
     if(svg)svg.style.stroke='rgba(255,255,255,.75)';
     _pinching=false;_pinchTarget=null;_pinchEl=null;_lastSnapFired=false;
-    window._scAnyDragActive=false;
+    // Keep drag flag active long enough so element touchend skips delete check
+    setTimeout(function(){window._scAnyDragActive=false;},200);
     setTimeout(_scHideSnapLine,400);
   }
   document.addEventListener('touchend',_endPinch,{passive:true});
@@ -7142,24 +7178,26 @@ function _scPlaceSticker(stickerDef){
 
   el.addEventListener('touchstart',function(e){
     if(e.touches.length!==1){
+      // Multi-touch (pinch) starting — abort drag, reset tap timer
       if(dragging){dragging=false;_scHideDeleteZone();window._scAnyDragActive=false;}
-      _lastTap=0;
+      _lastTap=0; // prevent double-tap delete triggering after pinch
       return;
     }
     if(dragging)return;
-    // Cancel any in-flight CSS transition so getBoundingClientRect returns final position
+    // Cancel any in-progress transition so getBoundingClientRect returns final position
     el.style.transition='none';
     var sc=el._curScale||1;
     var rot=el._curRot||0;
     var t=e.touches[0];
     var cr=canvas.getBoundingClientRect();
     var er=el.getBoundingClientRect();
+    // Resolve center in canvas-relative px from actual layout
     ox=er.left+er.width/2-cr.left;
     oy=er.top+er.height/2-cr.top;
     el.style.left=ox+'px';
     el.style.top=oy+'px';
     el.style.animation='';
-    // Always include rotation so visual position matches internal state
+    // Always preserve rotation in transform
     el.style.transform='translate(-50%,-50%) scale('+sc+') rotate('+rot+'deg)';
     sx=t.clientX;sy=t.clientY;
     dragging=true;_moved=false;
@@ -7176,9 +7214,11 @@ function _scPlaceSticker(stickerDef){
     var cr=canvas.getBoundingClientRect();
     var newLeft=ox+(t.clientX-sx);
     var newTop=oy+(t.clientY-sy);
-    // Clamp within canvas
-    newLeft=Math.max(0,Math.min(cr.width,newLeft));
-    newTop=Math.max(0,Math.min(cr.height,newTop));
+    // Clamp center within canvas — keep element fully on screen
+    var elr=el.getBoundingClientRect();
+    var hw=Math.max(elr.width/2,24),hh=Math.max(elr.height/2,24);
+    newLeft=Math.max(hw,Math.min(cr.width-hw,newLeft));
+    newTop=Math.max(hh,Math.min(cr.height-hh,newTop));
     el.style.left=newLeft+'px';
     el.style.top=newTop+'px';
     _scCheckDeleteZone(t,el);
@@ -7187,6 +7227,7 @@ function _scPlaceSticker(stickerDef){
 
   el.addEventListener('touchend',function(e){
     var now=Date.now();
+    // Double-tap delete
     if(!_moved&&now-_lastTap<320){
       dragging=false;window._scAnyDragActive=false;
       el.style.transition='transform .18s ease,opacity .18s ease';
@@ -7207,7 +7248,6 @@ function _scPlaceSticker(stickerDef){
     } else {
       var sc=el._curScale||1;
       var rot=el._curRot||0;
-      // No transition — instant settle so next touchstart reads correct rect
       el.style.transition='none';
       el.style.opacity='1';
       el.style.transform='translate(-50%,-50%) scale('+sc+') rotate('+rot+'deg)';
