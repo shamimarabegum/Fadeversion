@@ -218,7 +218,6 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sc-vslider-wrap{
   position:absolute;
   left:0;
-  /* starts below safe area, ends above font strip */
   top:0;
   bottom:0;
   width:52px;
@@ -229,27 +228,26 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 }
 #sc-vslider-wrap.on{opacity:1;pointer-events:auto}
 
-/* The visible track — fixed position, does NOT go into toolbar */
+/* Track: thin line, left edge, between status bar and toolbar */
 #sc-vslider-track{
   position:absolute;
   left:16px;
   width:2px;
   top:max(52px, env(safe-area-inset-top));
-  /* stop above font strip + tools + pills (~155px) */
-  bottom:155px;
-  background:rgba(255,255,255,.35);
+  bottom:160px;
+  background:rgba(255,255,255,.32);
   border-radius:2px;
   pointer-events:none;
+  /* thumb is positioned inside THIS element */
 }
 
-/* No fill element needed — track is single color */
 #sc-vslider-fill{ display:none }
 
-/* The dot — slides along the track; JS sets 'top' as % */
+/* Dot inside the track — JS sets top as px from track top */
 #sc-vslider-thumb{
   position:absolute;
   left:50%;
-  top:60%; /* JS overrides this */
+  top:0; /* JS sets this in px */
   transform:translate(-50%, -50%);
   width:21px;height:21px;
   background:#fff;
@@ -1665,15 +1663,10 @@ body {
         left:50%;
         top:50%;
         transform:translate(-50%,-50%);
-        /* never go wider than canvas minus slider */
-        min-width:64px;
+        min-width:60px;
         width:max-content;
-        max-width:78%;
-        /* cap height so it never pushes into toolbar; overflow scrolls */
-        max-height:52vh;
-        overflow-y:auto;
-        overflow-x:hidden;
-        padding:8px 14px;
+        max-width:80%;
+        padding:6px 12px;
         border-radius:10px;
         font-size:40px;
         line-height:1.25;
@@ -6652,12 +6645,12 @@ function _scVSliderUpdate(){
   var track=document.getElementById('sc-vslider-track');
   if(!thumb||!track)return;
   var min=14,max=100;
-  var pct=(_scTeSize-min)/(max-min); // 0=small, 1=big
+  var pct=(_scTeSize-min)/(max-min);
   pct=Math.max(0,Math.min(1,pct));
-  // big text (pct=1) → dot near TOP (top=0%)
-  // small text (pct=0) → dot near BOTTOM (top=100%)
-  var topPct=(1-pct)*100;
-  thumb.style.top=topPct+'%';
+  // pct=1(big)→dot at top(0px), pct=0(small)→dot at bottom(trackH px)
+  var trackH=track.offsetHeight;
+  var dotTop=(1-pct)*trackH;
+  thumb.style.top=dotTop+'px';
 }
 function _scVSliderTouch(e){
   e.preventDefault();e.stopPropagation();
@@ -6665,7 +6658,6 @@ function _scVSliderTouch(e){
   var rect=track.getBoundingClientRect();
   var touch=e.touches[0];
   var y=Math.max(0,Math.min(touch.clientY-rect.top,rect.height));
-  // y=0 → top → pct=1 (big). y=height → bottom → pct=0 (small)
   var pct=1-(y/rect.height);
   pct=Math.max(0,Math.min(1,pct));
   var min=14,max=100;
@@ -6684,13 +6676,39 @@ function _scTeWatchKeyboard(){
   _scTeKbWatching=true;
   function onVV(){
     if(!_scTeOpen)return;
-    var sp=document.getElementById('sc-te-kbspacer');if(!sp)return;
+    var sp=document.getElementById('sc-te-kbspacer');
+    var live=document.getElementById('sc-te-live');
+    var canvas=document.getElementById('sc-canvas');
+    if(!sp||!canvas)return;
     var kbH=Math.max(0,window.innerHeight-window.visualViewport.height);
-    // Only add spacer when keyboard is actually up (>80px)
+    // Add spacer to push toolbar up
     sp.style.height=(kbH>80?kbH:0)+'px';
+    // Reposition live text: center it in space above toolbar
+    if(live){
+      // Available canvas height above keyboard
+      var canvasH=canvas.offsetHeight;
+      // Toolbar approximate height (fonts+tools+pills)
+      var tbH=160+(kbH>80?kbH:0);
+      var availH=canvasH-tbH;
+      // Center text in available space
+      live.style.top=Math.max(20,(availH/2))+'px';
+      live.style.transform='translate(-50%,-50%)';
+      // Constrain max height so text never goes into toolbar
+      live.style.maxHeight=(availH-40)+'px';
+      live.style.overflowY='auto';
+    }
+    // Also update slider track bottom to match
+    var track=document.getElementById('sc-vslider-track');
+    if(track){
+      var tbActual=160+(kbH>80?kbH:0);
+      track.style.bottom=tbActual+'px';
+    }
+    _scVSliderUpdate();
   }
   window.visualViewport.addEventListener('resize',onVV);
   window.visualViewport.addEventListener('scroll',onVV);
+  // Fire once immediately
+  setTimeout(onVV,100);
 }
 
 // ── CANVAS TAP → OPEN EDITOR ─────────────────────────────────────────────────
