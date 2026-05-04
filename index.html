@@ -8378,10 +8378,11 @@ function startSVTmr(){
   clearTimeout(svTmr);svBarDone=0;svPaused=false;svBarStart=Date.now();
   var isOwn=svGroups[svGI]&&(svGroups[svGI].user.id==='demo'||(profile&&svGroups[svGI].user.id===profile.id));
   var f=document.getElementById('svf-'+svII);
-  if(f){f.style.transition='none';f.style.width='0%';requestAnimationFrame(function(){requestAnimationFrame(function(){if(!isOwn){f.style.transition='width 5s linear';f.style.width='100%';}else{f.style.width='100%';}});});}
-  if(!isOwn){svTmr=setTimeout(function(){svBarDone=0;svNext();},5000);}
+  if(f){f.style.transition='none';f.style.width='0%';requestAnimationFrame(function(){requestAnimationFrame(function(){f.style.transition='width 5s linear';f.style.width='100%';});});}
+  svTmr=setTimeout(function(){svBarDone=0;svNext();},5000);
 }
-function svNext(){if(svViewsOpen)return;clearTimeout(svTmr);svBarDone=0;svPaused=false;var g=svGroups[svGI];if(!g)return closeSV();var isOwn=g.user.id==='demo';if(svII<g.items.length-1){svII++;renderSVFrame(true);startSVTmr();}else if(!isOwn){// If opened from talk or chat, close instead of jumping to another user's story
+function svNext(){if(svViewsOpen)return;clearTimeout(svTmr);svBarDone=0;svPaused=false;var g=svGroups[svGI];if(!g)return closeSV();var isOwn=g.user.id==='demo'||(profile&&g.user.id===profile.id);if(svII<g.items.length-1){svII++;renderSVFrame(true);startSVTmr();}else if(isOwn){// Own story last frame -- just close
+closeSV();}else{// If opened from talk or chat, close instead of jumping to another user's story
 if(_svReturnCtx==='talk'||_svReturnCtx==='chat'){closeSV();return;}var nextGI=-1;for(var i=svGI+1;i<svGroups.length;i++){if(svGroups[i].items&&svGroups[i].items.length>0){nextGI=i;break;}}if(nextGI>=0){svGI=nextGI;svII=0;renderSVFrame(true);startSVTmr();}else closeSV();}}
 function svPrev(){if(svViewsOpen)return;clearTimeout(svTmr);svBarDone=0;svPaused=false;if(svII>0){svII--;}else if(svGI>0&&_svReturnCtx!=='talk'&&_svReturnCtx!=='chat'){for(var i=svGI-1;i>=0;i--){if(svGroups[i].items&&svGroups[i].items.length>0){svGI=i;svII=svGroups[svGI].items.length-1;break;}}}renderSVFrame(true);startSVTmr();}
 
