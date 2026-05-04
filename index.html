@@ -7464,9 +7464,10 @@ function scShare(){
     if(!profile)return;
     _sb.from('stories').insert({user_id:profile.id,text:txt||null,img_url:imgUrl||null,bg:scBg,tc:tc,fi:scFI,audience:scAudience,img_filter:filterCss!=='none'?filterCss:null})
       .select('id,created_at').then(function(r){
-        if(r.error){T('Moment added');return;}
-        var row=r.data&&r.data[0];
-        // Swap temp id for real DB id
+        if(r.error){console.error('[Fade] Story insert error:',r.error);T('DB error: '+((r.error&&r.error.message)||'unknown'));return;}
+        var row=r.data&&r.data[0];if(!row)return;
+        // Swap temp id for real DB id, clear from localStorage
+        _clearLocalStory(_tempId);
         var _oi2=getOwnGroupIndex();
         if(_oi2>=0){var _g2=svGroups[_oi2];var _loc2=_g2.items.find(function(s){return s.id===_tempId;});if(_loc2){_loc2.id=row.id;_loc2.ts=row.created_at;_loc2.img=imgUrl||null;}}
         T('Moment added');
@@ -7484,6 +7485,37 @@ function scShare(){
     doInsert(photoUrl);
   }
 }
+function _localStoriesKey(){return profile?'fade_stories_'+profile.id:null;}
+function _saveLocalStories(){
+  try{
+    var k=_localStoriesKey();if(!k)return;
+    var ownIdx=getOwnGroupIndex();
+    var items=ownIdx>=0?svGroups[ownIdx].items:[];
+    // Only persist temp (st...) items -- real DB items reload from Supabase
+    var pending=items.filter(function(s){return s.id.startsWith('st');});
+    // Exclude blob: urls which don't survive reload
+    pending=pending.map(function(s){return Object.assign({},s,{img:s.img&&!s.img.startsWith('blob:')?s.img:null});});
+    localStorage.setItem(k,JSON.stringify(pending));
+  }catch(e){}
+}
+function _loadLocalStories(){
+  try{
+    var k=_localStoriesKey();if(!k)return[];
+    var raw=localStorage.getItem(k);if(!raw)return[];
+    var items=JSON.parse(raw);
+    // Expire anything older than 24h
+    var now=Date.now();
+    return items.filter(function(s){return now-new Date(s.ts).getTime()<86400000;});
+  }catch(e){return[];}
+}
+function _clearLocalStory(id){
+  try{
+    var k=_localStoriesKey();if(!k)return;
+    var raw=localStorage.getItem(k);if(!raw)return;
+    var items=JSON.parse(raw).filter(function(s){return s.id!==id;});
+    localStorage.setItem(k,JSON.stringify(items));
+  }catch(e){}
+}
 function _addStoryLocal(item){
   var ownIdx=getOwnGroupIndex();
   if(ownIdx===-1){
@@ -7497,11 +7529,25 @@ function _addStoryLocal(item){
     svGroups[ownIdx].items.push(item);
   }
   svGroups[ownIdx].seen=false;
+  _saveLocalStories();
   renderStrip();
 }
 // -- LOAD STORIES FROM SUPABASE ------------------------------------------------
 function loadStories(){
   if(!profile)return renderStrip();
+  // Restore any pending local stories from localStorage (survive page reload)
+  var _pendingLocal=_loadLocalStories();
+  if(_pendingLocal.length){
+    var _pi=getOwnGroupIndex();
+    if(_pi===-1){
+      svGroups.unshift({user:{id:'demo',username:profile.username||'you',display_name:profile.display_name||'You',avatar_url:profPhotoUrl||profile.avatar_url||null},items:[],seen:false});
+      _pi=0;
+    }
+    _pendingLocal.forEach(function(s){
+      if(!svGroups[_pi].items.find(function(x){return x.id===s.id;}))svGroups[_pi].items.push(s);
+    });
+    renderStrip();
+  }
   // Step 1: get who the current user follows (for audience filtering)
   var since=new Date(Date.now()-86400000).toISOString();
   _sb.from('follows').select('following_id').eq('follower_id',profile.id).then(function(fRes){
@@ -7511,11 +7557,12 @@ function loadStories(){
       var closeFriendIds=(cfRes.data||[]).map(function(r){return r.friend_id;});
       // Step 2: fetch all recent stories
       _sb.from('stories')
-        .select('id,user_id,text,img_url,bg,tc,fi,audience,created_at,profiles(id,username,display_name,avatar_url)')
+        .select('id,user_id,text,img_url,img_filter,bg,tc,fi,audience,created_at,profiles(id,username,display_name,avatar_url)')
         .gte('created_at',since)
         .order('created_at',{ascending:true})
         .then(function(res){
-          if(res.error||!res.data){renderStrip();return;}
+          if(res.error){console.error('[Fade] loadStories error:',res.error);renderStrip();return;}
+          if(!res.data){renderStrip();return;}
           // Rebuild svGroups preserving own 'demo' group marker
           var ownIdx=getOwnGroupIndex();
           var ownGroup=ownIdx>=0?svGroups[ownIdx]:null;
@@ -7525,18 +7572,19 @@ function loadStories(){
           var ownStories=res.data.filter(function(s){return s.user_id===profile.id;});
           if(ownStories.length>0||localOwnItems.length>0){
             var items=ownStories.map(function(s){return{id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:s.img_filter||null};});
-            localOwnItems.forEach(function(li){if(!items.find(function(i){return i.id===li.id;}))items.push(li);});
+            // Remove pending local items that are now confirmed in DB
+            localOwnItems.forEach(function(li){if(!items.find(function(i){return i.id===li.id;}))items.push(li);else _clearLocalStory(li.id);});
             items.sort(function(a,b){return new Date(a.ts)-new Date(b.ts);});
             svGroups.push({user:{id:'demo',username:profile.username||'you',display_name:profile.display_name||'You',avatar_url:profPhotoUrl||profile.avatar_url||null},items:items,seen:ownGroup?ownGroup.seen:true});
           }
-          // Other users' stories -- filter by audience setting
+          // Other users' stories: show stories from followed users (any audience),
+          // plus stories marked 'everyone'. If following nobody, show all stories.
           var others=res.data.filter(function(s){
             if(s.user_id===profile.id)return false;
             var aud=s.audience||'followers';
             if(aud==='everyone')return true;
-            if(aud==='followers')return followingIds.indexOf(s.user_id)>=0;
-            if(aud==='close_friends')return closeFriendIds.indexOf(s.user_id)>=0;
-            return false;
+            if(followingIds.length===0)return true; // new account sees all
+            return followingIds.indexOf(s.user_id)>=0;
           });
           var groupMap={};var groupOrder=[];
           others.forEach(function(s){
@@ -7549,7 +7597,10 @@ function loadStories(){
             groupMap[uid].items.push({id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:s.img_filter||null});
           });
           groupOrder.forEach(function(uid){svGroups.push(groupMap[uid]);});
-          var _allIds=[];svGroups.forEach(function(g){g.items.forEach(function(s){_allIds.push(s.id);});});
+          // Render immediately -- don't wait for story_views
+          renderStrip();
+          // Only query story_views for real DB UUIDs (not temp st... ids)
+          var _allIds=[];svGroups.forEach(function(g){g.items.forEach(function(s){if(!s.id.startsWith('st'))_allIds.push(s.id);});});
           if(_allIds.length&&profile){
             _sb.from('story_views').select('story_id').eq('user_id',profile.id).in('story_id',_allIds).then(function(vr){
               var _seen={};(vr.data||[]).forEach(function(r){_seen[r.story_id]=true;});
@@ -7559,12 +7610,12 @@ function loadStories(){
               });
               renderStrip();
             });
-          } else {renderStrip();}
+          }
         });
     }).catch(function(){
       // close_friends table may not exist yet -- proceed without it
       _sb.from('stories')
-        .select('id,user_id,text,img_url,bg,tc,fi,audience,created_at,profiles(id,username,display_name,avatar_url)')
+        .select('id,user_id,text,img_url,img_filter,bg,tc,fi,audience,created_at,profiles(id,username,display_name,avatar_url)')
         .gte('created_at',since)
         .order('created_at',{ascending:true})
         .then(function(res){
@@ -7584,8 +7635,8 @@ function loadStories(){
             if(s.user_id===profile.id)return false;
             var aud=s.audience||'followers';
             if(aud==='everyone')return true;
-            if(aud==='followers')return followingIds.indexOf(s.user_id)>=0;
-            return false;
+            if(followingIds.length===0)return true;
+            return followingIds.indexOf(s.user_id)>=0;
           });
           var groupMap={};var groupOrder=[];
           others.forEach(function(s){
@@ -7594,7 +7645,8 @@ function loadStories(){
             groupMap[uid].items.push({id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:s.img_filter||null});
           });
           groupOrder.forEach(function(uid){svGroups.push(groupMap[uid]);});
-          var _allIds2=[];svGroups.forEach(function(g){g.items.forEach(function(s){_allIds2.push(s.id);});});
+          renderStrip();
+          var _allIds2=[];svGroups.forEach(function(g){g.items.forEach(function(s){if(!s.id.startsWith('st'))_allIds2.push(s.id);});});
           if(_allIds2.length&&profile){
             _sb.from('story_views').select('story_id').eq('user_id',profile.id).in('story_id',_allIds2).then(function(vr){
               var _seen2={};(vr.data||[]).forEach(function(r){_seen2[r.story_id]=true;});
@@ -7604,7 +7656,7 @@ function loadStories(){
               });
               renderStrip();
             });
-          } else {renderStrip();}
+          }
         });
     });
   });
