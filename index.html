@@ -335,10 +335,10 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sv-menu-sheet{position:relative;background:var(--card);width:100%;border-radius:22px 22px 0 0;padding-bottom:max(18px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .3s cubic-bezier(.25,.46,.45,.94)}
 #sv-menu-bg.on #sv-menu-sheet{transform:translateY(0)}
 .sv-menu-handle{width:34px;height:3px;background:var(--border);border-radius:2px;margin:12px auto 8px}
-.sv-menu-item{display:flex;align-items:center;gap:16px;padding:15px 22px;cursor:pointer;font-size:15.5px;font-weight:500;transition:background .1s}
+.sv-menu-item{display:flex;align-items:center;gap:16px;padding:16px 22px;cursor:pointer;font-size:15px;font-weight:500;color:var(--text);transition:background .1s}
 .sv-menu-item:active{background:var(--inp-bg)}
 .sv-menu-item.red{color:#E8352A}
-.sv-menu-item svg{flex-shrink:0;opacity:.8}
+.sv-menu-item svg{flex-shrink:0;opacity:.75}
 .sv-menu-item.red svg{opacity:1}
 .sv-menu-sep{height:1px;background:var(--border);margin:0 22px}
 
@@ -348,11 +348,11 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sv-del-dim{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:dimIn .2s ease}
 #sv-del-sheet{position:relative;background:var(--card);width:100%;border-radius:22px 22px 0 0;padding:22px 22px max(28px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94)}
 #sv-del-bg.on #sv-del-sheet{transform:translateY(0)}
-.sv-del-title{font-size:17px;font-weight:700;margin-bottom:6px}
+.sv-del-title{font-size:16px;font-weight:700;margin-bottom:5px;color:var(--text)}
 .sv-del-sub{font-size:14px;color:var(--sub);margin-bottom:22px;line-height:1.5}
-.sv-del-btn-del{width:100%;padding:15px;border-radius:14px;border:none;background:#E8352A;color:#fff;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:10px;transition:opacity .12s}
+.sv-del-btn-del{width:100%;padding:15px;border-radius:14px;border:none;background:#E8352A;color:#fff;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:8px;transition:opacity .12s}
 .sv-del-btn-del:active{opacity:.7}
-.sv-del-btn-cancel{width:100%;padding:15px;border-radius:14px;border:1.5px solid var(--border);background:transparent;color:var(--text);font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s}
+.sv-del-btn-cancel{width:100%;padding:15px;border-radius:14px;border:none;background:var(--inp-bg);color:var(--sub);font-size:15px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s}
 .sv-del-btn-cancel:active{opacity:.6}
 
 /* EDIT STORY SHEET */
@@ -8064,7 +8064,7 @@ function svSaveEdit(){
     _sb.from('stories').update(upd).eq('id',item.id).then(function(){});
   }
   svCloseEdit();
-  renderSVFrame(false);
+  setTimeout(function(){renderSVFrame(false);},250);
   T('Moment updated');
 }
 
