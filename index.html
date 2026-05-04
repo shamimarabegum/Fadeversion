@@ -164,7 +164,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:36px;line-height:1.35;word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;-webkit-user-select:none;user-select:none;width:88%;max-width:88%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px;display:none;left:50%;top:50%;transform:translate(-50%,-50%);margin-left:0;will-change:transform;cursor:default}
 #sc-text-ov.active{display:block}
 /* Top-right panel */
-#sc-top{position:absolute;top:0;left:0;right:0;z-index:26;display:flex;align-items:flex-start;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 14px 0}
+#sc-top{position:absolute;top:0;left:0;right:0;z-index:26;display:flex;align-items:flex-start;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 14px 0;pointer-events:none}
 .sc-tbtn{background:rgba(0,0,0,.5);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.14)}
 #sc-right-panel{display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:2px}
 .sc-rpbtn{background:none;border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:transform .15s,opacity .15s;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
@@ -1686,10 +1686,8 @@ body {
     </div>
   </div>
   <div id="sc-top">
-    <button class="sc-tbtn" onclick="closeCreator()" title="Close" style="margin-top:max(0px,env(safe-area-inset-top))">
-      <svg width="16" height="16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-    <div id="sc-right-panel">
+    <div style="pointer-events:auto;margin-top:max(0px,env(safe-area-inset-top))"><!-- close btn removed --></div>
+    <div id="sc-right-panel" style="pointer-events:auto">
       <button class="sc-rpbtn" id="sc-addtext-btn" onclick="_scOpenTextEditor()" title="Add text">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><text x="12" y="18" text-anchor="middle" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#fff">A</text></svg>
       </button>
@@ -6149,13 +6147,13 @@ function _scAttachTextHandlers(el){
   el.addEventListener('touchmove',function(e){
     if(!dragging||e.touches.length!==1)return;
     var t=e.touches[0];
-    // Only count as a real move if finger moved more than 6px — prevents iOS tap-wobble
+    // 6px threshold — prevents iOS tap wobble from counting as a drag
     if(!_moved&&Math.abs(t.clientX-sx)<6&&Math.abs(t.clientY-sy)<6)return;
     _moved=true;
     var cr=canvas.getBoundingClientRect();
     var newLeft=ox+(t.clientX-sx);
     var newTop=oy+(t.clientY-sy);
-    // Clamp: keep element center fully within canvas with half-size margin
+    // Clamp: keep element fully within canvas
     var elr=el.getBoundingClientRect();
     var hw=Math.max(elr.width/2,24),hh=Math.max(elr.height/2,24);
     newLeft=Math.max(hw,Math.min(cr.width-hw,newLeft));
@@ -6800,18 +6798,16 @@ function _scNearestSnapAngle(a){
       sticker.dataset.pinching='1';sticker.style.animation='';
       _pinching=true;window._scAnyDragActive=true;_haptic(6);
     } else if(textEl){
-      // Sync left/top to px before pinch so position is accurate
-      var _tcr=canvas.getBoundingClientRect();var _ter=textEl.getBoundingClientRect();
-      textEl.style.transition='none';textEl.style.left=(_ter.left+_ter.width/2-_tcr.left)+'px';textEl.style.top=(_ter.top+_ter.height/2-_tcr.top)+'px';
+      var _tc=canvas.getBoundingClientRect();var _te=textEl.getBoundingClientRect();
+      textEl.style.transition='none';textEl.style.left=(_te.left+_te.width/2-_tc.left)+'px';textEl.style.top=(_te.top+_te.height/2-_tc.top)+'px';
       _pinchTarget='text';_pinchEl=textEl;
       _initDist=dist(e.touches);_initAngle=ang(e.touches);
       _initScale=textEl._scale||parseFloat(textEl.style.fontSize)||36;_initRot=textEl._rot||0;
       textEl.contentEditable='false';textEl.classList.remove('editing');_scIsTyping=false;
       _pinching=true;window._scAnyDragActive=true;_haptic(6);
     } else if(_scActiveTextEl){
-      // Sync left/top to px before pinch so position is accurate
-      var _tacr=canvas.getBoundingClientRect();var _taer=_scActiveTextEl.getBoundingClientRect();
-      _scActiveTextEl.style.transition='none';_scActiveTextEl.style.left=(_taer.left+_taer.width/2-_tacr.left)+'px';_scActiveTextEl.style.top=(_taer.top+_taer.height/2-_tacr.top)+'px';
+      var _tc2=canvas.getBoundingClientRect();var _te2=_scActiveTextEl.getBoundingClientRect();
+      _scActiveTextEl.style.transition='none';_scActiveTextEl.style.left=(_te2.left+_te2.width/2-_tc2.left)+'px';_scActiveTextEl.style.top=(_te2.top+_te2.height/2-_tc2.top)+'px';
       _pinchTarget='text';_pinchEl=_scActiveTextEl;
       _initDist=dist(e.touches);_initAngle=ang(e.touches);
       _initScale=_scActiveTextEl._scale||parseFloat(_scActiveTextEl.style.fontSize)||36;_initRot=_scActiveTextEl._rot||0;
@@ -6848,7 +6844,7 @@ function _scNearestSnapAngle(a){
   function _endPinch(){
     if(!_pinching)return;
     var savedEl=_pinchEl, savedTarget=_pinchTarget;
-    var _pCanvas=_scGetCanvas();
+    var _pCv=_scGetCanvas();
     if(savedTarget==='sticker'&&savedEl){
       if(savedEl.dataset.scale)savedEl._curScale=parseFloat(savedEl.dataset.scale);
       delete savedEl.dataset.pinching;
@@ -6856,16 +6852,16 @@ function _scNearestSnapAngle(a){
       savedEl.style.transition='none';
       savedEl.style.opacity='1';
       savedEl.style.transform='translate(-50%,-50%) scale('+rs+') rotate('+rr+'deg)';
-      // Sync left/top to actual px so next drag-start reads correct position
-      if(_pCanvas){var _pcr=_pCanvas.getBoundingClientRect();var _per=savedEl.getBoundingClientRect();savedEl.style.left=(_per.left+_per.width/2-_pcr.left)+'px';savedEl.style.top=(_per.top+_per.height/2-_pcr.top)+'px';}
+      // Sync left/top to px so next drag reads correct position
+      if(_pCv){var _pc=_pCv.getBoundingClientRect();var _pe=savedEl.getBoundingClientRect();savedEl.style.left=(_pe.left+_pe.width/2-_pc.left)+'px';savedEl.style.top=(_pe.top+_pe.height/2-_pc.top)+'px';}
     } else if(savedTarget==='text'&&savedEl){
       var ts=savedEl._scale||36,tr=savedEl._rot||0;
       savedEl.style.transition='none';
       savedEl.style.opacity='1';
       savedEl.style.transform='translate(-50%,-50%) rotate('+tr+'deg)';
       savedEl.style.fontSize=ts+'px';
-      // Sync left/top to actual px so next drag-start reads correct position
-      if(_pCanvas){var _pcr2=_pCanvas.getBoundingClientRect();var _per2=savedEl.getBoundingClientRect();savedEl.style.left=(_per2.left+_per2.width/2-_pcr2.left)+'px';savedEl.style.top=(_per2.top+_per2.height/2-_pcr2.top)+'px';}
+      // Sync left/top to px so next drag reads correct position
+      if(_pCv){var _pc2=_pCv.getBoundingClientRect();var _pe2=savedEl.getBoundingClientRect();savedEl.style.left=(_pe2.left+_pe2.width/2-_pc2.left)+'px';savedEl.style.top=(_pe2.top+_pe2.height/2-_pc2.top)+'px';}
     }
     // Reset delete zone state so it doesn't stay "active" after pinch
     _scDeleteActive=false;
@@ -7198,13 +7194,13 @@ function _scPlaceSticker(stickerDef){
   el.addEventListener('touchmove',function(e){
     if(!dragging||e.touches.length!==1)return;
     var t=e.touches[0];
-    // Only count as a real move if finger moved more than 6px — prevents iOS tap-wobble
+    // 6px threshold — prevents iOS tap wobble from counting as a drag
     if(!_moved&&Math.abs(t.clientX-sx)<6&&Math.abs(t.clientY-sy)<6)return;
     _moved=true;
     var cr=canvas.getBoundingClientRect();
     var newLeft=ox+(t.clientX-sx);
     var newTop=oy+(t.clientY-sy);
-    // Clamp: keep element center fully within canvas with half-size margin
+    // Clamp: keep element fully within canvas
     var elr=el.getBoundingClientRect();
     var hw=Math.max(elr.width/2,24),hh=Math.max(elr.height/2,24);
     newLeft=Math.max(hw,Math.min(cr.width-hw,newLeft));
