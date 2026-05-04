@@ -6849,7 +6849,7 @@ function _scNearestSnapAngle(a){
     var d=dist(e.touches),a=ang(e.touches);
     var ratio=d/Math.max(_initDist,30),dAngle=a-_initAngle;
     if(_pinchTarget==='sticker'&&_pinchEl){
-      var newScale=Math.min(3,Math.max(0.3,_initScale*ratio));
+      var newScale=Math.min(6,Math.max(0.15,_initScale*ratio));
       var newRot=_initRot+dAngle;
       _pinchEl._curScale=newScale;_pinchEl._curRot=newRot;
       _pinchEl.dataset.scale=String(newScale);
