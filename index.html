@@ -4897,8 +4897,11 @@ function pickCI(e){
   var existing=cFiles.map(function(cf){var f=cf.file||cf;return f.name+'|'+f.size;});
   var newFiles=files.filter(function(f){return existing.indexOf(f.name+'|'+f.size)<0;});
   if(!newFiles.length){T('Already selected');return;}
+  var startIdx=cFiles.length; // index of first newly added photo
   newFiles.slice(0,remaining).forEach(function(f){cFiles.push({file:f,filter:'none'});});
   renderPhotoTray();
+  // Auto-open editor so user can filter/crop before returning to compose
+  _openDropPhotoViewer(startIdx);
 }
 function rmCI(idx){
   cFiles.splice(idx,1);
