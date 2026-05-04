@@ -1710,16 +1710,17 @@ body {
 </div>
 
 <!-- STORY CREATOR DISCARD DIALOG -->
-<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:flex-end;justify-content:center">
-  <div id="sc-discard-dim" style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="scKeepEditing()"></div>
-  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;width:calc(100% - 32px);max-width:380px;margin-bottom:max(28px,env(safe-area-inset-bottom));border-radius:18px;overflow:hidden;transform:translateY(20px) scale(.97);opacity:0;transition:transform .22s cubic-bezier(.34,1.3,.64,1),opacity .18s ease">
-    <div style="background:rgba(28,28,30,.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:20px 20px 6px;text-align:center">
-      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px">Discard moment?</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.4);line-height:1.4">Your edits won't be saved.</div>
+<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;padding:24px">
+  <div id="sc-discard-dim" style="position:absolute;inset:0;background:rgba(0,0,0,.45)" onclick="scKeepEditing()"></div>
+  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;width:calc(100% - 48px);max-width:300px;background:var(--card);border-radius:18px;overflow:hidden;transform:scale(.95);opacity:0;transition:transform .22s cubic-bezier(.34,1.3,.64,1),opacity .18s ease">
+    <div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center">
+      <div style="font-size:16px;font-weight:700;color:var(--text);text-align:center">Discard moment?</div>
+      <div style="font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55">Your edits won't be saved.</div>
     </div>
-    <div style="background:rgba(28,28,30,.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);display:flex;margin-top:1px">
-      <button onclick="scKeepEditing()" style="flex:1;padding:16px 0;border:none;background:none;color:rgba(255,255,255,.75);font-size:15px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border-right:1px solid rgba(255,255,255,.08)">Keep</button>
-      <button onclick="scConfirmDiscard()" style="flex:1;padding:16px 0;border:none;background:none;color:#FF453A;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer">Discard</button>
+    <div style="height:1px;background:var(--border)"></div>
+    <div style="display:flex">
+      <button onclick="scKeepEditing()" style="flex:1;padding:15px;border:none;border-right:1px solid var(--border);background:none;color:var(--text);font-size:15px;font-weight:400;font-family:'Inter',sans-serif;cursor:pointer">Keep</button>
+      <button onclick="scConfirmDiscard()" style="flex:1;padding:15px;border:none;background:none;color:#E8352A;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer">Discard</button>
     </div>
   </div>
 </div>
@@ -4935,6 +4936,7 @@ function renderPhotoTray(){
     // Tap thumbnail -> open full-screen photo viewer with nav
     (function(idx2){
       img.addEventListener('click',function(e){e.stopPropagation();_openDropPhotoViewer(idx2);});
+      img.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();_openDropPhotoViewer(idx2);},{passive:false});
     })(i);
     // Edit icon bottom-left -- screenshot 5 style pencil icon
     var editIco=document.createElement('div');
@@ -5837,13 +5839,13 @@ function _scShowDiscardDialog(){
   bg.style.display='flex';
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     var sheet=document.getElementById('sc-discard-sheet');
-    if(sheet){sheet.style.transform='translateY(0) scale(1)';sheet.style.opacity='1';}
+    if(sheet){sheet.style.transform='scale(1)';sheet.style.opacity='1';}
     history.pushState({_fade:'sc-discard'},'');
   });});
 }
 function _scHideDiscardDialog(){
   var sheet=document.getElementById('sc-discard-sheet');
-  if(sheet){sheet.style.transform='translateY(10px) scale(.97)';sheet.style.opacity='0';}
+  if(sheet){sheet.style.transform='scale(.95)';sheet.style.opacity='0';}
   setTimeout(function(){
     var bg=document.getElementById('sc-discard-bg');
     if(bg) bg.style.display='none';
