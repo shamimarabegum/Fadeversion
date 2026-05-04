@@ -7462,7 +7462,7 @@ function scShare(){
       if(_oi>=0){var _g=svGroups[_oi];var _loc=_g.items.find(function(s){return s.id===_tempId;});if(_loc){_loc.img=imgUrl;renderStrip();}}
     }
     if(!profile)return;
-    _sb.from('stories').insert({user_id:profile.id,text:txt||null,img_url:imgUrl||null,bg:scBg,tc:tc,fi:scFI,audience:scAudience,img_filter:filterCss!=='none'?filterCss:null})
+    _sb.from('stories').insert({user_id:profile.id,text:txt||null,img_url:imgUrl||null,bg:scBg,tc:tc,fi:scFI,audience:scAudience})
       .select('id,created_at').then(function(r){
         if(r.error){console.error('[Fade] Story insert error:',r.error);T('DB error: '+((r.error&&r.error.message)||'unknown'));return;}
         var row=r.data&&r.data[0];if(!row)return;
@@ -7557,7 +7557,7 @@ function loadStories(){
       var closeFriendIds=(cfRes.data||[]).map(function(r){return r.friend_id;});
       // Step 2: fetch all recent stories
       _sb.from('stories')
-        .select('id,user_id,text,img_url,img_filter,bg,tc,fi,audience,created_at,profiles(id,username,display_name,avatar_url)')
+        .select('id,user_id,text,img_url,bg,tc,fi,audience,created_at,profiles(id,username,display_name,avatar_url)')
         .gte('created_at',since)
         .order('created_at',{ascending:true})
         .then(function(res){
@@ -7571,7 +7571,7 @@ function loadStories(){
           // Own stories -- always visible to self
           var ownStories=res.data.filter(function(s){return s.user_id===profile.id;});
           if(ownStories.length>0||localOwnItems.length>0){
-            var items=ownStories.map(function(s){return{id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:s.img_filter||null};});
+            var items=ownStories.map(function(s){return{id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:null};});
             // Remove pending local items that are now confirmed in DB
             localOwnItems.forEach(function(li){if(!items.find(function(i){return i.id===li.id;}))items.push(li);else _clearLocalStory(li.id);});
             items.sort(function(a,b){return new Date(a.ts)-new Date(b.ts);});
@@ -7594,7 +7594,7 @@ function loadStories(){
               groupMap[uid]={user:{id:u.id,username:u.username||'',display_name:u.display_name||u.username||'User',avatar_url:u.avatar_url||null},items:[],seen:false};
               groupOrder.push(uid);
             }
-            groupMap[uid].items.push({id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:s.img_filter||null});
+            groupMap[uid].items.push({id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:null});
           });
           groupOrder.forEach(function(uid){svGroups.push(groupMap[uid]);});
           // Render immediately -- don't wait for story_views
@@ -7615,7 +7615,7 @@ function loadStories(){
     }).catch(function(){
       // close_friends table may not exist yet -- proceed without it
       _sb.from('stories')
-        .select('id,user_id,text,img_url,img_filter,bg,tc,fi,audience,created_at,profiles(id,username,display_name,avatar_url)')
+        .select('id,user_id,text,img_url,bg,tc,fi,audience,created_at,profiles(id,username,display_name,avatar_url)')
         .gte('created_at',since)
         .order('created_at',{ascending:true})
         .then(function(res){
@@ -7626,7 +7626,7 @@ function loadStories(){
           svGroups=[];
           var ownStories=res.data.filter(function(s){return s.user_id===profile.id;});
           if(ownStories.length>0||localOwnItems.length>0){
-            var items=ownStories.map(function(s){return{id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:s.img_filter||null};});
+            var items=ownStories.map(function(s){return{id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:null};});
             localOwnItems.forEach(function(li){if(!items.find(function(i){return i.id===li.id;}))items.push(li);});
             items.sort(function(a,b){return new Date(a.ts)-new Date(b.ts);});
             svGroups.push({user:{id:'demo',username:profile.username||'you',display_name:profile.display_name||'You',avatar_url:profPhotoUrl||profile.avatar_url||null},items:items,seen:ownGroup?ownGroup.seen:true});
@@ -7642,7 +7642,7 @@ function loadStories(){
           others.forEach(function(s){
             var uid=s.user_id;
             if(!groupMap[uid]){var u=s.profiles||{id:uid,username:'user',display_name:'User',avatar_url:null};groupMap[uid]={user:{id:u.id,username:u.username||'',display_name:u.display_name||u.username||'User',avatar_url:u.avatar_url||null},items:[],seen:false};groupOrder.push(uid);}
-            groupMap[uid].items.push({id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:s.img_filter||null});
+            groupMap[uid].items.push({id:s.id,text:s.text||'',img:s.img_url||null,ts:s.created_at,bg:s.bg||'#2C2C2C',tc:s.tc||'#fff',fi:s.fi||1,audience:s.audience||'followers',imgFilter:null});
           });
           groupOrder.forEach(function(uid){svGroups.push(groupMap[uid]);});
           renderStrip();
