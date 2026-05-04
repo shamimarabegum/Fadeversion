@@ -158,7 +158,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 /* STORY CREATOR */
 #story-creator{display:none;position:fixed;inset:0;z-index:400;flex-direction:column;background:#000;opacity:0;transition:opacity .25s ease}
 #story-creator.on{display:flex}
-#sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#1A0A2E;transition:background .2s ease}
+#sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#1C1C1E;transition:background .2s ease}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 #sc-canvas-img.on{display:block}
 #sc-text-ov{position:absolute;z-index:10;text-align:center;font-size:36px;line-height:1.35;word-break:break-word;overflow-wrap:break-word;white-space:pre-wrap;-webkit-user-select:none;user-select:none;width:88%;max-width:88%;touch-action:none;padding:6px 12px;border-radius:10px;min-width:48px;display:none;left:50%;top:50%;transform:translate(-50%,-50%);margin-left:0;will-change:transform;cursor:default}
@@ -166,12 +166,12 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 /* Top-right panel */
 #sc-top{position:absolute;top:0;left:0;right:0;z-index:26;display:flex;align-items:flex-start;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 14px 0}
 .sc-tbtn{background:rgba(0,0,0,.5);border:none;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.14)}
-#sc-right-panel{display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:2px}
-.sc-rpbtn{background:rgba(0,0,0,.45);border:none;border-radius:50%;width:46px;height:46px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .15s,opacity .15s;flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.3)}
-.sc-rpbtn:active{transform:scale(.88);opacity:.7}
+#sc-right-panel{display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:2px}
+.sc-rpbtn{background:none;border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:transform .15s,opacity .15s;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+.sc-rpbtn:active{transform:scale(.82);opacity:.6}
 /* Single cycling color dot */
-#sc-color-cycle{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.3);transition:background .18s,transform .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;display:block;background:#1C1C1E}
-#sc-color-cycle:active{transform:scale(.88)}
+#sc-color-cycle{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,.88);box-shadow:0 1px 4px rgba(0,0,0,.4),inset 0 0 0 1px rgba(0,0,0,.15);transition:background .18s,transform .15s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;display:block;background:#1A0A2E;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+#sc-color-cycle:active{transform:scale(.82)}
 #sc-bg-cycle{display:none}
 #sc-bar{position:absolute;bottom:0;left:0;right:0;z-index:20;padding:10px 16px max(22px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;background:linear-gradient(transparent,rgba(0,0,0,.68))}
 .sc-fonts{display:none;flex-direction:row;gap:8px;overflow-x:auto}
@@ -1694,7 +1694,16 @@ body {
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><text x="12" y="18" text-anchor="middle" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#fff">A</text></svg>
       </button>
       <button class="sc-rpbtn" id="sc-sticker-btn" onclick="scOpenStickers()" title="Stickers">
-        <svg width="23" height="23" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="#fff" stroke-width="1.8"/><circle cx="9.2" cy="10.5" r="1.1" fill="#fff"/><circle cx="14.8" cy="10.5" r="1.1" fill="#fff"/><path d="M8.5 14.5c1 1.8 6 1.8 7 0" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/><path d="M16 4.5C17.5 3 20 3.5 20.5 6" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Sticker shape: rounded square with peeling corner -->
+          <path d="M14 3H7C4.8 3 3 4.8 3 7v10c0 2.2 1.8 4 4 4h6.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Peeling flap -->
+          <path d="M14 21l7-7" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M14 21V14h7" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 14H14V21" fill="rgba(255,255,255,0.18)" stroke="none"/>
+          <!-- Star on sticker face -->
+          <path d="M10 7.5l.9 2.7h2.8l-2.3 1.7.9 2.7L10 12.9l-2.3 1.7.9-2.7L6.3 10.2h2.8z" fill="#fff"/>
+        </svg>
       </button>
       <div id="sc-color-cycle" onclick="scCycleColor()" onmousedown="event.preventDefault()" ontouchstart="_scDotTouch(event)" title="Color"></div>
     </div>
@@ -2307,7 +2316,7 @@ function setupRealtime(){
     .subscribe();
 }
 var S={pushNotifs:true,talkNotifs:true,private:false,hideLikes:false,cmtPerm:'everyone',storyAudience:'followers',activityVisible:'followers'};
-var scBg='#1A0A2E',scFontOpen=false,scFI=0,scAudience='followers';
+var scBg='#1C1C1E',scFontOpen=false,scFI=0,scAudience='followers';
 var scheduled=[],_schedListEl=null,_schedEditIdx=-1,_schedImgUrl=null;
 var soStack=[];
 var _profUser=null;
@@ -5842,7 +5851,7 @@ var _scColorIdx=0,_scBgIdx=0;
 // Text colors
 var SC_TEXT_COLORS=['#FFFFFF','#000000','#FFFC00','#FF3B30','#FF9500','#34C759','#007AFF','#AF52DE','#FF2D55','#5AC8FA'];
 // Background colors (text-only post)
-var SC_BG_COLORS=['#1A0A2E','#2D1B69','#0F172A','#1C1C1E','#FFFC00','#FF3B30','#FF9500','#34C759','#007AFF','#AF52DE','#FF2D55','#5856D6','#FFFFFF'];
+var SC_BG_COLORS=['#1C1C1E','#FFFC00','#FF3B30','#FF9500','#34C759','#007AFF','#AF52DE','#FF2D55','#5856D6','#FFFFFF'];
 function _scInitColorCycle(){
   _scColorIdx=0;_scBgIdx=0;
   // Don't touch display here -- _scUpdateCircles handles that
@@ -6099,7 +6108,6 @@ function _scAttachTextHandlers(el){
         live.style.fontSize=size+'px';
         _scVSliderUpdate();
         _scTeUpdateColorDot();
-        live.focus();
         try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}
       }
     });
@@ -6113,6 +6121,8 @@ function _scAttachTextHandlers(el){
       return;
     }
     if(dragging)return;
+    // Cancel any in-progress transition so getBoundingClientRect is accurate
+    el.style.transition='none';
     var t=e.touches[0];
     var cr=canvas.getBoundingClientRect();
     var er=el.getBoundingClientRect();
@@ -6156,17 +6166,18 @@ function _scAttachTextHandlers(el){
     var now=Date.now();
     // Double-tap delete
     if(!_moved&&now-_lastTap<320){
+      dragging=false;window._scAnyDragActive=false;
       el.style.transition='transform .18s ease,opacity .18s ease';
       var rot=el._rot||0;
       el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale(0)';
       el.style.opacity='0';
       setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
-      _scHideDeleteZone(); dragging=false; window._scAnyDragActive=false; return;
+      _scHideDeleteZone(); return;
     }
     _lastTap=now;
     if(!dragging){_moved=false;return;}
     dragging=false;
-    setTimeout(function(){window._scAnyDragActive=false;},80);
+    window._scAnyDragActive=false;
     var t=e.changedTouches[0];
     if(_moved&&_scCheckDeleteZone(t,el)){
       // Dragged into trash — delete with shrink animation
@@ -6177,12 +6188,11 @@ function _scAttachTextHandlers(el){
       el.style.opacity='0';
       setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
     } else if(_moved){
-      // Settled after drag — restore transform, keep selected
+      // Settled after drag — restore full opacity, keep selected
       var rot2=el._rot||0;
-      el.style.transition='transform .12s ease';
+      el.style.transition='none';
       el.style.transform='translate(-50%,-50%) rotate('+rot2+'deg)';
       el.style.opacity='1';
-      setTimeout(function(){el.style.transition='';},150);
       _scActiveTextEl=el;
       el.classList.add('selected');
     } else {
@@ -6361,10 +6371,7 @@ function _scOpenTextEditor(){
   if(live){
     live.textContent='';
     _scTeApplyStyle(live);
-    // Focus immediately (required for iOS keyboard to open from touch handler)
-    live.focus();
     requestAnimationFrame(function(){
-      if(!live)return;
       live.focus();
       try{var r=document.createRange();var s=window.getSelection();r.selectNodeContents(live);r.collapse(false);s.removeAllRanges();s.addRange(r);}catch(e_){}
     });
@@ -6830,30 +6837,29 @@ function _scNearestSnapAngle(a){
 
   function _endPinch(){
     if(!_pinching)return;
-    if(_pinchTarget==='sticker'&&_pinchEl){
-      if(_pinchEl.dataset.scale)_pinchEl._curScale=parseFloat(_pinchEl.dataset.scale);
-      delete _pinchEl.dataset.pinching;
-      // Restore full opacity/scale in case delete-zone shrink was applied mid-pinch
-      var rs=_pinchEl._curScale||1,rr=_pinchEl._curRot||0;
-      _pinchEl.style.transition='transform .2s cubic-bezier(.34,1.2,.64,1),opacity .15s';
-      _pinchEl.style.opacity='1';
-      _pinchEl.style.transform='translate(-50%,-50%) scale('+rs+') rotate('+rr+'deg)';
-      setTimeout(function(){if(_pinchEl)_pinchEl.style.transition='';},220);
-    } else if(_pinchTarget==='text'&&_pinchEl){
-      // Restore full opacity/scale in case delete-zone shrink was applied mid-pinch
-      var ts=_pinchEl._scale||36,tr=_pinchEl._rot||0;
-      _pinchEl.style.transition='transform .2s cubic-bezier(.34,1.2,.64,1),opacity .15s';
-      _pinchEl.style.opacity='1';
-      _pinchEl.style.transform='translate(-50%,-50%) rotate('+tr+'deg)';
-      _pinchEl.style.fontSize=ts+'px';
-      setTimeout(function(){if(_pinchEl)_pinchEl.style.transition='';},220);
+    var savedEl=_pinchEl, savedTarget=_pinchTarget;
+    if(savedTarget==='sticker'&&savedEl){
+      if(savedEl.dataset.scale)savedEl._curScale=parseFloat(savedEl.dataset.scale);
+      delete savedEl.dataset.pinching;
+      // Always restore full visibility — delete zone may have shrunk it
+      var rs=savedEl._curScale||1,rr=savedEl._curRot||0;
+      savedEl.style.transition='none';
+      savedEl.style.opacity='1';
+      savedEl.style.transform='translate(-50%,-50%) scale('+rs+') rotate('+rr+'deg)';
+    } else if(savedTarget==='text'&&savedEl){
+      // Always restore full visibility after pinch
+      var ts=savedEl._scale||36,tr=savedEl._rot||0;
+      savedEl.style.transition='none';
+      savedEl.style.opacity='1';
+      savedEl.style.transform='translate(-50%,-50%) rotate('+tr+'deg)';
+      savedEl.style.fontSize=ts+'px';
     }
-    // Reset delete zone state
+    // Reset delete zone state so it doesn't stay "active" after pinch
     _scDeleteActive=false;
     var wrap=document.getElementById('sc-dz-icon-wrap');
     var svg=document.getElementById('sc-dz-svg');
-    if(wrap){wrap.classList.remove('active');}
-    if(svg){svg.style.stroke='rgba(255,255,255,.75)';}
+    if(wrap)wrap.classList.remove('active');
+    if(svg)svg.style.stroke='rgba(255,255,255,.75)';
     _pinching=false;_pinchTarget=null;_pinchEl=null;_lastSnapFired=false;
     // Keep drag flag active long enough so element touchend skips delete check
     setTimeout(function(){window._scAnyDragActive=false;},200);
@@ -7153,18 +7159,21 @@ function _scPlaceSticker(stickerDef){
       return;
     }
     if(dragging)return;
-    // Always read from el._curScale — the pinch handler writes here
+    // Cancel any in-progress transition so getBoundingClientRect returns final position
+    el.style.transition='none';
     var sc=el._curScale||1;
+    var rot=el._curRot||0;
     var t=e.touches[0];
     var cr=canvas.getBoundingClientRect();
     var er=el.getBoundingClientRect();
-    // Resolve center in canvas-relative px from actual layout (not style strings)
+    // Resolve center in canvas-relative px from actual layout
     ox=er.left+er.width/2-cr.left;
     oy=er.top+er.height/2-cr.top;
     el.style.left=ox+'px';
     el.style.top=oy+'px';
     el.style.animation='';
-    el.style.transform='translate(-50%,-50%) scale('+sc+')';
+    // Always preserve rotation in transform
+    el.style.transform='translate(-50%,-50%) scale('+sc+') rotate('+rot+'deg)';
     sx=t.clientX;sy=t.clientY;
     dragging=true;_moved=false;
     window._scAnyDragActive=true;
@@ -7193,15 +7202,16 @@ function _scPlaceSticker(stickerDef){
     var now=Date.now();
     // Double-tap delete
     if(!_moved&&now-_lastTap<320){
+      dragging=false;window._scAnyDragActive=false;
       el.style.transition='transform .18s ease,opacity .18s ease';
       el.style.transform='translate(-50%,-50%) scale(0)';el.style.opacity='0';
       setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},200);
-      _scHideDeleteZone();dragging=false;window._scAnyDragActive=false;return;
+      _scHideDeleteZone();return;
     }
     _lastTap=now;
     if(!dragging){_moved=false;return;}
     dragging=false;
-    setTimeout(function(){window._scAnyDragActive=false;},80);
+    window._scAnyDragActive=false;
     var t=e.changedTouches[0];
     if(_moved&&_scCheckDeleteZone(t,el)){
       el.style.transition='transform .18s ease,opacity .18s ease';
@@ -7211,9 +7221,9 @@ function _scPlaceSticker(stickerDef){
     } else {
       var sc=el._curScale||1;
       var rot=el._curRot||0;
-      el.style.transition='transform .12s ease';
+      el.style.transition='none';
+      el.style.opacity='1';
       el.style.transform='translate(-50%,-50%) scale('+sc+') rotate('+rot+'deg)';
-      setTimeout(function(){el.style.transition='';},150);
     }
     _scHideDeleteZone();
     _moved=false;
