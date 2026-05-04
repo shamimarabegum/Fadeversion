@@ -6106,8 +6106,9 @@ function _scAttachTextHandlers(el){
 
   el.addEventListener('touchstart',function(e){
     if(e.touches.length!==1){
-      // Multi-touch starting — abort drag cleanly
+      // Multi-touch starting — abort drag, reset tap timer to prevent double-tap delete after pinch
       if(dragging){dragging=false;_scHideDeleteZone();window._scAnyDragActive=false;}
+      _lastTap=0;
       return;
     }
     if(dragging)return;
@@ -6712,21 +6713,25 @@ function _scTeWatchKeyboard(){
       var cr=document.getElementById('story-creator');
       if(!cr||cr.style.display==='none')return;
       if(_scTeOpen)return;
-      if(_scActiveTextEl)return;
-      // Don't open if any element drag just ended
       if(window._scAnyDragActive)return;
       // Ignore taps on any overlay/toolbar/sticker/text
-      var t=e.target;
-      if(t.closest&&(
-        t.closest('#sc-top')||
-        t.closest('#sc-bar')||
-        t.closest('._sc-te')||
-        t.closest('._sc-sticker')||
-        t.closest('#sc-text-editor')||
-        t.closest('#sc-sticker-sheet')||
-        t.closest('#sc-delete-zone')||
-        t.closest('#sc-filter-strip')
+      var tgt=e.target;
+      if(tgt.closest&&(
+        tgt.closest('#sc-top')||
+        tgt.closest('#sc-bar')||
+        tgt.closest('._sc-te')||
+        tgt.closest('._sc-sticker')||
+        tgt.closest('#sc-text-editor')||
+        tgt.closest('#sc-sticker-sheet')||
+        tgt.closest('#sc-delete-zone')||
+        tgt.closest('#sc-filter-strip')
       ))return;
+      // If a text element is selected, deselect it — don't open editor
+      if(_scActiveTextEl){
+        _scActiveTextEl.classList.remove('selected','editing');
+        _scActiveTextEl=null;
+        return;
+      }
       e.preventDefault();
       _scOpenTextEditor();
     },{passive:false});
@@ -6745,7 +6750,7 @@ function _scNearestSnapAngle(a){
 
 (function(){
   var _pinching=false,_initDist=0,_initScale=1,_initAngle=0,_initRot=0,_pinchTarget=null;
-  var _pinchEl=null; // sticker element or null for text
+  var _pinchEl=null;
   var _haptic=function(ms){try{if(navigator.vibrate)navigator.vibrate(ms||8);}catch(e_){}};
   var _lastSnapFired=false;
 
@@ -6754,14 +6759,8 @@ function _scNearestSnapAngle(a){
 
   function _applySnapLine(rot){
     var s=_scNearestSnapAngle(rot);
-    if(s.dist<5){
-      _scShowSnapLine(50);
-      if(!_lastSnapFired){_haptic(7);_lastSnapFired=true;}
-      return true;
-    }
-    _lastSnapFired=false;
-    _scHideSnapLine();
-    return false;
+    if(s.dist<5){_scShowSnapLine(50);if(!_lastSnapFired){_haptic(7);_lastSnapFired=true;}return true;}
+    _lastSnapFired=false;_scHideSnapLine();return false;
   }
 
   document.addEventListener('touchstart',function(e){
@@ -6772,49 +6771,32 @@ function _scNearestSnapAngle(a){
     var t1=e.touches[0],t2=e.touches[1];
     var el1=document.elementFromPoint(t1.clientX,t1.clientY);
     var el2=document.elementFromPoint(t2.clientX,t2.clientY);
-    // Find sticker under fingers
     var sticker=null;
-    [el1,el2].forEach(function(el){
-      if(!sticker&&el){var s=el.closest?el.closest('._sc-sticker'):null;if(s&&canvas.contains(s))sticker=s;}
-    });
-    // Find text element under fingers
+    [el1,el2].forEach(function(el){if(!sticker&&el){var s=el.closest?el.closest('._sc-sticker'):null;if(s&&canvas.contains(s))sticker=s;}});
     var textEl=null;
-    [el1,el2].forEach(function(el){
-      if(!textEl&&el){var te=el.closest?el.closest('._sc-te'):null;if(te&&canvas.contains(te))textEl=te;}
-    });
+    [el1,el2].forEach(function(el){if(!textEl&&el){var te=el.closest?el.closest('._sc-te'):null;if(te&&canvas.contains(te))textEl=te;}});
 
     if(sticker){
-      var cr2=canvas.getBoundingClientRect();
-      var er=sticker.getBoundingClientRect();
-      sticker.style.left=(er.left+er.width/2-cr2.left)+'px';
-      sticker.style.top=(er.top+er.height/2-cr2.top)+'px';
-      _pinchTarget='sticker'; _pinchEl=sticker;
-      _initDist=dist(e.touches); _initAngle=ang(e.touches);
-      _initScale=sticker._curScale||parseFloat(sticker.dataset.scale||'1');
-      _initRot=sticker._curRot||0;
-      sticker.dataset.pinching='1'; sticker.style.animation='';
-      _pinching=true; _haptic(6);
+      var cr2=canvas.getBoundingClientRect();var er=sticker.getBoundingClientRect();
+      sticker.style.left=(er.left+er.width/2-cr2.left)+'px';sticker.style.top=(er.top+er.height/2-cr2.top)+'px';
+      _pinchTarget='sticker';_pinchEl=sticker;
+      _initDist=dist(e.touches);_initAngle=ang(e.touches);
+      _initScale=sticker._curScale||parseFloat(sticker.dataset.scale||'1');_initRot=sticker._curRot||0;
+      sticker.dataset.pinching='1';sticker.style.animation='';
+      _pinching=true;window._scAnyDragActive=true;_haptic(6);
     } else if(textEl){
-      _pinchTarget='text'; _pinchEl=textEl;
-      _initDist=dist(e.touches); _initAngle=ang(e.touches);
-      _initScale=textEl._scale||parseFloat(textEl.style.fontSize)||36;
-      _initRot=textEl._rot||0;
-      // Commit editing so we can freely transform
-      textEl.contentEditable='false';
-      textEl.classList.remove('editing');
-      _scIsTyping=false;
-      _pinching=true; _haptic(6);
+      _pinchTarget='text';_pinchEl=textEl;
+      _initDist=dist(e.touches);_initAngle=ang(e.touches);
+      _initScale=textEl._scale||parseFloat(textEl.style.fontSize)||36;_initRot=textEl._rot||0;
+      textEl.contentEditable='false';textEl.classList.remove('editing');_scIsTyping=false;
+      _pinching=true;window._scAnyDragActive=true;_haptic(6);
     } else if(_scActiveTextEl){
-      _pinchTarget='text'; _pinchEl=_scActiveTextEl;
-      _initDist=dist(e.touches); _initAngle=ang(e.touches);
-      _initScale=_scActiveTextEl._scale||parseFloat(_scActiveTextEl.style.fontSize)||36;
-      _initRot=_scActiveTextEl._rot||0;
-      _scActiveTextEl.contentEditable='false';
-      _scActiveTextEl.classList.remove('editing');
-      _scIsTyping=false;
-      _pinching=true;
+      _pinchTarget='text';_pinchEl=_scActiveTextEl;
+      _initDist=dist(e.touches);_initAngle=ang(e.touches);
+      _initScale=_scActiveTextEl._scale||parseFloat(_scActiveTextEl.style.fontSize)||36;_initRot=_scActiveTextEl._rot||0;
+      _scActiveTextEl.contentEditable='false';_scActiveTextEl.classList.remove('editing');_scIsTyping=false;
+      _pinching=true;window._scAnyDragActive=true;
     } else if(canvas.contains(el1)||canvas.contains(el2)){
-      // Two fingers on canvas with no target — no-op pinch
       _pinching=false;
     }
     if(_pinching)e.preventDefault();
@@ -6822,22 +6804,19 @@ function _scNearestSnapAngle(a){
 
   document.addEventListener('touchmove',function(e){
     if(!_pinching||e.touches.length!==2)return;
-    var d=dist(e.touches);
-    var a=ang(e.touches);
-    var ratio=d/Math.max(_initDist,30);
-    var dAngle=a-_initAngle;
+    var d=dist(e.touches),a=ang(e.touches);
+    var ratio=d/Math.max(_initDist,30),dAngle=a-_initAngle;
     if(_pinchTarget==='sticker'&&_pinchEl){
       var newScale=Math.min(5,Math.max(0.2,_initScale*ratio));
       var newRot=_initRot+dAngle;
-      _pinchEl._curScale=newScale; _pinchEl._curRot=newRot;
+      _pinchEl._curScale=newScale;_pinchEl._curRot=newRot;
       _pinchEl.dataset.scale=String(newScale);
       _pinchEl.style.transform='translate(-50%,-50%) scale('+newScale+') rotate('+newRot+'deg)';
       _applySnapLine(newRot);
     } else if(_pinchTarget==='text'&&_pinchEl){
       var newSize=Math.min(160,Math.max(10,Math.round(_initScale*ratio)));
       var newRot2=_initRot+dAngle;
-      _pinchEl._scale=newSize; _pinchEl._rot=newRot2;
-      _scTextSize=newSize; // keep global in sync
+      _pinchEl._scale=newSize;_pinchEl._rot=newRot2;_scTextSize=newSize;
       _pinchEl.style.fontSize=newSize+'px';
       _pinchEl.style.transform='translate(-50%,-50%) rotate('+newRot2+'deg)';
       _applySnapLine(newRot2);
@@ -6846,12 +6825,14 @@ function _scNearestSnapAngle(a){
   },{passive:false});
 
   function _endPinch(){
+    if(!_pinching)return;
     if(_pinchTarget==='sticker'&&_pinchEl){
       if(_pinchEl.dataset.scale)_pinchEl._curScale=parseFloat(_pinchEl.dataset.scale);
       delete _pinchEl.dataset.pinching;
     }
-    _pinching=false; _pinchTarget=null; _pinchEl=null;
-    _lastSnapFired=false;
+    _pinching=false;_pinchTarget=null;_pinchEl=null;_lastSnapFired=false;
+    // Keep drag flag active long enough so element touchend skips delete check
+    setTimeout(function(){window._scAnyDragActive=false;},200);
     setTimeout(_scHideSnapLine,400);
   }
   document.addEventListener('touchend',_endPinch,{passive:true});
@@ -7142,8 +7123,9 @@ function _scPlaceSticker(stickerDef){
 
   el.addEventListener('touchstart',function(e){
     if(e.touches.length!==1){
-      // Multi-touch (pinch) starting — abort any active drag cleanly
-      if(dragging){dragging=false;_scHideDeleteZone();}
+      // Multi-touch (pinch) starting — abort drag, reset tap timer
+      if(dragging){dragging=false;_scHideDeleteZone();window._scAnyDragActive=false;}
+      _lastTap=0; // prevent double-tap delete triggering after pinch
       return;
     }
     if(dragging)return;
