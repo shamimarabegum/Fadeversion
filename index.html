@@ -5981,7 +5981,7 @@ function scActivateText(){
   var canvas=_scGetCanvas();if(!canvas)return;
   // Commit any open element first
   _scCommitText();
-  // Always spawn new elements at the default size — don't inherit last pinch size
+  // Always spawn at default size — don't inherit last pinch scale
   _scTextSize=36;
   var f=SC_FONTS[scFI]||SC_FONTS[0];
   var el=document.createElement('div');
@@ -5989,9 +5989,8 @@ function scActivateText(){
   el.contentEditable='true';
   el.spellcheck=false;
   el.autocomplete='off';
-  // Offset Y so multiple text elements don't overlap each other
   var existingCount=canvas.querySelectorAll('._sc-te').length;
-  var topPct=Math.min(75, 46 + existingCount * 12);
+  var topPct=Math.min(76, 46 + existingCount * 12);
   el.style.cssText=[
     'left:50%;top:'+topPct+'%;',
     'font-size:'+_scTextSize+'px;',
@@ -6119,7 +6118,7 @@ function _scAttachTextHandlers(el){
   el.addEventListener('touchstart',function(e){
     if(e.touches.length!==1){
       // Multi-touch starting — abort drag, reset tap timer to prevent double-tap delete after pinch
-      if(dragging){dragging=false;_scHideDeleteZone();window._scAnyDragActive=false;}
+      if(dragging){dragging=false;_scHideDeleteZone(el);window._scAnyDragActive=false;}
       _lastTap=0;
       return;
     }
@@ -6854,7 +6853,6 @@ function _scNearestSnapAngle(a){
       var newRot=_initRot+dAngle;
       _pinchEl._curScale=newScale;_pinchEl._curRot=newRot;
       _pinchEl.dataset.scale=String(newScale);
-      _pinchEl.style.opacity='1';
       _pinchEl.style.transform='translate(-50%,-50%) scale('+newScale+') rotate('+newRot+'deg)';
       _applySnapLine(newRot);
     } else if(_pinchTarget==='text'&&_pinchEl){
@@ -6894,7 +6892,8 @@ function _scNearestSnapAngle(a){
         savedEl.style.left=(_pe2.left+_pe2.width/2-_pc2.left)+'px';
         savedEl.style.top=(_pe2.top+_pe2.height/2-_pc2.top)+'px';}
     }
-    // Reset delete zone
+    // Reset delete zone — also restore element opacity in case it was near trash during drag before pinch
+    if(savedEl){savedEl.style.opacity='1';}
     _scDeleteActive=false;
     var wrap=document.getElementById('sc-dz-icon-wrap');
     var svg=document.getElementById('sc-dz-svg');
@@ -7128,13 +7127,25 @@ function _scShowDeleteZone(){
   // Trigger CSS transition
   requestAnimationFrame(function(){requestAnimationFrame(function(){dz.classList.add('on');});});
 }
-function _scHideDeleteZone(){
+function _scHideDeleteZone(el){
   if(!_scDeleteZone)return;
   var dz=_scDeleteZone;
   dz.classList.remove('on');
   setTimeout(function(){if(dz.parentNode)dz.parentNode.removeChild(dz);},240);
   _scDeleteZone=null;
   _scDeleteActive=false;
+  if(el){
+    var rot=el._rot||el._curRot||0;
+    el.style.transition='transform .25s cubic-bezier(.34,1.4,.64,1),opacity .2s';
+    el.style.opacity='1';
+    var sc=el._curScale!=null?el._curScale:null;
+    if(sc!=null){
+      el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale('+sc+')';
+    } else {
+      el.style.transform='translate(-50%,-50%) rotate('+rot+'deg)';
+    }
+    setTimeout(function(){if(el)el.style.transition='';},280);
+  }
 }
 function _scCheckDeleteZone(t,el){
   if(!_scDeleteZone)return false;
@@ -7165,7 +7176,12 @@ function _scCheckDeleteZone(t,el){
       var rot=el._rot||el._curRot||0;
       el.style.transition='transform .3s cubic-bezier(.34,1.4,.64,1),opacity .2s';
       el.style.opacity='1';
-      el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale(1)';
+      var sc=el._curScale!=null?el._curScale:null;
+      if(sc!=null){
+        el.style.transform='translate(-50%,-50%) rotate('+rot+'deg) scale('+sc+')';
+      } else {
+        el.style.transform='translate(-50%,-50%) rotate('+rot+'deg)';
+      }
       setTimeout(function(){if(el)el.style.transition='';},320);
     }
   }
@@ -7195,7 +7211,7 @@ function _scPlaceSticker(stickerDef){
   el.addEventListener('touchstart',function(e){
     if(e.touches.length!==1){
       // Multi-touch (pinch) starting — abort drag, reset tap timer
-      if(dragging){dragging=false;_scHideDeleteZone();window._scAnyDragActive=false;}
+      if(dragging){dragging=false;_scHideDeleteZone(el);window._scAnyDragActive=false;}
       _lastTap=0; // prevent double-tap delete triggering after pinch
       return;
     }
