@@ -27,10 +27,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'Inter',s
   #root{width:390px;max-width:390px;height:100dvh;box-shadow:0 0 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);overflow:hidden;flex-shrink:0;padding-top:0}
 }
 #sw{position:absolute;inset:0;bottom:calc(var(--nav-h) + var(--nb));overflow:hidden}
-.screen{display:flex;flex-direction:column;overflow:hidden;position:absolute;inset:0;transform:translateX(100%);opacity:0;transition:transform .32s cubic-bezier(.25,.46,.45,.94),opacity .22s ease;background:var(--bg)}
+.screen{display:flex;flex-direction:column;overflow:hidden;position:absolute;inset:0;transform:translateX(100%);opacity:0;transition:transform .32s cubic-bezier(.25,.46,.45,.94),opacity .22s ease;background:var(--bg);will-change:transform,opacity}
 .screen.active{transform:translateX(0);opacity:1}
 .screen.left{transform:translateX(-20%);opacity:0.6}
-.scroller{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:auto;padding-bottom:16px;position:relative}
+.scroller{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:auto;padding-bottom:16px;position:relative;touch-action:pan-y}
 .scroller::-webkit-scrollbar{display:none}
 
 /* AUTH */
@@ -156,7 +156,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 .heart-pop{animation:heartPop .35s ease forwards}
 
 /* STORY CREATOR */
-#story-creator{display:none;position:fixed;inset:0;z-index:400;flex-direction:column;background:#0D0D14;opacity:0;transition:opacity .25s ease}
+#story-creator{display:none;position:fixed;inset:0;z-index:400;flex-direction:column;background:#0D0D14;opacity:0;transform:translateY(18px);transition:opacity .26s ease,transform .26s cubic-bezier(.25,.46,.45,.94);will-change:opacity,transform}
 #story-creator.on{display:flex}
 #sc-canvas{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(145deg,#1A1028 0%,#0E1A2E 50%,#0D1F1A 100%);transition:background .3s ease}
 #sc-canvas-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
@@ -346,13 +346,13 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sv-del-bg{display:none;position:fixed;inset:0;z-index:650;align-items:flex-end}
 #sv-del-bg.on{display:flex}
 #sv-del-dim{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:dimIn .2s ease}
-#sv-del-sheet{position:relative;background:var(--card);width:100%;border-radius:22px 22px 0 0;padding:22px 18px max(24px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94)}
+#sv-del-sheet{position:relative;background:var(--card);width:100%;border-radius:22px 22px 0 0;padding:22px 22px max(28px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94)}
 #sv-del-bg.on #sv-del-sheet{transform:translateY(0)}
 .sv-del-title{font-size:16px;font-weight:700;margin-bottom:5px;color:var(--text)}
 .sv-del-sub{font-size:14px;color:var(--sub);margin-bottom:22px;line-height:1.5}
-.sv-del-btn-del{padding:13px 0;border-radius:12px;border:none;background:#E8352A;color:#fff;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s}
+.sv-del-btn-del{width:100%;padding:15px;border-radius:14px;border:none;background:#E8352A;color:#fff;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:8px;transition:opacity .12s}
 .sv-del-btn-del:active{opacity:.7}
-.sv-del-btn-cancel{padding:13px 0;border-radius:12px;border:none;background:var(--inp-bg);color:var(--sub);font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s}
+.sv-del-btn-cancel{width:100%;padding:15px;border-radius:14px;border:none;background:var(--inp-bg);color:var(--sub);font-size:15px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s}
 .sv-del-btn-cancel:active{opacity:.6}
 
 /* EDIT STORY SHEET */
@@ -1710,16 +1710,16 @@ body {
 </div>
 
 <!-- STORY CREATOR DISCARD DIALOG -->
-<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;padding:20px">
+<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:flex-end;justify-content:center">
   <div id="sc-discard-dim" style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="scKeepEditing()"></div>
-  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;width:100%;max-width:300px;background:var(--card);border-radius:18px;padding:20px 16px;transform:translateY(20px) scale(.97);opacity:0;transition:transform .22s cubic-bezier(.34,1.3,.64,1),opacity .18s ease">
-    <div style="text-align:center;padding:0 0 16px">
-      <div style="font-size:15.5px;font-weight:700;color:var(--text);margin-bottom:4px">Discard moment?</div>
-      <div style="font-size:13px;color:var(--sub);line-height:1.5">Your edits won't be saved.</div>
+  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;width:calc(100% - 32px);max-width:380px;margin-bottom:max(28px,env(safe-area-inset-bottom));border-radius:18px;overflow:hidden;transform:translateY(20px) scale(.97);opacity:0;transition:transform .22s cubic-bezier(.34,1.3,.64,1),opacity .18s ease">
+    <div style="background:rgba(28,28,30,.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:20px 20px 6px;text-align:center">
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:4px">Discard moment?</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4);line-height:1.4">Your edits won't be saved.</div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="scKeepEditing()" style="flex:1;padding:13px 0;background:var(--inp-bg);border:none;border-radius:12px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .12s">Keep editing</button>
-      <button onclick="scConfirmDiscard()" style="flex:1;padding:13px 0;background:#E8352A;border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .12s">Discard</button>
+    <div style="background:rgba(28,28,30,.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);display:flex;margin-top:1px">
+      <button onclick="scKeepEditing()" style="flex:1;padding:16px 0;border:none;background:none;color:rgba(255,255,255,.75);font-size:15px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;border-right:1px solid rgba(255,255,255,.08)">Keep</button>
+      <button onclick="scConfirmDiscard()" style="flex:1;padding:16px 0;border:none;background:none;color:#FF453A;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer">Discard</button>
     </div>
   </div>
 </div>
@@ -1754,11 +1754,9 @@ body {
   <div id="sv-del-dim"></div>
   <div id="sv-del-sheet" onclick="event.stopPropagation()">
     <div class="sv-del-title">Delete this moment?</div>
-    <div class="sv-del-sub">This cannot be undone.</div>
-    <div style="display:flex;gap:8px">
-      <button class="sv-del-btn-cancel" onclick="svCloseDelete()" style="flex:1;border-radius:12px;padding:13px 0;margin-bottom:0;width:auto">Cancel</button>
-      <button class="sv-del-btn-del" onclick="svConfirmDelete()" style="flex:1;border-radius:12px;padding:13px 0;margin-bottom:0;width:auto">Delete</button>
-    </div>
+    <div class="sv-del-sub">This moment will be permanently removed and can't be recovered.</div>
+    <button class="sv-del-btn-del" onclick="svConfirmDelete()">Delete</button>
+    <button class="sv-del-btn-cancel" onclick="svCloseDelete()">Cancel</button>
   </div>
 </div>
 
@@ -1999,27 +1997,29 @@ body {
 
 <!-- DELETE MODAL -->
 <div id="del-modal" class="mbg" style="z-index:900">
-  <div class="modal" style="gap:0;padding:20px 16px;overflow:hidden;max-width:300px">
-    <div style="text-align:center;padding:0 0 16px">
-      <div style="font-weight:700;font-size:15.5px;color:var(--text);margin-bottom:4px">Delete drop?</div>
-      <div style="font-size:13px;color:var(--sub);line-height:1.5">This cannot be undone.</div>
+  <div class="modal" style="gap:0;padding:0;overflow:hidden;max-width:300px">
+    <div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center">
+      <div style="font-weight:700;font-size:16px;text-align:center">Delete drop?</div>
+      <div style="font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55">Once deleted it cannot be recovered.</div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="closeDelSheet()" style="flex:1;padding:13px 0;background:var(--inp-bg);border:none;border-radius:12px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;font-family:Inter,sans-serif;transition:opacity .12s">Cancel</button>
-      <button id="del-btn" style="flex:1;padding:13px 0;background:#E8352A;border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:Inter,sans-serif;transition:opacity .12s">Delete</button>
+    <div style="height:1px;background:var(--border)"></div>
+    <div style="display:flex">
+      <button onclick="closeDelSheet()" style="flex:1;padding:15px;background:none;border:none;border-right:1px solid var(--border);font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+      <button id="del-btn" style="flex:1;padding:15px;background:none;border:none;font-size:15px;font-weight:600;color:#E8352A;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
     </div>
   </div>
 </div>
 
 <div id="cmt-del-modal" class="mbg" style="z-index:910">
-  <div class="modal" style="gap:0;padding:20px 16px;overflow:hidden;max-width:300px">
-    <div style="text-align:center;padding:0 0 16px">
-      <div style="font-weight:700;font-size:15.5px;color:var(--text);margin-bottom:4px">Delete comment?</div>
-      <div style="font-size:13px;color:var(--sub);line-height:1.5">This cannot be undone.</div>
+  <div class="modal" style="gap:0;padding:0;overflow:hidden;max-width:300px">
+    <div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center">
+      <div style="font-weight:700;font-size:16px;text-align:center">Delete comment?</div>
+      <div style="font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55">Once deleted it cannot be recovered.</div>
     </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="closeCmtDelBar()" style="flex:1;padding:13px 0;background:var(--inp-bg);border:none;border-radius:12px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;font-family:Inter,sans-serif;transition:opacity .12s">Cancel</button>
-      <button onclick="execCmtDelete()" style="flex:1;padding:13px 0;background:#E8352A;border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:Inter,sans-serif;transition:opacity .12s">Delete</button>
+    <div style="height:1px;background:var(--border)"></div>
+    <div style="display:flex">
+      <button onclick="closeCmtDelBar()" style="flex:1;padding:15px;background:none;border:none;border-right:1px solid var(--border);font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+      <button onclick="execCmtDelete()" style="flex:1;padding:15px;background:none;border:none;font-size:15px;font-weight:600;color:#E8352A;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
     </div>
   </div>
 </div>
@@ -2822,13 +2822,14 @@ function goTab(n){
     // re-trigger tab pop on the icon wrapper
     var icon=document.getElementById('nbi-'+n);
     if(icon){
+      // Use rAF instead of void offsetWidth to avoid forced layout mid-transition
       icon.classList.remove('anim-tab-pop');
-      void icon.offsetWidth; // force reflow
-      icon.classList.add('anim-tab-pop');
-      // clean up after animation so it can re-trigger next time
-      icon.addEventListener('animationend',function(){
-        icon.classList.remove('anim-tab-pop');
-      },{once:true});
+      requestAnimationFrame(function(){
+        icon.classList.add('anim-tab-pop');
+        icon.addEventListener('animationend',function(){
+          icon.classList.remove('anim-tab-pop');
+        },{once:true});
+      });
     }
   }
   if(n==='search'){setTimeout(function(){var s=document.getElementById('sinp');if(s)s.focus();},350);showSearchHome();}
@@ -2836,7 +2837,9 @@ function goTab(n){
   if(n==='talk')renderTalkList();
   if(n==='clips')loadClips();
   // Refresh story strip when user returns to Today tab -- no sign-out needed
-  if(n==='today'&&profile)loadStories();
+  // _skipNextStoryLoad is set by scShare() so the post-send delayed call handles it instead
+  if(n==='today'&&profile&&!window._skipNextStoryLoad)loadStories();
+  window._skipNextStoryLoad=false;
   // Restore saved scroll for this tab
   var _scIds2={today:'today-scroll',clips:'clips-feed',talk:'talk-list',me:'me-body'};
   var _nextId=_scIds2[n];
@@ -3224,7 +3227,7 @@ function initApp(userProfile){
   document.querySelectorAll('.nbtn').forEach(function(b){b.classList.remove('on');});
   var nb=document.getElementById('nb-'+savedTab);if(nb)nb.classList.add('on');
 
-  loadStories();
+  loadStories(true);
   renderFeed();
   // Fire event so deep link handler knows profile is ready
   document.dispatchEvent(new Event('fadeProfileLoaded'));
@@ -3250,7 +3253,7 @@ function initApp(userProfile){
         var t=sessionStorage.getItem('fade_tab')||'today';
         if(t!==curTab)return;
         // Re-check stories when app comes back to foreground
-        if(curTab==='today'&&profile)loadStories();
+        if(curTab==='today'&&profile)loadStories(true);
         // Re-apply active classes in case browser wiped them
         Object.keys(TAB_IDX).forEach(function(tab){
           var sc=document.getElementById('s-'+tab);if(!sc)return;
@@ -4886,8 +4889,7 @@ function doDelPost(id){
 }
 
 // -- COMPOSE -------------------------------------------------------------------
-function openCompose(){cFiles=[];renderPhotoTray();var bg=document.getElementById('compose-bg');bg.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){bg.querySelector('.sheet').style.transform='translateY(0)';});});setTimeout(function(){var t=document.getElementById('c-text');if(t)t.focus();},350);}
-
+function openCompose(){cFiles=[];renderPhotoTray();var bg=document.getElementById('compose-bg');bg.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){bg.querySelector('.sheet').style.transform='translateY(0)';});});setTimeout(function(){var t=document.getElementById('c-text');if(t)t.focus();},150);}
 function closeCompose(){closeSheet('compose-bg');}
 function pickCI(e){
   var files=Array.from(e.target.files||[]);
@@ -4898,15 +4900,8 @@ function pickCI(e){
   var existing=cFiles.map(function(cf){var f=cf.file||cf;return f.name+'|'+f.size;});
   var newFiles=files.filter(function(f){return existing.indexOf(f.name+'|'+f.size)<0;});
   if(!newFiles.length){T('Already selected');return;}
-  var firstNewIdx=cFiles.length;
   newFiles.slice(0,remaining).forEach(function(f){cFiles.push({file:f,filter:'none'});});
   renderPhotoTray();
-  // Hide compose sheet immediately so there's no flash before the editor opens
-  var _csBg=document.getElementById('compose-bg');
-  if(_csBg){var _csSheet=_csBg.querySelector('.sheet');if(_csSheet)_csSheet.style.visibility='hidden';}
-  var _navEl=document.getElementById('nav');if(_navEl)_navEl.style.visibility='hidden';
-  // Auto-open the photo editor (filter picker) for the first newly added photo
-  requestAnimationFrame(function(){_openDropPhotoViewer(firstNewIdx);});
 }
 function rmCI(idx){
   cFiles.splice(idx,1);
@@ -4963,12 +4958,6 @@ function renderPhotoTray(){
     tray.appendChild(add);
   }
   if(lbl)lbl.style.display='none';
-  // Refresh any thumbnail that has crop or filter data already saved
-  cFiles.forEach(function(cf,i){
-    if(cf&&(cf.filter&&cf.filter!=='none')||(cf&&cf._crop&&(cf._crop.tx||cf._crop.ty||(cf._crop.scale&&cf._crop.scale!==1)))){
-      _updateTrayThumb(i);
-    }
-  });
 }
 
 // Full-screen photo viewer with left/right nav and filter picker
@@ -5560,10 +5549,9 @@ function submitPost(){
     var filterCss=cf.filter&&cf.filter!=='none'?(_scFilters.find(function(fl){return fl.id===cf.filter;})||{css:'none'}).css:'none';
     var cropState=cf._crop||{tx:0,ty:0,scale:1};
     var hasCrop=(cropState.tx!==0||cropState.ty!==0||(cropState.scale&&cropState.scale!==1));
-    // Always process through canvas so the 4:5 preview crop is always baked in,
-    // even when no explicit filter or user-crop was applied.
+    // Apply crop and/or filter via canvas
     var processPromise;
-    if(true){
+    if(filterCss!=='none'||hasCrop){
       processPromise=new Promise(function(resolve){
         var img2=new Image();
         var objUrl2=URL.createObjectURL(f);
@@ -5607,6 +5595,8 @@ function submitPost(){
         img2.onerror=function(){resolve(f);};
         img2.src=objUrl2;
       });
+    } else {
+      processPromise=Promise.resolve(f);
     }
     return processPromise.then(function(processed){
       return compressImage(processed,1280,0.82).then(function(compressed){
@@ -5762,7 +5752,11 @@ function renderStrip(){
   });
 
   // Re-render talk list so story rings reflect current svGroups state
-  if(typeof _renderTalkFromCache==='function')_renderTalkFromCache();
+  // Debounced -- renderStrip can fire 2-3 times in quick succession during loadStories
+  if(typeof _renderTalkFromCache==='function'){
+    clearTimeout(window._talkSyncTmr);
+    window._talkSyncTmr=setTimeout(_renderTalkFromCache,80);
+  }
 }
 
 // -- STORY CREATOR -------------------------------------------------------------
@@ -5806,9 +5800,9 @@ function openCreator(){
   // Show tap hint
   var hint=document.getElementById('sc-tap-hint');
   if(hint){hint.style.opacity='1';}
-  var cr=document.getElementById('story-creator');cr.style.display='flex';cr.classList.remove('sc-editing');
+  var cr=document.getElementById('story-creator');cr.classList.add('on');cr.classList.remove('sc-editing');
   history.pushState({_fade:'story-creator'},'');
-  requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';});});
+  requestAnimationFrame(function(){requestAnimationFrame(function(){cr.style.opacity='1';cr.style.transform='translateY(0)';});});
 }
 
 // Update which circle buttons show based on current mode
@@ -5838,8 +5832,11 @@ function scCycleColor(){
 function scCycleBg(){ scCycleColor(); } // alias -- bg-cycle button calls same fn
 // Show discard dialog (used by x button + swipe-back)
 function _scTryClose(){
-  // Always show discard dialog on swipe-back -- prevents accidental app exit
-  _scShowDiscardDialog();
+  if(_scHasContent()){
+    _scShowDiscardDialog();
+  } else {
+    _scDoClose();
+  }
 }
 function _scShowDiscardDialog(){
   var bg=document.getElementById('sc-discard-bg');
@@ -5870,7 +5867,7 @@ function scConfirmDiscard(){
 }
 function _scDoClose(){
   _scCommitText&&_scCommitText();
-  var cr=document.getElementById('story-creator');cr.style.opacity='0';
+  var cr=document.getElementById('story-creator');cr.style.opacity='0';cr.style.transform='translateY(18px)';
   var canvas=document.getElementById('sc-canvas');
   if(canvas){
     canvas.querySelectorAll('._sc-te').forEach(function(t){t.remove();});
@@ -5894,7 +5891,7 @@ function _scDoClose(){
   var ln=document.getElementById('_sc-snap-line');if(ln)ln.remove();
   var dz=document.getElementById('sc-delete-zone');if(dz)dz.remove();
   _scDeleteZone=null;_scDeleteActive=false;
-  setTimeout(function(){cr.style.display='none';},250);
+  setTimeout(function(){cr.classList.remove('on');},260);
 }
 function closeCreator(){
   _scTryClose();
@@ -7516,7 +7513,14 @@ function scShare(){
   // Add locally FIRST before goTab so loadStories() doesn't race-wipe it
   var _tempId='st'+Date.now();
   _addStoryLocal({id:_tempId,text:txt,img:photoUrl,ts:new Date().toISOString(),bg:scBg,tc:tc,fi:scFI,imgFilter:filterCss});
-  SFX('drop');_scDoClose();goTab('today');T('Posting moment...');
+  SFX('drop');haptic('success');
+  _scDoClose();
+  window._skipNextStoryLoad=true; // goTab('today') would fire loadStories -- we delay it below instead
+  goTab('today');
+  // Delay loadStories until after the creator close animation (250ms) completes
+  // so the Supabase query + renderStrip don't compete with the CSS fade-out
+  setTimeout(function(){if(curTab==='today')loadStories(true);},300);
+  setTimeout(function(){T('Posting moment...');},260);
   function doInsert(imgUrl){
     // Update local blob url to final CDN url if changed
     if(imgUrl&&imgUrl!==photoUrl){
@@ -7595,8 +7599,13 @@ function _addStoryLocal(item){
   renderStrip();
 }
 // -- LOAD STORIES FROM SUPABASE ------------------------------------------------
-function loadStories(){
+var _lastStoriesLoad=0;
+function loadStories(force){
   if(!profile)return renderStrip();
+  // Skip reload if we fetched less than 60 seconds ago (unless forced)
+  var now=Date.now();
+  if(!force&&svGroups.length>0&&(now-_lastStoriesLoad)<60000){renderStrip();return;}
+  _lastStoriesLoad=now;
   // Restore any pending local stories from localStorage (survive page reload)
   var _pendingLocal=_loadLocalStories();
   if(_pendingLocal.length){
@@ -11038,7 +11047,7 @@ function closeProf(){
       startSVTmr();
 
       // Re-open the views sheet on top
-      setTimeout(function(){openViewsSheet();},60);
+      openViewsSheet();
     } else {
       _profFromViews=false;
       _savedSVState=null;
@@ -14415,8 +14424,8 @@ function confirmCircleLeave(c){
     ?'This will remove all members and delete the Circle permanently.'
     :'You will silently leave the Circle. You can request to rejoin later.';
   var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:960;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:24px';
-  var modal=document.createElement('div');modal.style.cssText='background:var(--card);border-radius:18px;width:100%;max-width:300px;padding:20px 16px';
-  modal.innerHTML='<div style="text-align:center;padding:0 0 16px"><div style="font-weight:700;font-size:15.5px;color:var(--text);margin-bottom:4px">'+label+'?</div><div style="font-size:13px;color:var(--sub);line-height:1.5">'+sub+'</div></div><div style="display:flex;gap:8px"><button id="_cl_cancel" style="flex:1;padding:13px 0;background:var(--inp-bg);border:none;border-radius:12px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;font-family:Inter,sans-serif">Cancel</button><button id="_cl_confirm" style="flex:1;padding:13px 0;background:#E8352A;border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:Inter,sans-serif">'+label+'</button></div>';
+  var modal=document.createElement('div');modal.style.cssText='background:var(--card);border-radius:18px;width:100%;max-width:320px;overflow:hidden';
+  modal.innerHTML='<div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center"><div style="font-weight:700;font-size:16px;text-align:center">'+label+'?</div><div style="font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55">'+sub+'</div></div><div style="height:1px;background:var(--border)"></div><div style="display:flex"><button id="_cl_cancel" style="flex:1;padding:15px;background:none;border:none;border-right:1px solid var(--border);font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:Inter,sans-serif">Cancel</button><button id="_cl_confirm" style="flex:1;padding:15px;background:none;border:none;font-size:15px;font-weight:600;color:#E8352A;cursor:pointer;font-family:Inter,sans-serif">'+label+'</button></div>';
   ov.appendChild(modal);document.body.appendChild(ov);
   document.getElementById('_cl_cancel').onclick=function(){ov.remove();};
   document.getElementById('_cl_confirm').onclick=function(){
