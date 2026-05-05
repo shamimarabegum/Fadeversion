@@ -346,13 +346,13 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg width='10' height='6'
 #sv-del-bg{display:none;position:fixed;inset:0;z-index:650;align-items:flex-end}
 #sv-del-bg.on{display:flex}
 #sv-del-dim{position:absolute;inset:0;background:rgba(0,0,0,.55);animation:dimIn .2s ease}
-#sv-del-sheet{position:relative;background:var(--card);width:100%;border-radius:22px 22px 0 0;padding:22px 22px max(28px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94)}
+#sv-del-sheet{position:relative;background:var(--card);width:100%;border-radius:22px 22px 0 0;padding:22px 18px max(24px,env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .28s cubic-bezier(.25,.46,.45,.94)}
 #sv-del-bg.on #sv-del-sheet{transform:translateY(0)}
 .sv-del-title{font-size:16px;font-weight:700;margin-bottom:5px;color:var(--text)}
 .sv-del-sub{font-size:14px;color:var(--sub);margin-bottom:22px;line-height:1.5}
-.sv-del-btn-del{width:100%;padding:15px;border-radius:14px;border:none;background:#E8352A;color:#fff;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;margin-bottom:8px;transition:opacity .12s}
+.sv-del-btn-del{padding:13px 0;border-radius:12px;border:none;background:#E8352A;color:#fff;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s}
 .sv-del-btn-del:active{opacity:.7}
-.sv-del-btn-cancel{width:100%;padding:15px;border-radius:14px;border:none;background:var(--inp-bg);color:var(--sub);font-size:15px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s}
+.sv-del-btn-cancel{padding:13px 0;border-radius:12px;border:none;background:var(--inp-bg);color:var(--sub);font-size:14px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:opacity .12s}
 .sv-del-btn-cancel:active{opacity:.6}
 
 /* EDIT STORY SHEET */
@@ -1710,17 +1710,16 @@ body {
 </div>
 
 <!-- STORY CREATOR DISCARD DIALOG -->
-<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;padding:24px">
-  <div id="sc-discard-dim" style="position:absolute;inset:0;background:rgba(0,0,0,.45)" onclick="scKeepEditing()"></div>
-  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;width:calc(100% - 48px);max-width:300px;background:var(--card);border-radius:18px;overflow:hidden;transform:scale(.95);opacity:0;transition:transform .22s cubic-bezier(.34,1.3,.64,1),opacity .18s ease">
-    <div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center">
-      <div style="font-size:16px;font-weight:700;color:var(--text);text-align:center">Discard moment?</div>
-      <div style="font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55">Your edits won't be saved.</div>
+<div id="sc-discard-bg" style="display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;padding:20px">
+  <div id="sc-discard-dim" style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="scKeepEditing()"></div>
+  <div id="sc-discard-sheet" onclick="event.stopPropagation()" style="position:relative;width:100%;max-width:300px;background:var(--card);border-radius:18px;padding:20px 16px;transform:translateY(20px) scale(.97);opacity:0;transition:transform .22s cubic-bezier(.34,1.3,.64,1),opacity .18s ease">
+    <div style="text-align:center;padding:0 0 16px">
+      <div style="font-size:15.5px;font-weight:700;color:var(--text);margin-bottom:4px">Discard moment?</div>
+      <div style="font-size:13px;color:var(--sub);line-height:1.5">Your edits won't be saved.</div>
     </div>
-    <div style="height:1px;background:var(--border)"></div>
-    <div style="display:flex">
-      <button onclick="scKeepEditing()" style="flex:1;padding:15px;border:none;border-right:1px solid var(--border);background:none;color:var(--text);font-size:15px;font-weight:400;font-family:'Inter',sans-serif;cursor:pointer">Keep</button>
-      <button onclick="scConfirmDiscard()" style="flex:1;padding:15px;border:none;background:none;color:#E8352A;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer">Discard</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="scKeepEditing()" style="flex:1;padding:13px 0;background:var(--inp-bg);border:none;border-radius:12px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .12s">Keep editing</button>
+      <button onclick="scConfirmDiscard()" style="flex:1;padding:13px 0;background:#E8352A;border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .12s">Discard</button>
     </div>
   </div>
 </div>
@@ -1755,9 +1754,11 @@ body {
   <div id="sv-del-dim"></div>
   <div id="sv-del-sheet" onclick="event.stopPropagation()">
     <div class="sv-del-title">Delete this moment?</div>
-    <div class="sv-del-sub">This moment will be permanently removed and can't be recovered.</div>
-    <button class="sv-del-btn-del" onclick="svConfirmDelete()">Delete</button>
-    <button class="sv-del-btn-cancel" onclick="svCloseDelete()">Cancel</button>
+    <div class="sv-del-sub">This cannot be undone.</div>
+    <div style="display:flex;gap:8px">
+      <button class="sv-del-btn-cancel" onclick="svCloseDelete()" style="flex:1;border-radius:12px;padding:13px 0;margin-bottom:0;width:auto">Cancel</button>
+      <button class="sv-del-btn-del" onclick="svConfirmDelete()" style="flex:1;border-radius:12px;padding:13px 0;margin-bottom:0;width:auto">Delete</button>
+    </div>
   </div>
 </div>
 
@@ -1998,29 +1999,27 @@ body {
 
 <!-- DELETE MODAL -->
 <div id="del-modal" class="mbg" style="z-index:900">
-  <div class="modal" style="gap:0;padding:0;overflow:hidden;max-width:300px">
-    <div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center">
-      <div style="font-weight:700;font-size:16px;text-align:center">Delete drop?</div>
-      <div style="font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55">Once deleted it cannot be recovered.</div>
+  <div class="modal" style="gap:0;padding:20px 16px;overflow:hidden;max-width:300px">
+    <div style="text-align:center;padding:0 0 16px">
+      <div style="font-weight:700;font-size:15.5px;color:var(--text);margin-bottom:4px">Delete drop?</div>
+      <div style="font-size:13px;color:var(--sub);line-height:1.5">This cannot be undone.</div>
     </div>
-    <div style="height:1px;background:var(--border)"></div>
-    <div style="display:flex">
-      <button onclick="closeDelSheet()" style="flex:1;padding:15px;background:none;border:none;border-right:1px solid var(--border);font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
-      <button id="del-btn" style="flex:1;padding:15px;background:none;border:none;font-size:15px;font-weight:600;color:#E8352A;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeDelSheet()" style="flex:1;padding:13px 0;background:var(--inp-bg);border:none;border-radius:12px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;font-family:Inter,sans-serif;transition:opacity .12s">Cancel</button>
+      <button id="del-btn" style="flex:1;padding:13px 0;background:#E8352A;border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:Inter,sans-serif;transition:opacity .12s">Delete</button>
     </div>
   </div>
 </div>
 
 <div id="cmt-del-modal" class="mbg" style="z-index:910">
-  <div class="modal" style="gap:0;padding:0;overflow:hidden;max-width:300px">
-    <div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center">
-      <div style="font-weight:700;font-size:16px;text-align:center">Delete comment?</div>
-      <div style="font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55">Once deleted it cannot be recovered.</div>
+  <div class="modal" style="gap:0;padding:20px 16px;overflow:hidden;max-width:300px">
+    <div style="text-align:center;padding:0 0 16px">
+      <div style="font-weight:700;font-size:15.5px;color:var(--text);margin-bottom:4px">Delete comment?</div>
+      <div style="font-size:13px;color:var(--sub);line-height:1.5">This cannot be undone.</div>
     </div>
-    <div style="height:1px;background:var(--border)"></div>
-    <div style="display:flex">
-      <button onclick="closeCmtDelBar()" style="flex:1;padding:15px;background:none;border:none;border-right:1px solid var(--border);font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
-      <button onclick="execCmtDelete()" style="flex:1;padding:15px;background:none;border:none;font-size:15px;font-weight:600;color:#E8352A;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeCmtDelBar()" style="flex:1;padding:13px 0;background:var(--inp-bg);border:none;border-radius:12px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;font-family:Inter,sans-serif;transition:opacity .12s">Cancel</button>
+      <button onclick="execCmtDelete()" style="flex:1;padding:13px 0;background:#E8352A;border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:Inter,sans-serif;transition:opacity .12s">Delete</button>
     </div>
   </div>
 </div>
@@ -4898,8 +4897,11 @@ function pickCI(e){
   var existing=cFiles.map(function(cf){var f=cf.file||cf;return f.name+'|'+f.size;});
   var newFiles=files.filter(function(f){return existing.indexOf(f.name+'|'+f.size)<0;});
   if(!newFiles.length){T('Already selected');return;}
+  var firstNewIdx=cFiles.length;
   newFiles.slice(0,remaining).forEach(function(f){cFiles.push({file:f,filter:'none'});});
   renderPhotoTray();
+  // Auto-open the photo editor (filter picker) for the first newly added photo
+  setTimeout(function(){_openDropPhotoViewer(firstNewIdx);},80);
 }
 function rmCI(idx){
   cFiles.splice(idx,1);
@@ -4934,28 +4936,7 @@ function renderPhotoTray(){
     img.src=objUrl;
     img.style.cssText='border-radius:10px;width:100%;height:100%;object-fit:cover;filter:'+(cf.filter&&cf.filter!=='none'?(_scFilters.find(function(fl){return fl.id===cf.filter;})||{css:'none'}).css:'none');
     // Tap thumbnail -> open full-screen photo viewer with nav
-    // Use touchstart+touchend on the CHIP (not just img) with scroll detection.
-    // iOS safari swallows click events inside overflow-x:auto scroll containers.
     (function(idx2){
-      var _tStartX=0,_tStartY=0,_tMoved=false;
-      chip.addEventListener('touchstart',function(e){
-        if(e.target.closest('.photo-chip-rm'))return; // let remove button handle itself
-        _tStartX=e.touches[0].clientX;
-        _tStartY=e.touches[0].clientY;
-        _tMoved=false;
-      },{passive:true});
-      chip.addEventListener('touchmove',function(e){
-        var dx=Math.abs(e.touches[0].clientX-_tStartX);
-        var dy=Math.abs(e.touches[0].clientY-_tStartY);
-        if(dx>6||dy>6)_tMoved=true;
-      },{passive:true});
-      chip.addEventListener('touchend',function(e){
-        if(_tMoved)return; // was a scroll, not a tap
-        if(e.target.closest('.photo-chip-rm'))return;
-        e.preventDefault();
-        _openDropPhotoViewer(idx2);
-      },{passive:false});
-      // Fallback for desktop / non-touch
       img.addEventListener('click',function(e){e.stopPropagation();_openDropPhotoViewer(idx2);});
     })(i);
     // Edit icon bottom-left -- screenshot 5 style pencil icon
@@ -5847,11 +5828,8 @@ function scCycleColor(){
 function scCycleBg(){ scCycleColor(); } // alias -- bg-cycle button calls same fn
 // Show discard dialog (used by x button + swipe-back)
 function _scTryClose(){
-  if(_scHasContent()){
-    _scShowDiscardDialog();
-  } else {
-    _scDoClose();
-  }
+  // Always show discard dialog on swipe-back -- prevents accidental app exit
+  _scShowDiscardDialog();
 }
 function _scShowDiscardDialog(){
   var bg=document.getElementById('sc-discard-bg');
@@ -5859,13 +5837,13 @@ function _scShowDiscardDialog(){
   bg.style.display='flex';
   requestAnimationFrame(function(){requestAnimationFrame(function(){
     var sheet=document.getElementById('sc-discard-sheet');
-    if(sheet){sheet.style.transform='scale(1)';sheet.style.opacity='1';}
+    if(sheet){sheet.style.transform='translateY(0) scale(1)';sheet.style.opacity='1';}
     history.pushState({_fade:'sc-discard'},'');
   });});
 }
 function _scHideDiscardDialog(){
   var sheet=document.getElementById('sc-discard-sheet');
-  if(sheet){sheet.style.transform='scale(.95)';sheet.style.opacity='0';}
+  if(sheet){sheet.style.transform='translateY(10px) scale(.97)';sheet.style.opacity='0';}
   setTimeout(function(){
     var bg=document.getElementById('sc-discard-bg');
     if(bg) bg.style.display='none';
@@ -14427,8 +14405,8 @@ function confirmCircleLeave(c){
     ?'This will remove all members and delete the Circle permanently.'
     :'You will silently leave the Circle. You can request to rejoin later.';
   var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:960;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:24px';
-  var modal=document.createElement('div');modal.style.cssText='background:var(--card);border-radius:18px;width:100%;max-width:320px;overflow:hidden';
-  modal.innerHTML='<div style="padding:22px 18px 16px;display:flex;flex-direction:column;gap:8px;align-items:center"><div style="font-weight:700;font-size:16px;text-align:center">'+label+'?</div><div style="font-size:13.5px;color:var(--sub);text-align:center;line-height:1.55">'+sub+'</div></div><div style="height:1px;background:var(--border)"></div><div style="display:flex"><button id="_cl_cancel" style="flex:1;padding:15px;background:none;border:none;border-right:1px solid var(--border);font-size:15px;font-weight:400;color:var(--text);cursor:pointer;font-family:Inter,sans-serif">Cancel</button><button id="_cl_confirm" style="flex:1;padding:15px;background:none;border:none;font-size:15px;font-weight:600;color:#E8352A;cursor:pointer;font-family:Inter,sans-serif">'+label+'</button></div>';
+  var modal=document.createElement('div');modal.style.cssText='background:var(--card);border-radius:18px;width:100%;max-width:300px;padding:20px 16px';
+  modal.innerHTML='<div style="text-align:center;padding:0 0 16px"><div style="font-weight:700;font-size:15.5px;color:var(--text);margin-bottom:4px">'+label+'?</div><div style="font-size:13px;color:var(--sub);line-height:1.5">'+sub+'</div></div><div style="display:flex;gap:8px"><button id="_cl_cancel" style="flex:1;padding:13px 0;background:var(--inp-bg);border:none;border-radius:12px;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;font-family:Inter,sans-serif">Cancel</button><button id="_cl_confirm" style="flex:1;padding:13px 0;background:#E8352A;border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:Inter,sans-serif">'+label+'</button></div>';
   ov.appendChild(modal);document.body.appendChild(ov);
   document.getElementById('_cl_cancel').onclick=function(){ov.remove();};
   document.getElementById('_cl_confirm').onclick=function(){
