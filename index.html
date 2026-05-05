@@ -4887,6 +4887,7 @@ function doDelPost(id){
 
 // -- COMPOSE -------------------------------------------------------------------
 function openCompose(){cFiles=[];renderPhotoTray();var bg=document.getElementById('compose-bg');bg.style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(function(){bg.querySelector('.sheet').style.transform='translateY(0)';});});setTimeout(function(){var t=document.getElementById('c-text');if(t)t.focus();},350);}
+
 function closeCompose(){closeSheet('compose-bg');}
 function pickCI(e){
   var files=Array.from(e.target.files||[]);
@@ -4900,8 +4901,12 @@ function pickCI(e){
   var firstNewIdx=cFiles.length;
   newFiles.slice(0,remaining).forEach(function(f){cFiles.push({file:f,filter:'none'});});
   renderPhotoTray();
+  // Hide compose sheet immediately so there's no flash before the editor opens
+  var _csBg=document.getElementById('compose-bg');
+  if(_csBg){var _csSheet=_csBg.querySelector('.sheet');if(_csSheet)_csSheet.style.visibility='hidden';}
+  var _navEl=document.getElementById('nav');if(_navEl)_navEl.style.visibility='hidden';
   // Auto-open the photo editor (filter picker) for the first newly added photo
-  setTimeout(function(){_openDropPhotoViewer(firstNewIdx);},80);
+  requestAnimationFrame(function(){_openDropPhotoViewer(firstNewIdx);});
 }
 function rmCI(idx){
   cFiles.splice(idx,1);
@@ -4958,6 +4963,12 @@ function renderPhotoTray(){
     tray.appendChild(add);
   }
   if(lbl)lbl.style.display='none';
+  // Refresh any thumbnail that has crop or filter data already saved
+  cFiles.forEach(function(cf,i){
+    if(cf&&(cf.filter&&cf.filter!=='none')||(cf&&cf._crop&&(cf._crop.tx||cf._crop.ty||(cf._crop.scale&&cf._crop.scale!==1)))){
+      _updateTrayThumb(i);
+    }
+  });
 }
 
 // Full-screen photo viewer with left/right nav and filter picker
@@ -5549,9 +5560,10 @@ function submitPost(){
     var filterCss=cf.filter&&cf.filter!=='none'?(_scFilters.find(function(fl){return fl.id===cf.filter;})||{css:'none'}).css:'none';
     var cropState=cf._crop||{tx:0,ty:0,scale:1};
     var hasCrop=(cropState.tx!==0||cropState.ty!==0||(cropState.scale&&cropState.scale!==1));
-    // Apply crop and/or filter via canvas
+    // Always process through canvas so the 4:5 preview crop is always baked in,
+    // even when no explicit filter or user-crop was applied.
     var processPromise;
-    if(filterCss!=='none'||hasCrop){
+    if(true){
       processPromise=new Promise(function(resolve){
         var img2=new Image();
         var objUrl2=URL.createObjectURL(f);
@@ -5595,8 +5607,6 @@ function submitPost(){
         img2.onerror=function(){resolve(f);};
         img2.src=objUrl2;
       });
-    } else {
-      processPromise=Promise.resolve(f);
     }
     return processPromise.then(function(processed){
       return compressImage(processed,1280,0.82).then(function(compressed){
